@@ -236,6 +236,28 @@ function buildInitialState(): StoreState {
         status: "scheduled",
         createdAt: new Date().toISOString(),
       },
+      // A match awaiting the current user's confirmation
+      {
+        id: "match-demo-2",
+        weekKey: thisWeek,
+        team1Id: "team-demo-1",
+        team2Id: "team-demo-3",
+        proposedBy: "user-005",
+        scheduledAt: (() => {
+          const d = new Date();
+          d.setDate(d.getDate() - 1);
+          d.setHours(19, 0, 0, 0);
+          return d.toISOString();
+        })(),
+        status: "pending_confirmation",
+        score1: 6,
+        score2: 3,
+        winnerId: "team-demo-1",
+        submittedBy: "user-005",
+        confirmedBy: ["user-005", "user-002"],
+        submittedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+        createdAt: new Date().toISOString(),
+      },
     ],
   };
 }
