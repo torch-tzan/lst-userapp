@@ -277,7 +277,7 @@ const MessageDetail = () => {
       );
     }
 
-    // User video upload message
+    // User video upload message (legacy single-file cards)
     if (msg.sender === "user" && msg.type === "video_upload") {
       return (
         <div key={msg.id} className="flex justify-end">
@@ -290,6 +290,80 @@ const MessageDetail = () => {
                 </div>
               </div>
               <p className="text-[10px] text-muted-foreground/60 mt-1 text-right">{msg.time}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Review request card (user)
+    if (msg.type === "review_request") {
+      const videoCount = msg.reviewVideos?.length ?? 0;
+      return (
+        <div key={msg.id} className="flex justify-end">
+          <div className="max-w-[85%]">
+            <button
+              onClick={() => navigate(`/review-detail/${thread.id}/${msg.id}`)}
+              className="block w-full bg-accent-yellow/10 border border-accent-yellow/30 rounded-[12px] rounded-br-[4px] p-3 text-left hover:bg-accent-yellow/15 transition-colors"
+            >
+              <div className="flex items-center gap-1.5 mb-1.5 text-accent-yellow">
+                <FileVideo className="w-3.5 h-3.5 flex-shrink-0" />
+                <p className="text-[11px] font-bold">動画レビュー依頼</p>
+              </div>
+              <p className="text-sm font-bold text-foreground leading-snug">{msg.reviewTitle || msg.text}</p>
+              {msg.reviewBody && (
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                  {msg.reviewBody}
+                </p>
+              )}
+              <div className="mt-2.5 inline-flex items-center gap-1 px-2.5 py-1 rounded bg-background border border-border text-xs font-bold text-foreground">
+                確認する →
+              </div>
+              {videoCount > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-2">動画 {videoCount}本</p>
+              )}
+            </button>
+            <p className="text-[10px] text-muted-foreground/60 mt-1 text-right">{msg.time}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Review reply card (coach)
+    if (msg.type === "review_reply") {
+      return (
+        <div key={msg.id} className="flex justify-start">
+          <div className="flex items-end gap-2 max-w-[85%]">
+            {(() => {
+              const avatar = getCoachAvatar(thread.coachName) || thread.coachAvatar;
+              return avatar ? (
+                <img src={avatar} alt={thread.coachName} loading="lazy" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold text-muted-foreground">{thread.coachInitial}</span>
+                </div>
+              );
+            })()}
+            <div className="flex-1 min-w-0">
+              <button
+                onClick={() => navigate(`/review-detail/${thread.id}/${msg.id}`)}
+                className="block w-full bg-accent-yellow/10 border border-accent-yellow/30 rounded-[12px] rounded-bl-[4px] p-3 text-left hover:bg-accent-yellow/15 transition-colors"
+              >
+                <div className="flex items-center gap-1.5 mb-1.5 text-accent-yellow">
+                  <Video className="w-3.5 h-3.5 flex-shrink-0" />
+                  <p className="text-[11px] font-bold">動画レビュー回答</p>
+                </div>
+                <p className="text-sm font-bold text-foreground leading-snug">「{msg.reviewTitle || msg.text}」</p>
+                {msg.reviewBody && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-3 leading-relaxed whitespace-pre-line">
+                    {msg.reviewBody}
+                  </p>
+                )}
+                <div className="mt-2.5 inline-flex items-center gap-1 px-2.5 py-1 rounded bg-background border border-border text-xs font-bold text-foreground">
+                  詳細を見る →
+                </div>
+              </button>
+              <p className="text-[10px] text-muted-foreground/60 mt-1">{msg.time}</p>
             </div>
           </div>
         </div>

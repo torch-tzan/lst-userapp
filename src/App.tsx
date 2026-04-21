@@ -42,6 +42,7 @@ import OnlineLesson from "./pages/OnlineLesson.tsx";
 import Coupons from "./pages/Coupons.tsx";
 import CoachingHistory from "./pages/CoachingHistory.tsx";
 import ReviewSubmit from "./pages/ReviewSubmit.tsx";
+import ReviewDetail from "./pages/ReviewDetail.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ForgotPasswordOtp from "./pages/ForgotPasswordOtp.tsx";
 import ForgotPasswordReset from "./pages/ForgotPasswordReset.tsx";
@@ -94,6 +95,7 @@ const App = () => (
           <Route path="/password-change" element={<PasswordChange />} />
           <Route path="/notification-settings" element={<NotificationSettings />} />
           <Route path="/review/submit" element={<ReviewSubmit />} />
+          <Route path="/review-detail/:threadId/:msgId" element={<ReviewDetail />} />
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/signup/otp" element={<SignupOtp />} />

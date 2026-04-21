@@ -1,16 +1,33 @@
+export interface ReviewVideo {
+  name: string;
+  url?: string;
+}
+
 export interface ChatMessage {
   id: string;
   sender: "coach" | "user" | "system";
   text: string;
   time: string;
   /** For system messages like online lesson link or video review */
-  type?: "text" | "online_link" | "video_upload" | "video_review_reply";
+  type?:
+    | "text"
+    | "online_link"
+    | "video_upload"
+    | "video_review_reply"
+    | "review_request"
+    | "review_reply";
   /** Link URL for online lesson */
   linkUrl?: string;
   /** Whether the link has expired */
   linkExpired?: boolean;
   /** Video filename for review */
   videoFileName?: string;
+  /** review_request / review_reply payload */
+  reviewTitle?: string;
+  reviewBody?: string;
+  reviewVideos?: ReviewVideo[];
+  /** For review_reply: points to the original request msgId */
+  replyTo?: string;
 }
 
 export type ReviewState = "awaiting_coach" | "in_review" | "completed" | "refunded";
@@ -291,34 +308,29 @@ export const createReviewThread = (
   if (existing) return existing;
 
   const nowStr = now();
+  const trimmed = memo?.trim() ?? "";
+  // Derive title from first line of memo, fallback to generic
+  const firstLine = trimmed.split("\n")[0]?.slice(0, 40) || "";
+  const reviewTitle = firstLine || `動画${uploadedVideos?.length ?? 0}本のレビュー依頼`;
   const messages: ChatMessage[] = [
     {
-      id: `msg-review-${Date.now()}`,
+      id: `msg-sys-${Date.now()}`,
       sender: "system",
-      text:
-        uploadedVideos && uploadedVideos.length > 0
-          ? `オンラインレビューのお支払いが完了しました。${uploadedVideos.length}本の動画を受け付けました。7日以内にコーチが返信しない場合は自動返金されます。`
-          : "オンラインレビューのお支払いが完了しました。下のボタンからプレー動画を送信してください。",
+      text: `オンラインレビューのお支払いが完了しました。${uploadedVideos?.length ?? 0}本の動画を受け付けました。7日以内にコーチが返信しない場合は自動返金されます。`,
       time: nowStr,
       type: "video_upload",
     },
-    ...(uploadedVideos ?? []).map((v, i) => ({
-      id: `msg-video-${Date.now()}-${i}`,
-      sender: "user" as const,
-      text: v.name,
-      time: nowStr,
-      type: "video_upload" as const,
-      videoFileName: v.name,
-    })),
-  ];
-  if (memo && memo.trim()) {
-    messages.push({
-      id: `msg-memo-${Date.now()}`,
+    {
+      id: `msg-req-${Date.now()}`,
       sender: "user",
-      text: memo.trim(),
+      text: reviewTitle,
       time: nowStr,
-    });
-  }
+      type: "review_request",
+      reviewTitle,
+      reviewBody: trimmed || undefined,
+      reviewVideos: uploadedVideos ?? [],
+    },
+  ];
 
   const thread: MessageThread = {
     id: `thread-review-${bookingId}`,
@@ -390,9 +402,16 @@ export const seedDemoThreads = (): void => {
       uploadedVideoNames: ["前衛ボレー.mp4", "サーブ練習.mov"],
       messages: [
         { id: "dr1-1", sender: "system", text: "オンラインレビューのお支払いが完了しました。2本の動画を受け付けました。7日以内にコーチが返信しない場合は自動返金されます。", time: "04/19 14:00", type: "video_upload" },
-        { id: "dr1-2", sender: "user", text: "前衛ボレー.mp4", time: "04/19 14:00", type: "video_upload", videoFileName: "前衛ボレー.mp4" },
-        { id: "dr1-3", sender: "user", text: "サーブ練習.mov", time: "04/19 14:00", type: "video_upload", videoFileName: "サーブ練習.mov" },
-        { id: "dr1-4", sender: "user", text: "前衛のボレーで打点が安定しません。アドバイスをお願いします。", time: "04/19 14:00" },
+        {
+          id: "dr1-2",
+          sender: "user",
+          text: "前衛ボレーの打点確認",
+          time: "04/19 14:00",
+          type: "review_request",
+          reviewTitle: "前衛ボレーの打点確認",
+          reviewBody: "前衛のボレーで打点が安定しません。特にバックボレーが詰まってしまうことが多いです。肘の使い方や体の向きなどアドバイスをお願いします。",
+          reviewVideos: [{ name: "前衛ボレー.mp4" }, { name: "サーブ練習.mov" }],
+        },
       ],
     },
     // Review state 2: coach replied, in 72h window (replied 27h ago, ~45h remaining)
@@ -410,11 +429,27 @@ export const seedDemoThreads = (): void => {
       uploadedVideoNames: ["バンデーハ.mp4", "後衛ポジション.mp4"],
       messages: [
         { id: "dr2-1", sender: "system", text: "オンラインレビューのお支払いが完了しました。2本の動画を受け付けました。", time: "04/18 10:00", type: "video_upload" },
-        { id: "dr2-2", sender: "user", text: "バンデーハ.mp4", time: "04/18 10:00", type: "video_upload", videoFileName: "バンデーハ.mp4" },
-        { id: "dr2-3", sender: "user", text: "後衛ポジション.mp4", time: "04/18 10:00", type: "video_upload", videoFileName: "後衛ポジション.mp4" },
-        { id: "dr2-4", sender: "user", text: "後衛でのポジショニングに自信がありません。よろしくお願いします。", time: "04/18 10:01" },
-        { id: "dr2-5", sender: "coach", text: "動画を確認しました！🎾\n\nバンデーハはタイミングが少し早いです。ボールが落ちてくる瞬間を待ってから振り抜くと、もっと安定します。\n\n詳しくコメントしますので少々お待ちください。", time: "04/20 10:00" },
-        { id: "dr2-6", sender: "system", text: "コーチが初回返信しました。72時間以内にレビューを完了する必要があります。期限後はこのチャットは閉鎖されます。", time: "04/20 10:00" },
+        {
+          id: "dr2-2",
+          sender: "user",
+          text: "後衛ポジショニングの改善",
+          time: "04/18 10:00",
+          type: "review_request",
+          reviewTitle: "後衛ポジショニングの改善",
+          reviewBody: "後衛でのポジショニングに自信がありません。相手の攻めに対する立ち位置やバンデーハのタイミングについてアドバイスください。",
+          reviewVideos: [{ name: "バンデーハ.mp4" }, { name: "後衛ポジション.mp4" }],
+        },
+        {
+          id: "dr2-3",
+          sender: "coach",
+          text: "「後衛ポジショニングの改善」",
+          time: "04/20 10:00",
+          type: "review_reply",
+          replyTo: "dr2-2",
+          reviewTitle: "後衛ポジショニングの改善",
+          reviewBody: "動画を確認しました！🎾\n\n【バンデーハ】\nタイミングが少し早いです。ボールが落ちてくる瞬間を待ってから振り抜くと、もっと安定します。\n\n【ポジション】\n全体的に少し後ろすぎます。ベースラインから1歩前に入って、攻撃的な姿勢を意識しましょう。\n\n【次のステップ】\nまずはバンデーハのタイミングを練習してみてください。",
+        },
+        { id: "dr2-4", sender: "system", text: "コーチが初回返信しました。72時間以内にレビューを完了する必要があります。期限後はこのチャットは閉鎖されます。", time: "04/20 10:00" },
       ],
     },
     // Review state 3: completed — 72h passed, paid out, locked
@@ -434,13 +469,29 @@ export const seedDemoThreads = (): void => {
       uploadedVideoNames: ["試合ハイライト.mov"],
       messages: [
         { id: "dr3-1", sender: "system", text: "オンラインレビューのお支払いが完了しました。1本の動画を受け付けました。", time: "04/13 09:00", type: "video_upload" },
-        { id: "dr3-2", sender: "user", text: "試合ハイライト.mov", time: "04/13 09:00", type: "video_upload", videoFileName: "試合ハイライト.mov" },
-        { id: "dr3-3", sender: "user", text: "公式戦の映像です。総合的なアドバイスをください。", time: "04/13 09:02" },
-        { id: "dr3-4", sender: "coach", text: "公式戦お疲れ様でした！映像を拝見しました📹\n\n全体的にフォームは安定してきていますが、ネット前での判断が少し遅れています。パートナーとの連携も含めて改善できるポイントをまとめますね。", time: "04/15 14:00" },
-        { id: "dr3-5", sender: "system", text: "コーチが初回返信しました。72時間以内にレビューを完了する必要があります。期限後はこのチャットは閉鎖されます。", time: "04/15 14:00" },
-        { id: "dr3-6", sender: "coach", text: "詳しいフィードバックです：\n\n1. フォアハンド：テイクバックをもう少し大きく。安定感がアップします。\n2. ネット前：パートナーとの声かけを意識。リターンコース読みが早くなります。\n3. フットワーク：素晴らしいです！この調子で👍\n\n次回の試合で試してみてください😊", time: "04/16 18:00" },
-        { id: "dr3-7", sender: "user", text: "ありがとうございます！とても参考になりました。早速練習で試してみます！", time: "04/16 20:00" },
-        { id: "dr3-8", sender: "system", text: "レビューが完了し、料金がコーチへ支払われました。このチャットは閉鎖されました。", time: "04/18 14:00" },
+        {
+          id: "dr3-2",
+          sender: "user",
+          text: "公式戦の総合アドバイス",
+          time: "04/13 09:00",
+          type: "review_request",
+          reviewTitle: "公式戦の総合アドバイス",
+          reviewBody: "先日の公式戦の映像です。フォーム・ポジショニング・パートナーとの連携など、総合的なアドバイスをお願いします。",
+          reviewVideos: [{ name: "試合ハイライト.mov" }],
+        },
+        {
+          id: "dr3-3",
+          sender: "coach",
+          text: "「公式戦の総合アドバイス」",
+          time: "04/15 14:00",
+          type: "review_reply",
+          replyTo: "dr3-2",
+          reviewTitle: "公式戦の総合アドバイス",
+          reviewBody: "公式戦お疲れ様でした！映像を拝見しました📹\n\n【全体】\nフォームは安定してきています。\n\n【フォアハンド】\nテイクバックをもう少し大きく。安定感がアップします。\n\n【ネット前】\nパートナーとの声かけを意識。リターンコース読みが早くなります。\n\n【フットワーク】\n素晴らしいです！この調子で👍\n\n次回の試合で試してみてください😊",
+        },
+        { id: "dr3-4", sender: "system", text: "コーチが初回返信しました。72時間以内にレビューを完了する必要があります。期限後はこのチャットは閉鎖されます。", time: "04/15 14:00" },
+        { id: "dr3-5", sender: "user", text: "ありがとうございます！とても参考になりました。早速練習で試してみます！", time: "04/16 20:00" },
+        { id: "dr3-6", sender: "system", text: "レビューが完了し、料金がコーチへ支払われました。このチャットは閉鎖されました。", time: "04/18 14:00" },
       ],
     },
     // Review state 4: refunded — 7d no reply, auto-refund
@@ -459,9 +510,17 @@ export const seedDemoThreads = (): void => {
       uploadedVideoNames: ["初心者練習.mp4"],
       messages: [
         { id: "dr4-1", sender: "system", text: "オンラインレビューのお支払いが完了しました。1本の動画を受け付けました。7日以内にコーチが返信しない場合は自動返金されます。", time: "04/11 09:00", type: "video_upload" },
-        { id: "dr4-2", sender: "user", text: "初心者練習.mp4", time: "04/11 09:00", type: "video_upload", videoFileName: "初心者練習.mp4" },
-        { id: "dr4-3", sender: "user", text: "初心者なので基本フォームのチェックをお願いします。", time: "04/11 09:05" },
-        { id: "dr4-4", sender: "system", text: "7日以内にコーチからの返信がなかったため、自動返金されました。動画は保存期限まで閲覧できます。", time: "04/18 09:00" },
+        {
+          id: "dr4-2",
+          sender: "user",
+          text: "基本フォーム確認",
+          time: "04/11 09:00",
+          type: "review_request",
+          reviewTitle: "基本フォーム確認",
+          reviewBody: "初心者なので基本フォームのチェックをお願いします。特にフォアハンドとサーブの構え方が不安です。",
+          reviewVideos: [{ name: "初心者練習.mp4" }],
+        },
+        { id: "dr4-3", sender: "system", text: "7日以内にコーチからの返信がなかったため、自動返金されました。動画は保存期限まで閲覧できます。", time: "04/18 09:00" },
       ],
     },
     {
