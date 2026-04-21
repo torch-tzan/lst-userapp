@@ -66,15 +66,26 @@ const BookingConfirm = () => {
   const [showCouponList, setShowCouponList] = useState(false);
   const [usePoints, setUsePoints] = useState(0);
 
-  // Review video upload state
-  const [reviewVideos, setReviewVideos] = useState<{ file: File; url: string }[]>([]);
+  // Review video upload state (file = undefined for demo-only fake entries)
+  const [reviewVideos, setReviewVideos] = useState<{ file?: File; name: string; size: number; url?: string }[]>([]);
   const [videoError, setVideoError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const FAKE_VIDEOS = [
+    { name: "前衛ボレー.mp4", size: 42 * 1024 * 1024 },
+    { name: "サーブ練習.mov", size: 78 * 1024 * 1024 },
+    { name: "バンデーハ.mp4", size: 55 * 1024 * 1024 },
+    { name: "後衛ポジション.mp4", size: 61 * 1024 * 1024 },
+    { name: "試合ハイライト.mov", size: 89 * 1024 * 1024 },
+  ];
+  const addFakeVideos = () => {
+    setVideoError("");
+    setReviewVideos(FAKE_VIDEOS.map((v) => ({ ...v })));
+  };
 
   // Revoke object URLs on unmount to avoid leaks
   useEffect(() => {
     return () => {
-      reviewVideos.forEach((v) => URL.revokeObjectURL(v.url));
+      reviewVideos.forEach((v) => { if (v.url) URL.revokeObjectURL(v.url); });
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -96,7 +107,7 @@ const BookingConfirm = () => {
       if (e.target) e.target.value = "";
       return;
     }
-    const accepted: { file: File; url: string }[] = [];
+    const accepted: { file: File; name: string; size: number; url: string }[] = [];
     for (const f of files) {
       if (!f.type.startsWith("video/")) {
         setVideoError(`「${f.name}」は動画ファイルではありません`);
@@ -106,7 +117,7 @@ const BookingConfirm = () => {
         setVideoError(`「${f.name}」は100MBを超えています（${formatSize(f.size)}）`);
         continue;
       }
-      accepted.push({ file: f, url: URL.createObjectURL(f) });
+      accepted.push({ file: f, name: f.name, size: f.size, url: URL.createObjectURL(f) });
     }
     if (accepted.length > 0) setReviewVideos((prev) => [...prev, ...accepted]);
     if (e.target) e.target.value = "";
@@ -114,7 +125,7 @@ const BookingConfirm = () => {
   const removeVideo = (idx: number) => {
     setReviewVideos((prev) => {
       const target = prev[idx];
-      if (target) URL.revokeObjectURL(target.url);
+      if (target?.url) URL.revokeObjectURL(target.url);
       return prev.filter((_, i) => i !== idx);
     });
     setVideoError("");
@@ -204,9 +215,9 @@ const BookingConfirm = () => {
       ctaDisabled={isReview && reviewVideos.length === 0}
       onCtaClick={() => {
         const videoMeta: ReviewVideoMeta[] = reviewVideos.map((v) => ({
-          name: v.file.name,
-          size: v.file.size,
-          type: v.file.type,
+          name: v.name,
+          size: v.size,
+          type: v.file?.type ?? "video/mp4",
           url: v.url,
         }));
         setPendingBooking({
@@ -322,6 +333,79 @@ const BookingConfirm = () => {
           )}
         </div>
 
+        {/* Review videos upload — placed above coupon */}
+        {isReview && (
+          <div className="bg-card rounded-[8px] border border-border p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Video className="w-4 h-4 text-accent-yellow" />
+              <h3 className="text-sm font-bold text-foreground">レビュー動画をアップロード</h3>
+              <span className="ml-auto text-[11px] text-muted-foreground">
+                {reviewVideos.length} / {MAX_VIDEOS}
+              </span>
+            </div>
+
+            {reviewVideos.length === 0 ? (
+              <button
+                onClick={addFakeVideos}
+                className="w-full aspect-video rounded-[8px] border-2 border-dashed border-primary/50 bg-primary/5 hover:bg-primary/10 transition-colors flex flex-col items-center justify-center gap-2 text-primary"
+              >
+                <Upload className="w-8 h-8" />
+                <p className="text-sm font-bold">動画を選択</p>
+                <p className="text-[11px] text-muted-foreground">最大{MAX_VIDEOS}本 · 1本100MBまで</p>
+              </button>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {reviewVideos.map((v, i) => (
+                  <div key={i} className="relative aspect-video rounded-[6px] bg-black overflow-hidden group">
+                    {v.url ? (
+                      <video src={v.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900">
+                        <FileVideo className="w-8 h-8 text-white/60" />
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
+                      <p className="text-[10px] font-medium text-white truncate">{v.name}</p>
+                      <p className="text-[9px] text-white/70">{formatSize(v.size)}</p>
+                    </div>
+                    <button
+                      onClick={() => removeVideo(i)}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-destructive transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {reviewVideos.length < MAX_VIDEOS && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="aspect-video rounded-[6px] border-2 border-dashed border-primary/50 bg-primary/5 hover:bg-primary/10 flex flex-col items-center justify-center gap-1 text-primary"
+                  >
+                    <Upload className="w-5 h-5" />
+                    <p className="text-[11px] font-bold">追加</p>
+                  </button>
+                )}
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="video/*"
+              multiple
+              onChange={handleVideoSelect}
+              className="hidden"
+            />
+
+            {videoError && (
+              <p className="text-[11px] text-destructive flex items-center gap-1">
+                <X className="w-3 h-3" />
+                {videoError}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Coupon section */}
         <div className="bg-card rounded-[8px] border border-border p-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -427,83 +511,6 @@ const BookingConfirm = () => {
             )}
           </div>
         </div>
-
-        {/* Review videos upload */}
-        {isReview && (
-          <div className="bg-card rounded-[8px] border border-border p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Video className="w-4 h-4 text-accent-yellow" />
-              <h3 className="text-sm font-bold text-foreground">レビュー動画をアップロード</h3>
-              <span className="ml-auto text-[11px] text-muted-foreground">
-                {reviewVideos.length} / {MAX_VIDEOS}
-              </span>
-            </div>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              予約送信時に動画をアップロードしてください（1〜5本、1本あたり100MBまで）。<br />
-              コーチが確認後、フィードバックがメッセージで届きます。
-            </p>
-
-            {reviewVideos.length > 0 && (
-              <div className="space-y-2">
-                {reviewVideos.map((v, i) => (
-                  <div key={i} className="flex items-center gap-3 bg-muted/30 border border-border rounded-[8px] p-2.5">
-                    <video
-                      src={v.url}
-                      className="w-14 h-14 rounded-[6px] bg-black object-cover flex-shrink-0"
-                      muted
-                      playsInline
-                      preload="metadata"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">{v.file.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{formatSize(v.file.size)}</p>
-                    </div>
-                    <button
-                      onClick={() => removeVideo(i)}
-                      className="p-2 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/*"
-              multiple
-              onChange={handleVideoSelect}
-              className="hidden"
-            />
-            {reviewVideos.length < MAX_VIDEOS && (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-center gap-2 h-11 rounded-[6px] border border-dashed border-primary/50 text-primary text-sm font-bold hover:bg-primary/5 transition-colors"
-              >
-                {reviewVideos.length === 0 ? (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    動画を選択（最大{MAX_VIDEOS}本）
-                  </>
-                ) : (
-                  <>
-                    <FileVideo className="w-4 h-4" />
-                    動画を追加（あと{MAX_VIDEOS - reviewVideos.length}本）
-                  </>
-                )}
-              </button>
-            )}
-
-            {videoError && (
-              <p className="text-[11px] text-destructive flex items-center gap-1">
-                <X className="w-3 h-3" />
-                {videoError}
-              </p>
-            )}
-          </div>
-        )}
 
         {/* Price breakdown */}
         <div className="bg-card rounded-[8px] border border-border p-4 space-y-3">
