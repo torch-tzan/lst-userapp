@@ -192,10 +192,36 @@ export const getUnreadMessageCount = (): number => {
   return count;
 };
 /** Create a review thread for online video review */
-export const createReviewThread = (bookingId: string, coachName: string): MessageThread => {
+export const createReviewThread = (
+  bookingId: string,
+  coachName: string,
+  uploadedVideos?: { name: string }[]
+): MessageThread => {
   const threads = getThreads();
   const existing = threads.find((t) => t.bookingId === bookingId);
   if (existing) return existing;
+
+  const nowStr = now();
+  const messages: ChatMessage[] = [
+    {
+      id: `msg-review-${Date.now()}`,
+      sender: "system",
+      text:
+        uploadedVideos && uploadedVideos.length > 0
+          ? `オンラインレビューのお支払いが完了しました。${uploadedVideos.length}本の動画を受け付けました。コーチが確認次第、フィードバックが届きます。`
+          : "オンラインレビューのお支払いが完了しました。下のボタンからプレー動画を送信してください。",
+      time: nowStr,
+      type: "video_upload",
+    },
+    ...(uploadedVideos ?? []).map((v, i) => ({
+      id: `msg-video-${Date.now()}-${i}`,
+      sender: "user" as const,
+      text: v.name,
+      time: nowStr,
+      type: "video_upload" as const,
+      videoFileName: v.name,
+    })),
+  ];
 
   const thread: MessageThread = {
     id: `thread-review-${bookingId}`,
@@ -204,15 +230,7 @@ export const createReviewThread = (bookingId: string, coachName: string): Messag
     bookingId,
     createdAt: new Date().toISOString(),
     threadType: "review",
-    messages: [
-      {
-        id: `msg-review-${Date.now()}`,
-        sender: "system",
-        text: "オンラインレビューのお支払いが完了しました。下のボタンからプレー動画を送信してください。コーチからフィードバックが届きます。",
-        time: now(),
-        type: "video_upload",
-      },
-    ],
+    messages,
   };
 
   threads.unshift(thread);

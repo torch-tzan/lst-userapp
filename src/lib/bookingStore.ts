@@ -18,6 +18,14 @@ export interface BookingEquipmentLine {
 
 export type BookingMode = "solo" | "standard";
 
+export interface ReviewVideoMeta {
+  name: string;
+  size: number;
+  type: string;
+  /** 上傳後的持久 URL（此 mock 使用 ObjectURL，生產版應為 CDN URL） */
+  url?: string;
+}
+
 export interface StoredBooking {
   id: string;
   type: BookingType;
@@ -62,6 +70,8 @@ export interface StoredBooking {
   // Event linkage (tournament court booking)
   eventId?: string;
   teamId?: string;
+  // Review lesson videos
+  reviewVideos?: ReviewVideoMeta[];
 }
 
 const STORAGE_KEY = "padel_bookings";

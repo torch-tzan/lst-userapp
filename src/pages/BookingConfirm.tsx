@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { setPendingBooking, BookingEquipmentLine, BookingMode } from "@/lib/bookingStore";
+import { setPendingBooking, BookingEquipmentLine, BookingMode, ReviewVideoMeta } from "@/lib/bookingStore";
 import InnerPageLayout from "@/components/InnerPageLayout";
-import { MapPin, Calendar, Clock, LayoutGrid, Tag, ChevronRight, Check, X, Coins, User, Video } from "lucide-react";
+import { MapPin, Calendar, Clock, LayoutGrid, Tag, ChevronRight, Check, X, Coins, User, Video, Upload, FileVideo, Trash2 } from "lucide-react";
 
 interface CourtBookingState {
   type?: "court";
@@ -66,7 +66,59 @@ const BookingConfirm = () => {
   const [showCouponList, setShowCouponList] = useState(false);
   const [usePoints, setUsePoints] = useState(0);
 
+  // Review video upload state
+  const [reviewVideos, setReviewVideos] = useState<{ file: File; url: string }[]>([]);
+  const [videoError, setVideoError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Revoke object URLs on unmount to avoid leaks
+  useEffect(() => {
+    return () => {
+      reviewVideos.forEach((v) => URL.revokeObjectURL(v.url));
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const AVAILABLE_POINTS = 1250; // Mock user points
+  const MAX_VIDEOS = 5;
+  const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  };
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVideoError("");
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    const remainingSlots = MAX_VIDEOS - reviewVideos.length;
+    if (files.length > remainingSlots) {
+      setVideoError(`動画は最大${MAX_VIDEOS}本まで（あと${remainingSlots}本追加可能）`);
+      if (e.target) e.target.value = "";
+      return;
+    }
+    const accepted: { file: File; url: string }[] = [];
+    for (const f of files) {
+      if (!f.type.startsWith("video/")) {
+        setVideoError(`「${f.name}」は動画ファイルではありません`);
+        continue;
+      }
+      if (f.size > MAX_VIDEO_SIZE) {
+        setVideoError(`「${f.name}」は100MBを超えています（${formatSize(f.size)}）`);
+        continue;
+      }
+      accepted.push({ file: f, url: URL.createObjectURL(f) });
+    }
+    if (accepted.length > 0) setReviewVideos((prev) => [...prev, ...accepted]);
+    if (e.target) e.target.value = "";
+  };
+  const removeVideo = (idx: number) => {
+    setReviewVideos((prev) => {
+      const target = prev[idx];
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((_, i) => i !== idx);
+    });
+    setVideoError("");
+  };
 
   if (!booking) {
     return (
@@ -144,14 +196,24 @@ const BookingConfirm = () => {
     <InnerPageLayout
       title="予約確認"
       onBack={() => navigate(-1)}
-      ctaLabel={`お支払いへ ¥${total.toLocaleString()}`}
-      ctaDisabled={false}
+      ctaLabel={
+        isReview && reviewVideos.length === 0
+          ? "動画を1本以上選択してください"
+          : `お支払いへ ¥${total.toLocaleString()}`
+      }
+      ctaDisabled={isReview && reviewVideos.length === 0}
       onCtaClick={() => {
-        // Save pending booking before navigating to payment
+        const videoMeta: ReviewVideoMeta[] = reviewVideos.map((v) => ({
+          name: v.file.name,
+          size: v.file.size,
+          type: v.file.type,
+          url: v.url,
+        }));
         setPendingBooking({
           ...(booking as unknown as Record<string, unknown>),
           totalPrice: total,
           timeRange,
+          reviewVideos: videoMeta,
         });
         navigate("/booking/payment", { state: { total } });
       }}
@@ -365,6 +427,83 @@ const BookingConfirm = () => {
             )}
           </div>
         </div>
+
+        {/* Review videos upload */}
+        {isReview && (
+          <div className="bg-card rounded-[8px] border border-border p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Video className="w-4 h-4 text-accent-yellow" />
+              <h3 className="text-sm font-bold text-foreground">レビュー動画をアップロード</h3>
+              <span className="ml-auto text-[11px] text-muted-foreground">
+                {reviewVideos.length} / {MAX_VIDEOS}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              予約送信時に動画をアップロードしてください（1〜5本、1本あたり100MBまで）。<br />
+              コーチが確認後、フィードバックがメッセージで届きます。
+            </p>
+
+            {reviewVideos.length > 0 && (
+              <div className="space-y-2">
+                {reviewVideos.map((v, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-muted/30 border border-border rounded-[8px] p-2.5">
+                    <video
+                      src={v.url}
+                      className="w-14 h-14 rounded-[6px] bg-black object-cover flex-shrink-0"
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{v.file.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatSize(v.file.size)}</p>
+                    </div>
+                    <button
+                      onClick={() => removeVideo(i)}
+                      className="p-2 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="video/*"
+              multiple
+              onChange={handleVideoSelect}
+              className="hidden"
+            />
+            {reviewVideos.length < MAX_VIDEOS && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-2 h-11 rounded-[6px] border border-dashed border-primary/50 text-primary text-sm font-bold hover:bg-primary/5 transition-colors"
+              >
+                {reviewVideos.length === 0 ? (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    動画を選択（最大{MAX_VIDEOS}本）
+                  </>
+                ) : (
+                  <>
+                    <FileVideo className="w-4 h-4" />
+                    動画を追加（あと{MAX_VIDEOS - reviewVideos.length}本）
+                  </>
+                )}
+              </button>
+            )}
+
+            {videoError && (
+              <p className="text-[11px] text-destructive flex items-center gap-1">
+                <X className="w-3 h-3" />
+                {videoError}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Price breakdown */}
         <div className="bg-card rounded-[8px] border border-border p-4 space-y-3">

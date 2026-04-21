@@ -12,6 +12,7 @@ const BookingComplete = () => {
   const navigate = useNavigate();
   const bookingType = useRef<string | null>(null);
   const lessonTypeRef = useRef<string | null>(null);
+  const videoCountRef = useRef<number>(0);
   const reviewThreadIdRef = useRef<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [matchPrompt, setMatchPrompt] = useState<{ matchId: string; bookingId: string; opponentName: string } | null>(null);
@@ -25,6 +26,8 @@ const BookingComplete = () => {
     if (!pending) return;
     bookingType.current = (pending.type as string) || "court";
     lessonTypeRef.current = (pending.lessonType as string) || null;
+    const vids = pending.reviewVideos as { name: string }[] | undefined;
+    videoCountRef.current = vids?.length ?? 0;
 
     const isCoach = pending.type === "coach";
     const isReview = pending.lessonType === "review";
@@ -77,13 +80,15 @@ const BookingComplete = () => {
       equipmentTotal: pending.equipmentTotal as number | undefined,
       eventId: pending.fromEvent as string | undefined,
       teamId: pending.teamId as string | undefined,
+      reviewVideos: pending.reviewVideos as StoredBooking["reviewVideos"],
     };
 
     addBooking(booking);
 
-    // Create review thread if review type
+    // Create review thread if review type (pass uploaded videos if any)
     if (isReview && pending.coachName) {
-      const thread = createReviewThread(booking.id, pending.coachName as string);
+      const vids = (booking.reviewVideos ?? []).map((v) => ({ name: v.name }));
+      const thread = createReviewThread(booking.id, pending.coachName as string, vids);
       reviewThreadIdRef.current = thread.id;
     }
 
@@ -144,14 +149,17 @@ const BookingComplete = () => {
           <div className="text-center space-y-2">
             <h2 className="text-xl font-bold text-foreground">
               {lessonTypeRef.current === "review"
-                ? "お支払いが完了しました"
+                ? "予約と動画を受け付けました"
                 : bookingType.current === "coach"
                 ? "予約リクエストを送信しました"
                 : "予約が完了しました"}
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {lessonTypeRef.current === "review" ? (
-                <>メッセージからプレー動画を送信してください。<br />コーチからフィードバックが届きます。</>
+                <>
+                  {videoCountRef.current}本の動画をアップロードしました。<br />
+                  コーチが確認後、メッセージでフィードバックが届きます。
+                </>
               ) : bookingType.current === "coach" ? (
                 <>コーチの確認後、予約が確定されます。<br />確定後にお知らせいたします。</>
               ) : (
@@ -164,7 +172,7 @@ const BookingComplete = () => {
               onClick={() => navigate(`/messages/${reviewThreadIdRef.current}`)}
               className="mt-3 h-11 px-6 rounded-[4px] text-sm font-semibold bg-primary text-primary-foreground"
             >
-              動画を送信する
+              メッセージを確認する
             </Button>
           ) : (
             <Button
