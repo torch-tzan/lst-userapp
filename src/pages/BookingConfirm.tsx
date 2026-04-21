@@ -68,6 +68,7 @@ const BookingConfirm = () => {
 
   // Review video upload state (file = undefined for demo-only fake entries)
   const [reviewVideos, setReviewVideos] = useState<{ file?: File; name: string; size: number; url?: string }[]>([]);
+  const [reviewMemo, setReviewMemo] = useState("");
   const [videoError, setVideoError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const FAKE_VIDEOS = [
@@ -225,6 +226,7 @@ const BookingConfirm = () => {
           totalPrice: total,
           timeRange,
           reviewVideos: videoMeta,
+          reviewMemo: reviewMemo.trim(),
         });
         navigate("/booking/payment", { state: { total } });
       }}
@@ -403,6 +405,22 @@ const BookingConfirm = () => {
                 {videoError}
               </p>
             )}
+
+            {/* Review memo */}
+            <div className="pt-2 border-t border-border space-y-1.5">
+              <label className="text-xs font-bold text-foreground block">
+                コーチに伝えたいこと
+                <span className="text-[10px] text-muted-foreground font-normal ml-1">（任意）</span>
+              </label>
+              <textarea
+                value={reviewMemo}
+                onChange={(e) => setReviewMemo(e.target.value.slice(0, 500))}
+                placeholder="例：前衛のボレーが安定しません。打点のアドバイスをお願いします。"
+                rows={3}
+                className="w-full px-3 py-2 text-sm rounded-[6px] border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+              />
+              <p className="text-[10px] text-muted-foreground text-right">{reviewMemo.length}/500</p>
+            </div>
           </div>
         )}
 

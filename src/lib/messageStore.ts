@@ -13,6 +13,8 @@ export interface ChatMessage {
   videoFileName?: string;
 }
 
+export type ReviewState = "awaiting_coach" | "in_review" | "completed" | "refunded";
+
 export interface MessageThread {
   id: string;
   coachName: string;
@@ -23,6 +25,15 @@ export interface MessageThread {
   createdAt: string;
   readCount?: number; // number of messages the user has seen
   threadType?: "normal" | "review"; // review = online video review thread
+  // Review lifecycle (review threads only)
+  reviewState?: ReviewState;
+  reviewSubmittedAt?: string;        // ISO — thread 建立時間（7天退費倒數起點）
+  coachFirstReplyAt?: string;        // ISO — 教練首次回覆（72h 結案倒數起點）
+  reviewCompletedAt?: string;        // ISO — 72h 到期，結案
+  reviewRefundedAt?: string;         // ISO — 7d 到期，自動退費
+  videoRetentionUntil?: string;      // ISO — 影片保存到期日（結案/退費 +7d）
+  videosDeleted?: boolean;            // 過期刪除
+  uploadedVideoNames?: string[];      // 實際上傳的檔名
 }
 
 const STORAGE_KEY = "padel_messages";
@@ -167,8 +178,85 @@ export const addCoachReply = (threadId: string, text: string): ChatMessage | nul
     time: now(),
   };
   thread.messages.push(msg);
+
+  // Review lifecycle: first coach reply → enter 72h window
+  if (thread.threadType === "review" && thread.reviewState === "awaiting_coach" && !thread.coachFirstReplyAt) {
+    thread.coachFirstReplyAt = new Date().toISOString();
+    thread.reviewState = "in_review";
+    thread.messages.push({
+      id: `msg-sys-${Date.now()}-1st`,
+      sender: "system",
+      text: "コーチが初回返信しました。72時間以内にレビューを完了する必要があります。期限後はこのチャットは閉鎖されます。",
+      time: now(),
+    });
+  }
+
   saveThreads(threads);
   return msg;
+};
+
+/** Auto-sync review thread lifecycle based on elapsed time. Mutates & saves. */
+export const syncReviewLifecycle = (threadId: string): MessageThread | null => {
+  const threads = getThreads();
+  const thread = threads.find((t) => t.id === threadId);
+  if (!thread || thread.threadType !== "review") return thread ?? null;
+  const nowMs = Date.now();
+  const MS_DAY = 86400_000;
+  const MS_HOUR = 3600_000;
+
+  // Awaiting → Refunded (7 days)
+  if (thread.reviewState === "awaiting_coach" && thread.reviewSubmittedAt) {
+    const elapsed = nowMs - new Date(thread.reviewSubmittedAt).getTime();
+    if (elapsed > 7 * MS_DAY) {
+      thread.reviewState = "refunded";
+      thread.reviewRefundedAt = new Date(new Date(thread.reviewSubmittedAt).getTime() + 7 * MS_DAY).toISOString();
+      thread.videoRetentionUntil = new Date(new Date(thread.reviewRefundedAt).getTime() + 7 * MS_DAY).toISOString();
+      thread.messages.push({
+        id: `msg-refund-${Date.now()}`,
+        sender: "system",
+        text: "7日以内にコーチからの返信がなかったため、自動返金されました。動画は保存期限まで閲覧できます。",
+        time: now(),
+      });
+    }
+  }
+
+  // In review → Completed (72h)
+  if (thread.reviewState === "in_review" && thread.coachFirstReplyAt) {
+    const elapsed = nowMs - new Date(thread.coachFirstReplyAt).getTime();
+    if (elapsed > 72 * MS_HOUR) {
+      thread.reviewState = "completed";
+      thread.reviewCompletedAt = new Date(new Date(thread.coachFirstReplyAt).getTime() + 72 * MS_HOUR).toISOString();
+      thread.videoRetentionUntil = new Date(new Date(thread.reviewCompletedAt).getTime() + 7 * MS_DAY).toISOString();
+      thread.messages.push({
+        id: `msg-complete-${Date.now()}`,
+        sender: "system",
+        text: "レビューが完了し、料金がコーチへ支払われました。このチャットは閉鎖されました。",
+        time: now(),
+      });
+    }
+  }
+
+  // Videos expire (1 week after retentionUntil passes)
+  if (!thread.videosDeleted && thread.videoRetentionUntil) {
+    if (nowMs > new Date(thread.videoRetentionUntil).getTime()) {
+      thread.videosDeleted = true;
+      thread.messages.push({
+        id: `msg-video-deleted-${Date.now()}`,
+        sender: "system",
+        text: "動画の保存期限が過ぎたため、サーバーから削除されました。",
+        time: now(),
+      });
+    }
+  }
+
+  saveThreads(threads);
+  return thread;
+};
+
+/** Is user input locked for this thread (i.e. review closed) */
+export const isThreadInputLocked = (thread: MessageThread): boolean => {
+  if (thread.threadType !== "review") return false;
+  return thread.reviewState === "completed" || thread.reviewState === "refunded";
 };
 
 /** Mark a thread as read */
@@ -195,7 +283,8 @@ export const getUnreadMessageCount = (): number => {
 export const createReviewThread = (
   bookingId: string,
   coachName: string,
-  uploadedVideos?: { name: string }[]
+  uploadedVideos?: { name: string }[],
+  memo?: string
 ): MessageThread => {
   const threads = getThreads();
   const existing = threads.find((t) => t.bookingId === bookingId);
@@ -208,7 +297,7 @@ export const createReviewThread = (
       sender: "system",
       text:
         uploadedVideos && uploadedVideos.length > 0
-          ? `オンラインレビューのお支払いが完了しました。${uploadedVideos.length}本の動画を受け付けました。コーチが確認次第、フィードバックが届きます。`
+          ? `オンラインレビューのお支払いが完了しました。${uploadedVideos.length}本の動画を受け付けました。7日以内にコーチが返信しない場合は自動返金されます。`
           : "オンラインレビューのお支払いが完了しました。下のボタンからプレー動画を送信してください。",
       time: nowStr,
       type: "video_upload",
@@ -222,6 +311,14 @@ export const createReviewThread = (
       videoFileName: v.name,
     })),
   ];
+  if (memo && memo.trim()) {
+    messages.push({
+      id: `msg-memo-${Date.now()}`,
+      sender: "user",
+      text: memo.trim(),
+      time: nowStr,
+    });
+  }
 
   const thread: MessageThread = {
     id: `thread-review-${bookingId}`,
@@ -230,6 +327,9 @@ export const createReviewThread = (
     bookingId,
     createdAt: new Date().toISOString(),
     threadType: "review",
+    reviewState: "awaiting_coach",
+    reviewSubmittedAt: new Date().toISOString(),
+    uploadedVideoNames: uploadedVideos?.map((v) => v.name) ?? [],
     messages,
   };
 
@@ -260,15 +360,110 @@ export const addVideoUploadMessage = (threadId: string, fileName: string): ChatM
 
 export const seedDemoThreads = (): void => {
   let threads = getThreads();
-  // Re-seed if demo threads lack avatars
+  // Re-seed if demo threads lack avatars OR lack review-state demos
   const hasOldDemo = threads.some((t) => t.id.startsWith("demo-") && !t.coachAvatar);
-  if (hasOldDemo) {
+  const hasReviewDemos = threads.some((t) => t.id.startsWith("demo-review-"));
+  if (hasOldDemo || !hasReviewDemos) {
     threads = threads.filter((t) => !t.id.startsWith("demo-"));
     localStorage.setItem("padel_messages", JSON.stringify(threads));
   }
   if (threads.some((t) => t.id.startsWith("demo-"))) return;
 
+  const MS_DAY = 86400_000;
+  const MS_HOUR = 3600_000;
+  const nowD = Date.now();
+  const iso = (offsetMs: number) => new Date(nowD - offsetMs).toISOString();
+  const iso_future = (offsetMs: number) => new Date(nowD + offsetMs).toISOString();
+
   const demoThreads: MessageThread[] = [
+    // Review state 1: awaiting coach reply (submitted 2 days ago, ~5 days remaining)
+    {
+      id: "demo-review-awaiting",
+      coachName: "田中 美咲",
+      coachInitial: "田",
+      coachAvatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face",
+      bookingId: "demo-rev-1",
+      createdAt: iso(2 * MS_DAY),
+      threadType: "review",
+      reviewState: "awaiting_coach",
+      reviewSubmittedAt: iso(2 * MS_DAY),
+      uploadedVideoNames: ["前衛ボレー.mp4", "サーブ練習.mov"],
+      messages: [
+        { id: "dr1-1", sender: "system", text: "オンラインレビューのお支払いが完了しました。2本の動画を受け付けました。7日以内にコーチが返信しない場合は自動返金されます。", time: "04/19 14:00", type: "video_upload" },
+        { id: "dr1-2", sender: "user", text: "前衛ボレー.mp4", time: "04/19 14:00", type: "video_upload", videoFileName: "前衛ボレー.mp4" },
+        { id: "dr1-3", sender: "user", text: "サーブ練習.mov", time: "04/19 14:00", type: "video_upload", videoFileName: "サーブ練習.mov" },
+        { id: "dr1-4", sender: "user", text: "前衛のボレーで打点が安定しません。アドバイスをお願いします。", time: "04/19 14:00" },
+      ],
+    },
+    // Review state 2: coach replied, in 72h window (replied 27h ago, ~45h remaining)
+    {
+      id: "demo-review-inreview",
+      coachName: "佐藤 翔太",
+      coachInitial: "佐",
+      coachAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+      bookingId: "demo-rev-2",
+      createdAt: iso(3 * MS_DAY),
+      threadType: "review",
+      reviewState: "in_review",
+      reviewSubmittedAt: iso(3 * MS_DAY),
+      coachFirstReplyAt: iso(27 * MS_HOUR),
+      uploadedVideoNames: ["バンデーハ.mp4", "後衛ポジション.mp4"],
+      messages: [
+        { id: "dr2-1", sender: "system", text: "オンラインレビューのお支払いが完了しました。2本の動画を受け付けました。", time: "04/18 10:00", type: "video_upload" },
+        { id: "dr2-2", sender: "user", text: "バンデーハ.mp4", time: "04/18 10:00", type: "video_upload", videoFileName: "バンデーハ.mp4" },
+        { id: "dr2-3", sender: "user", text: "後衛ポジション.mp4", time: "04/18 10:00", type: "video_upload", videoFileName: "後衛ポジション.mp4" },
+        { id: "dr2-4", sender: "user", text: "後衛でのポジショニングに自信がありません。よろしくお願いします。", time: "04/18 10:01" },
+        { id: "dr2-5", sender: "coach", text: "動画を確認しました！🎾\n\nバンデーハはタイミングが少し早いです。ボールが落ちてくる瞬間を待ってから振り抜くと、もっと安定します。\n\n詳しくコメントしますので少々お待ちください。", time: "04/20 10:00" },
+        { id: "dr2-6", sender: "system", text: "コーチが初回返信しました。72時間以内にレビューを完了する必要があります。期限後はこのチャットは閉鎖されます。", time: "04/20 10:00" },
+      ],
+    },
+    // Review state 3: completed — 72h passed, paid out, locked
+    {
+      id: "demo-review-completed",
+      coachName: "鈴木 健太",
+      coachInitial: "鈴",
+      coachAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face",
+      bookingId: "demo-rev-3",
+      createdAt: iso(8 * MS_DAY),
+      threadType: "review",
+      reviewState: "completed",
+      reviewSubmittedAt: iso(8 * MS_DAY),
+      coachFirstReplyAt: iso(6 * MS_DAY),
+      reviewCompletedAt: iso(3 * MS_DAY),
+      videoRetentionUntil: iso_future(4 * MS_DAY),
+      uploadedVideoNames: ["試合ハイライト.mov"],
+      messages: [
+        { id: "dr3-1", sender: "system", text: "オンラインレビューのお支払いが完了しました。1本の動画を受け付けました。", time: "04/13 09:00", type: "video_upload" },
+        { id: "dr3-2", sender: "user", text: "試合ハイライト.mov", time: "04/13 09:00", type: "video_upload", videoFileName: "試合ハイライト.mov" },
+        { id: "dr3-3", sender: "user", text: "公式戦の映像です。総合的なアドバイスをください。", time: "04/13 09:02" },
+        { id: "dr3-4", sender: "coach", text: "公式戦お疲れ様でした！映像を拝見しました📹\n\n全体的にフォームは安定してきていますが、ネット前での判断が少し遅れています。パートナーとの連携も含めて改善できるポイントをまとめますね。", time: "04/15 14:00" },
+        { id: "dr3-5", sender: "system", text: "コーチが初回返信しました。72時間以内にレビューを完了する必要があります。期限後はこのチャットは閉鎖されます。", time: "04/15 14:00" },
+        { id: "dr3-6", sender: "coach", text: "詳しいフィードバックです：\n\n1. フォアハンド：テイクバックをもう少し大きく。安定感がアップします。\n2. ネット前：パートナーとの声かけを意識。リターンコース読みが早くなります。\n3. フットワーク：素晴らしいです！この調子で👍\n\n次回の試合で試してみてください😊", time: "04/16 18:00" },
+        { id: "dr3-7", sender: "user", text: "ありがとうございます！とても参考になりました。早速練習で試してみます！", time: "04/16 20:00" },
+        { id: "dr3-8", sender: "system", text: "レビューが完了し、料金がコーチへ支払われました。このチャットは閉鎖されました。", time: "04/18 14:00" },
+      ],
+    },
+    // Review state 4: refunded — 7d no reply, auto-refund
+    {
+      id: "demo-review-refunded",
+      coachName: "山本 大輝",
+      coachInitial: "山",
+      coachAvatar: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&fit=crop&crop=face",
+      bookingId: "demo-rev-4",
+      createdAt: iso(10 * MS_DAY),
+      threadType: "review",
+      reviewState: "refunded",
+      reviewSubmittedAt: iso(10 * MS_DAY),
+      reviewRefundedAt: iso(3 * MS_DAY),
+      videoRetentionUntil: iso_future(4 * MS_DAY),
+      uploadedVideoNames: ["初心者練習.mp4"],
+      messages: [
+        { id: "dr4-1", sender: "system", text: "オンラインレビューのお支払いが完了しました。1本の動画を受け付けました。7日以内にコーチが返信しない場合は自動返金されます。", time: "04/11 09:00", type: "video_upload" },
+        { id: "dr4-2", sender: "user", text: "初心者練習.mp4", time: "04/11 09:00", type: "video_upload", videoFileName: "初心者練習.mp4" },
+        { id: "dr4-3", sender: "user", text: "初心者なので基本フォームのチェックをお願いします。", time: "04/11 09:05" },
+        { id: "dr4-4", sender: "system", text: "7日以内にコーチからの返信がなかったため、自動返金されました。動画は保存期限まで閲覧できます。", time: "04/18 09:00" },
+      ],
+    },
     {
       id: "demo-online-pending",
       coachName: "田中 美咲",

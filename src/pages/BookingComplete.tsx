@@ -85,10 +85,11 @@ const BookingComplete = () => {
 
     addBooking(booking);
 
-    // Create review thread if review type (pass uploaded videos if any)
+    // Create review thread if review type (pass uploaded videos + memo if any)
     if (isReview && pending.coachName) {
       const vids = (booking.reviewVideos ?? []).map((v) => ({ name: v.name }));
-      const thread = createReviewThread(booking.id, pending.coachName as string, vids);
+      const memo = (pending.reviewMemo as string | undefined) ?? "";
+      const thread = createReviewThread(booking.id, pending.coachName as string, vids, memo);
       reviewThreadIdRef.current = thread.id;
     }
 
