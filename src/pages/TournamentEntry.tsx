@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
+import { useToast } from "@/components/ui/use-toast";
 import { useTournamentStore, findPlayerByName, PREMIUM_USERS, CURRENT_USER } from "@/lib/tournamentStore";
 import { useUserProfile } from "@/lib/userProfileStore";
 import { Check, X, AlertCircle, Diamond } from "lucide-react";
@@ -10,6 +11,7 @@ const TournamentEntry = () => {
   const navigate = useNavigate();
   const { getTournament, registerForTournament } = useTournamentStore();
   const { profile } = useUserProfile();
+  const { toast } = useToast();
 
   const t = id ? getTournament(id) : undefined;
   const [partnerName, setPartnerName] = useState("");
@@ -36,6 +38,10 @@ const TournamentEntry = () => {
       setError(result.error ?? "エントリーに失敗しました");
       return;
     }
+    toast({
+      title: isDoubles ? "パートナーに招待を送信しました" : "エントリーが完了しました",
+      description: isDoubles ? "72時間以内にパートナーが承諾すると確定します" : undefined,
+    });
     navigate(`/game/tournament/${t.id}`);
   };
 
