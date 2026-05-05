@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useTournamentStore, CURRENT_USER, getPlayer } from "@/lib/tournamentStore";
 import { useSubscription } from "@/lib/subscriptionStore";
-import { Calendar, MapPin, Users, Trophy, Diamond, Lock } from "lucide-react";
+import { Calendar, MapPin, Users, Trophy, Diamond, Lock, Phone, Train, Info } from "lucide-react";
 
 function formatDateTimeJP(iso: string): string {
   const d = new Date(iso);
@@ -65,7 +65,15 @@ const TournamentDetail = () => {
       ctaDisabled={!!myEntry || !canRegister}
       onCtaClick={handleEntry}
     >
-      <div className="bg-card border border-border rounded-[8px] p-4 mb-4">
+      {/* Hero image */}
+      {t.heroImageUrl && (
+        <div className="-mx-[20px] -mt-6 mb-4 aspect-video bg-muted overflow-hidden">
+          <img src={t.heroImageUrl} alt={t.title} className="w-full h-full object-cover" />
+        </div>
+      )}
+
+      {/* Title + meta */}
+      <div className="mb-4">
         <p className="text-base font-bold text-foreground">{t.title}</p>
         <div className="mt-3 space-y-1.5">
           <p className="text-xs text-muted-foreground flex items-center gap-2">
@@ -95,6 +103,39 @@ const TournamentDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Description */}
+      {t.description && (
+        <section className="mb-4">
+          <p className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
+            <Info className="w-4 h-4 text-muted-foreground" />
+            大会について
+          </p>
+          <p className="text-xs text-foreground whitespace-pre-line leading-relaxed">{t.description}</p>
+        </section>
+      )}
+
+      {/* Access */}
+      {t.accessInfo && (
+        <section className="mb-4">
+          <p className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
+            <Train className="w-4 h-4 text-muted-foreground" />
+            アクセス
+          </p>
+          <p className="text-xs text-foreground whitespace-pre-line leading-relaxed">{t.accessInfo}</p>
+        </section>
+      )}
+
+      {/* Contact */}
+      {t.contactInfo && (
+        <section className="mb-4">
+          <p className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
+            <Phone className="w-4 h-4 text-muted-foreground" />
+            お問い合わせ
+          </p>
+          <p className="text-xs text-foreground whitespace-pre-line leading-relaxed">{t.contactInfo}</p>
+        </section>
+      )}
 
       {/* Premium gating notice for non-premium */}
       {isOpen && !isPremium && (
