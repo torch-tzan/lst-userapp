@@ -55,6 +55,11 @@ export interface Tournament {
   status: TournamentStatus;
   entries: TournamentEntry[];
   results?: TournamentResult;
+  // ── new optional fields ──
+  heroImageUrl?: string;
+  description?: string;
+  accessInfo?: string;
+  contactInfo?: string;
 }
 
 const PLAYER_DIRECTORY: PlayerRef[] = [
@@ -116,6 +121,10 @@ function buildInitialState(): StoreState {
     scheduledAt: lastWeek,
     registrationDeadline: lastWeek,
     status: "completed",
+    heroImageUrl: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&h=450&fit=crop",
+    description: "毎月恒例のシングルストーナメント。\n初級〜上級まで実力に応じてご参加いただけます。\n試合形式は8名による単一エリミネーションです。",
+    accessInfo: "JR 東京駅 八重洲口 徒歩7分\n地下駐車場あり（100台、有料）",
+    contactInfo: "LST 本店 03-1234-5678\nlst-tournament@example.co.jp",
     entries: [
       { id: "e-c1", tournamentId: "t-completed", registrantUserId: CURRENT_USER, registeredAt: lastWeek, status: "confirmed" },
       ...["user-002","user-003","user-005","user-006","user-007","user-010","user-008"].map((u, i) => ({
@@ -154,6 +163,10 @@ function buildInitialState(): StoreState {
     scheduledAt: in7days,
     registrationDeadline: in5days,
     status: "registration_open",
+    heroImageUrl: "https://images.unsplash.com/photo-1507398941214-572c25f4b1dc?w=800&h=450&fit=crop",
+    description: "ペアで挑む月例ダブルス大会。\nお馴染みのパートナーとチームを組んでご参加ください。\n16ペアの単一エリミネーション形式です。",
+    accessInfo: "東京メトロ 渋谷駅 徒歩5分\nビル 5F LST 本店コートB",
+    contactInfo: "LST 本店 03-1234-5678",
     entries: [
       { id: "e-o1", tournamentId: "t-open", registrantUserId: "user-002", partnerUserId: "user-003", registeredAt: now.toISOString(), status: "confirmed" },
       { id: "e-o2", tournamentId: "t-open", registrantUserId: "user-005", partnerUserId: "user-006", registeredAt: now.toISOString(), status: "confirmed" },
@@ -171,6 +184,10 @@ function buildInitialState(): StoreState {
     scheduledAt: today,
     registrationDeadline: today,
     status: "in_progress",
+    heroImageUrl: "https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=800&h=450&fit=crop",
+    description: "西支店主催のダブルス交流戦。\nレベル制限なし、楽しむことを重視した雰囲気の大会です。",
+    accessInfo: "西武新宿線 上石神井駅 徒歩10分\nLST 西支店コート1",
+    contactInfo: "LST 西支店 042-345-6789",
     entries: [],
   };
 
@@ -184,6 +201,10 @@ function buildInitialState(): StoreState {
     scheduledAt: in20days,
     registrationDeadline: in15days,
     status: "upcoming",
+    heroImageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&h=450&fit=crop",
+    description: "5月最大のシングルストーナメント。\n32名定員、3週間にわたる本格大会。\nランキング上位入賞で月間積分大幅獲得。",
+    accessInfo: "JR 東京駅 八重洲口 徒歩7分\nLST 本店コートA",
+    contactInfo: "LST 本店 03-1234-5678",
     entries: [],
   };
 
