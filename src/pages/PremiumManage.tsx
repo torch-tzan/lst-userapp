@@ -2,18 +2,29 @@ import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useSubscription } from "@/lib/subscriptionStore";
 import { Diamond, Check } from "lucide-react";
-
-const formatJP = (iso?: string) => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-};
+import { formatJP } from "@/lib/utils";
 
 const PremiumManage = () => {
   const navigate = useNavigate();
   const { status, startedAt, nextRenewAt, paymentMethod, history } = useSubscription();
 
-  const isActive = status === "active" || status === "cancelled_pending";
+  const isPremium = status === "active" || status === "cancelled_pending";
+  if (!isPremium) {
+    return (
+      <InnerPageLayout title="プラン管理">
+        <div className="text-center py-12">
+          <p className="text-sm text-muted-foreground mb-4">プレミアム会員ではありません</p>
+          <button
+            onClick={() => navigate("/premium/plan")}
+            className="text-sm text-primary font-bold underline"
+          >
+            プレミアムに登録する
+          </button>
+        </div>
+      </InnerPageLayout>
+    );
+  }
+
   const recentHistory = [...history].reverse().slice(0, 3);
 
   return (
@@ -28,8 +39,14 @@ const PremiumManage = () => {
               <p className="text-xl font-bold mt-0.5">プレミアム会員</p>
             </div>
           </div>
-          <span className="flex items-center gap-1 text-[10px] font-bold bg-green-500/20 text-green-400 px-2 py-1 rounded">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+          <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded ${
+            status === "cancelled_pending"
+              ? "bg-amber-500/20 text-amber-400"
+              : "bg-green-500/20 text-green-400"
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              status === "cancelled_pending" ? "bg-amber-400" : "bg-green-400"
+            }`} />
             {status === "cancelled_pending" ? "解約予定" : "利用中"}
           </span>
         </div>
@@ -137,7 +154,7 @@ const PremiumManage = () => {
       </div>
 
       {/* Cancel link */}
-      {isActive && status !== "cancelled_pending" && (
+      {status === "active" && (
         <div className="text-center">
           <button
             onClick={() => navigate("/premium/cancel")}

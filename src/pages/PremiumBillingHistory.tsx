@@ -1,10 +1,6 @@
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useSubscription } from "@/lib/subscriptionStore";
-
-const formatJP = (iso: string) => {
-  const d = new Date(iso);
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-};
+import { formatJP } from "@/lib/utils";
 
 const PremiumBillingHistory = () => {
   const { history } = useSubscription();

@@ -3,12 +3,7 @@ import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useSubscription } from "@/lib/subscriptionStore";
 import { AlertCircle } from "lucide-react";
-
-const formatJP = (iso?: string) => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-};
+import { formatJP } from "@/lib/utils";
 
 const REASONS = [
   "利用頻度が少なくなった",

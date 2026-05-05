@@ -3,6 +3,36 @@ import InnerPageLayout from "@/components/InnerPageLayout";
 import { useSubscription, type PaymentMethod } from "@/lib/subscriptionStore";
 import { CreditCard, Smartphone, Apple, ChevronRight } from "lucide-react";
 
+const Row = ({
+  icon: Icon,
+  iconBg,
+  iconColor,
+  title,
+  sub,
+  onClick,
+}: {
+  icon: typeof CreditCard;
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  sub: string;
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className="w-full bg-card border border-border rounded-[8px] p-4 flex items-center gap-3 hover:border-primary/40 transition-colors"
+  >
+    <div className={`w-10 h-10 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
+      <Icon className={`w-5 h-5 ${iconColor}`} />
+    </div>
+    <div className="flex-1 text-left">
+      <p className="text-sm font-bold text-foreground">{title}</p>
+      <p className="text-[11px] text-muted-foreground">{sub}</p>
+    </div>
+    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+  </button>
+);
+
 const PremiumPaymentMethod = () => {
   const navigate = useNavigate();
   const { updatePaymentMethod } = useSubscription();
@@ -11,36 +41,6 @@ const PremiumPaymentMethod = () => {
     updatePaymentMethod(method);
     navigate(-1);
   };
-
-  const Row = ({
-    icon: Icon,
-    iconBg,
-    iconColor,
-    title,
-    sub,
-    onClick,
-  }: {
-    icon: typeof CreditCard;
-    iconBg: string;
-    iconColor: string;
-    title: string;
-    sub: string;
-    onClick: () => void;
-  }) => (
-    <button
-      onClick={onClick}
-      className="w-full bg-card border border-border rounded-[8px] p-4 flex items-center gap-3 hover:border-primary/40 transition-colors"
-    >
-      <div className={`w-10 h-10 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
-        <Icon className={`w-5 h-5 ${iconColor}`} />
-      </div>
-      <div className="flex-1 text-left">
-        <p className="text-sm font-bold text-foreground">{title}</p>
-        <p className="text-[11px] text-muted-foreground">{sub}</p>
-      </div>
-      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-    </button>
-  );
 
   return (
     <InnerPageLayout title="お支払い方法の変更">

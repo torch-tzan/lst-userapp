@@ -3,12 +3,7 @@ import PhoneMockup from "@/components/PhoneMockup";
 import { useSubscription } from "@/lib/subscriptionStore";
 import { useUserProfile } from "@/lib/userProfileStore";
 import { Check, Diamond } from "lucide-react";
-
-const formatJP = (iso?: string) => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-};
+import { formatJP } from "@/lib/utils";
 
 const PremiumWelcome = () => {
   const navigate = useNavigate();
