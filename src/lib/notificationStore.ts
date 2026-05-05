@@ -23,6 +23,7 @@ export interface PushNotification {
   bookingId?: string;
   coachName?: string;
   eventId?: string;
+  entryId?: string;
   createdAt: string;
   read: boolean;
 }
@@ -93,6 +94,20 @@ export const seedDemoNotifications = (): void => {
       message: "佐藤 花子さんから「5月度 ダブルストーナメント」への招待が届きました。72時間以内に回答してください。",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
       read: false,
+    },
+    {
+      type: "tournament_partner_accepted",
+      title: "パートナーが招待を承諾しました",
+      message: "渡辺 健太さんが「4月度 ダブルス大会」のエントリーを承諾しました。",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
+      read: true,
+    },
+    {
+      type: "tournament_partner_expired",
+      title: "招待の有効期限が切れました",
+      message: "「3月度 ダブルストーナメント」への招待が72時間経過したため失効しました。",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
+      read: true,
     },
     {
       type: "tournament_results_published",

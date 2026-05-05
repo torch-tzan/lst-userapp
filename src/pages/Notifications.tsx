@@ -90,6 +90,10 @@ const Notifications = () => {
   const handlePushClick = (n: PushNotification) => {
     markNotificationRead(n.id);
     setPushNotifs(getNotifications());
+    if (n.type === "tournament_partner_invited" && n.entryId) {
+      navigate(`/game/invite/${n.entryId}`);
+      return;
+    }
     if (n.type === "review_request" && n.coachName) {
       navigate(`/review/submit?coach=${encodeURIComponent(n.coachName)}&bookingId=${n.bookingId || ""}`);
     } else if (n.bookingId) {

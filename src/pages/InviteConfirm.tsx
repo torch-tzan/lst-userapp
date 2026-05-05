@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useTournamentStore, getPlayer } from "@/lib/tournamentStore";
+import { useToast } from "@/components/ui/use-toast";
 import { Calendar, MapPin, Users, Clock, AlertCircle } from "lucide-react";
 
 function formatDateTimeJP(iso: string): string {
@@ -25,6 +26,7 @@ const InviteConfirm = () => {
   const { entryId } = useParams();
   const navigate = useNavigate();
   const { getEntry, acceptPartnerInvite, declinePartnerInvite } = useTournamentStore();
+  const { toast } = useToast();
 
   const found = entryId ? getEntry(entryId) : undefined;
   const [showDecline, setShowDecline] = useState(false);
@@ -62,7 +64,13 @@ const InviteConfirm = () => {
 
   const handleAccept = () => {
     const r = acceptPartnerInvite(entry.id);
-    if (r.ok) navigate(`/game/tournament/${tournament.id}`);
+    if (r.ok) {
+      toast({
+        title: "招待を承諾しました",
+        description: `${tournament.title} のエントリーが確定しました`,
+      });
+      navigate(`/game/tournament/${tournament.id}`);
+    }
   };
 
   const handleDecline = () => {

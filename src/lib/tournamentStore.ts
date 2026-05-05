@@ -469,6 +469,7 @@ export function useTournamentStore() {
           type: "tournament_partner_invited",
           title: "大会の招待が届きました",
           message: `田中 太郎さんから「${t.title}」への招待が届きました。${PARTNER_INVITE_HOURS}時間以内に回答してください。`,
+          entryId: entry.id,
         });
       } else {
         addNotification({
