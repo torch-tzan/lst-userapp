@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useTournamentStore, CURRENT_USER, computePersonalMonthlyScore } from "@/lib/tournamentStore";
 import { useSubscription } from "@/lib/subscriptionStore";
-import { Trophy, Calendar, Diamond } from "lucide-react";
+import { deriveUserBadges } from "@/lib/tournamentBadges";
+import LiveMonthCard from "@/components/game/LiveMonthCard";
+import MonthRecapCard from "@/components/game/MonthRecapCard";
+import TrophyChip from "@/components/game/TrophyChip";
+import { Diamond, ChevronDown, ChevronUp } from "lucide-react";
 
 function yearMonthsBetween(startIso: string, endDate: Date): string[] {
   const start = new Date(startIso);
@@ -13,7 +18,7 @@ function yearMonthsBetween(startIso: string, endDate: Date): string[] {
     months.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
     cursor.setMonth(cursor.getMonth() + 1);
   }
-  return months.reverse(); // 最新月在最上面
+  return months.reverse();
 }
 
 function formatYM(ym: string): string {
@@ -21,9 +26,18 @@ function formatYM(ym: string): string {
   return `${y}年${parseInt(m)}月`;
 }
 
+function nextRankCta(currentRank: number | null, currentScore: number, currentRanking: { score: number; userId: string }[]): string | undefined {
+  if (currentRank === null || currentRank <= 3) return undefined;
+  const targetIdx = 2; // 3位
+  const targetScore = currentRanking[targetIdx]?.score ?? 0;
+  const diff = targetScore - currentScore;
+  if (diff <= 0) return undefined;
+  return `あと ${diff} 点で 3位`;
+}
+
 const MyResults = () => {
   const navigate = useNavigate();
-  const { tournaments } = useTournamentStore();
+  const { tournaments, computeRanking } = useTournamentStore();
   const sub = useSubscription();
   const isPremium = sub.isPremium();
   const periodStart = sub.currentPeriodStartedAt();
@@ -45,89 +59,113 @@ const MyResults = () => {
     );
   }
 
-  const months = yearMonthsBetween(periodStart, new Date());
-  const cards = months
-    .map((ym) => computePersonalMonthlyScore(CURRENT_USER, ym, tournaments))
-    .filter((s) => s.tournaments.length > 0 || s.total > 0);
-
   const now = new Date();
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const months = yearMonthsBetween(periodStart, now);
+  const monthScores = months.map((ym) => computePersonalMonthlyScore(CURRENT_USER, ym, tournaments));
+  const liveScore = monthScores.find((s) => s.yearMonth === thisMonth);
+  const pastMonths = monthScores.filter((s) => s.yearMonth !== thisMonth && (s.tournaments.length > 0 || s.total > 0));
+
+  const ranking = computeRanking(thisMonth);
+  const myRank = ranking.findIndex((r) => r.userId === CURRENT_USER);
+  const cta = liveScore ? nextRankCta(myRank >= 0 ? myRank + 1 : null, liveScore.total, ranking) : undefined;
+
+  const badges = deriveUserBadges(CURRENT_USER, tournaments);
+
+  // year grouping
+  const yearGroups = new Map<string, typeof pastMonths>();
+  for (const s of pastMonths) {
+    const year = s.yearMonth.slice(0, 4);
+    if (!yearGroups.has(year)) yearGroups.set(year, []);
+    yearGroups.get(year)!.push(s);
+  }
+  const years = [...yearGroups.keys()].sort((a, b) => b.localeCompare(a));
+  const currentYear = String(now.getFullYear());
+  const [openYears, setOpenYears] = useState<Set<string>>(new Set([currentYear]));
+  const toggleYear = (y: string) => {
+    const next = new Set(openYears);
+    next.has(y) ? next.delete(y) : next.add(y);
+    setOpenYears(next);
+  };
 
   return (
     <InnerPageLayout title="大会成績">
       <p className="text-[11px] text-muted-foreground mb-3">
         プレミアム会員期間（{new Date(periodStart).getFullYear()}年
-        {new Date(periodStart).getMonth() + 1}月{new Date(periodStart).getDate()}日〜）の成績を表示しています
+        {new Date(periodStart).getMonth() + 1}月{new Date(periodStart).getDate()}日〜）の成績
       </p>
 
-      {cards.length === 0 ? (
+      {/* Live this-month card */}
+      {liveScore && (
+        <div className="mb-5">
+          <LiveMonthCard
+            variant="full"
+            yearMonthLabel={formatYM(liveScore.yearMonth)}
+            totalScore={liveScore.total}
+            rank={myRank >= 0 ? myRank + 1 : null}
+            played={liveScore.played}
+            cta={cta}
+          />
+        </div>
+      )}
+
+      {/* Trophy section */}
+      {badges.length > 0 && (
+        <div className="mb-5">
+          <p className="text-sm font-bold text-foreground mb-2">獲得トロフィー</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-[20px] px-[20px]">
+            {badges.map((b) => (
+              <TrophyChip key={b.type} badge={b} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Year accordion */}
+      {pastMonths.length === 0 ? (
         <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center">
-          <p className="text-xs text-muted-foreground">まだ大会の参加記録がありません</p>
+          <p className="text-xs text-muted-foreground">過去の参加記録はまだありません</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {cards.map((s) => (
-            <div key={s.yearMonth} className="bg-card border border-border rounded-[8px] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  {formatYM(s.yearMonth)}
-                  {s.yearMonth === thisMonth && (
-                    <span className="text-[10px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded">
-                      今月
-                    </span>
+        <>
+          <p className="text-sm font-bold text-foreground mb-2">年度成績</p>
+          <div className="space-y-3">
+            {years.map((year) => {
+              const monthsInYear = yearGroups.get(year)!;
+              const totalScore = monthsInYear.reduce((sum, s) => sum + s.total, 0);
+              const totalTournaments = monthsInYear.reduce((sum, s) => sum + s.tournaments.length, 0);
+              const bestRank = monthsInYear.reduce<number | null>(
+                (best, s) => (s.bestRank !== null && (best === null || s.bestRank < best) ? s.bestRank : best),
+                null
+              );
+              const isOpen = openYears.has(year);
+              return (
+                <div key={year} className="bg-card border border-border rounded-[8px] overflow-hidden">
+                  <button
+                    onClick={() => toggleYear(year)}
+                    className="w-full p-3 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-foreground">{year}年</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        出場 {totalTournaments} 大会 ・ 累計 {totalScore} 積分
+                        {bestRank ? ` ・ 最高 ${bestRank}位` : ""}
+                      </p>
+                    </div>
+                    {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                  </button>
+                  {isOpen && (
+                    <div className="border-t border-border p-3 bg-muted/10 space-y-2">
+                      {monthsInYear.map((s) => (
+                        <MonthRecapCard key={s.yearMonth} score={s} />
+                      ))}
+                    </div>
                   )}
-                </p>
-                <p className="text-2xl font-bold text-primary">{s.total}</p>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-muted/50 rounded-[6px] p-2">
-                  <p className="text-[10px] text-muted-foreground">出場</p>
-                  <p className="text-sm font-bold text-foreground">{s.tournaments.length} 回</p>
                 </div>
-                <div className="bg-muted/50 rounded-[6px] p-2">
-                  <p className="text-[10px] text-muted-foreground">勝率</p>
-                  <p className="text-sm font-bold text-foreground">
-                    {s.played === 0 ? "—" : `${Math.round((s.won / s.played) * 100)}%`}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">{s.won}勝{s.played - s.won}敗</p>
-                </div>
-                <div className="bg-muted/50 rounded-[6px] p-2">
-                  <p className="text-[10px] text-muted-foreground">最高名次</p>
-                  <p className="text-sm font-bold text-foreground flex items-center justify-center gap-1">
-                    {s.bestRank ? (
-                      <>
-                        <Trophy className="w-3.5 h-3.5 text-primary" />
-                        {s.bestRank}位
-                      </>
-                    ) : "—"}
-                  </p>
-                </div>
-              </div>
-
-              {s.tournaments.length > 0 && (
-                <div className="mt-3 space-y-1.5">
-                  {s.tournaments.map((tt) => (
-                    <button
-                      key={tt.tournamentId}
-                      onClick={() => navigate(`/game/tournament/${tt.tournamentId}`)}
-                      className="w-full bg-muted/30 rounded-[6px] p-2 text-left flex items-center justify-between"
-                    >
-                      <div>
-                        <p className="text-xs font-bold text-foreground">{tt.title}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {tt.matchesPlayed}試合 {tt.matchesWon}勝
-                          {tt.finalRank ? ` ・ 最終 ${tt.finalRank}位` : ""}
-                        </p>
-                      </div>
-                      <span className="text-sm font-bold text-primary">+{tt.score}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </InnerPageLayout>
   );
