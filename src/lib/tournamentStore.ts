@@ -6,6 +6,8 @@ export const POINTS_PARTICIPATION = 10;
 export const POINTS_WIN = 50;
 export const POINTS_PODIUM = { 1: 100, 2: 50, 3: 25 } as const;
 
+export const PARTNER_INVITE_HOURS = 72;
+
 export type TournamentFormat = "singles" | "doubles";
 export type TournamentCapacity = 8 | 16 | 32;
 export type TournamentStatus =
@@ -26,7 +28,11 @@ export interface TournamentEntry {
   registrantUserId: string;
   partnerUserId?: string;
   registeredAt: string;
-  status: "confirmed" | "cancelled";
+  status: "pending_partner_confirmation" | "confirmed" | "cancelled" | "declined";
+  invitedAt?: string;
+  expiresAt?: string;
+  partnerRespondedAt?: string;
+  partnerDeclineReason?: string;
 }
 
 export interface MatchRecord {
@@ -96,6 +102,13 @@ export function findPlayerByName(query: string): PlayerRef | undefined {
 
 export function getPlayer(userId: string): PlayerRef | undefined {
   return PLAYER_DIRECTORY.find((p) => p.userId === userId);
+}
+
+function computeExpiresAt(invitedAt: string, registrationDeadline: string): string {
+  const expireFrom72h = new Date(invitedAt);
+  expireFrom72h.setHours(expireFrom72h.getHours() + PARTNER_INVITE_HOURS);
+  const deadline = new Date(registrationDeadline);
+  return (expireFrom72h < deadline ? expireFrom72h : deadline).toISOString();
 }
 
 interface StoreState {
@@ -208,10 +221,42 @@ function buildInitialState(): StoreState {
     entries: [],
   };
 
+  const in10days = new Date(now.getTime() + 10 * 86400000).toISOString();
+  const in9days = new Date(now.getTime() + 9 * 86400000).toISOString();
+  const inviteSentAt = new Date(now.getTime() - 24 * 3600000).toISOString(); // 24h ago
+
+  const pendingInviteTournament: Tournament = {
+    id: "t-pending-invite",
+    title: "5月度 ダブルストーナメント",
+    format: "doubles",
+    capacity: 8,
+    venue: "LST 西支店コート2",
+    scheduledAt: in10days,
+    registrationDeadline: in9days,
+    status: "registration_open",
+    heroImageUrl: "https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&h=450&fit=crop",
+    description: "西支店主催のダブルストーナメント。\n気軽にご参加ください。",
+    accessInfo: "西武新宿線 上石神井駅 徒歩10分\nLST 西支店コート2",
+    contactInfo: "LST 西支店 042-345-6789",
+    entries: [
+      {
+        id: "e-pi1",
+        tournamentId: "t-pending-invite",
+        registrantUserId: "user-002",
+        partnerUserId: CURRENT_USER,
+        registeredAt: inviteSentAt,
+        status: "pending_partner_confirmation",
+        invitedAt: inviteSentAt,
+        expiresAt: computeExpiresAt(inviteSentAt, in9days),
+      },
+    ],
+  };
+
   return {
     tournaments: [
       inProgressTournament,
       openTournament,
+      pendingInviteTournament,
       upcomingTournament,
       completedTournament,
     ],
@@ -380,7 +425,7 @@ export function useTournamentStore() {
       .filter((t) =>
         t.entries.some(
           (e) =>
-            e.status === "confirmed" &&
+            (e.status === "confirmed" || e.status === "pending_partner_confirmation") &&
             (e.registrantUserId === CURRENT_USER || e.partnerUserId === CURRENT_USER)
         )
       );
@@ -397,13 +442,19 @@ export function useTournamentStore() {
       }
       if (t.entries.length >= t.capacity) return { ok: false, error: "定員に達しました" };
 
+      const now = new Date().toISOString();
+      const isDoubles = t.format === "doubles";
       const entry: TournamentEntry = {
         id: `e-${Date.now()}`,
         tournamentId,
         registrantUserId: CURRENT_USER,
         partnerUserId,
-        registeredAt: new Date().toISOString(),
-        status: "confirmed",
+        registeredAt: now,
+        status: isDoubles ? "pending_partner_confirmation" : "confirmed",
+        ...(isDoubles && {
+          invitedAt: now,
+          expiresAt: computeExpiresAt(now, t.registrationDeadline),
+        }),
       };
       state = {
         ...state,
@@ -412,15 +463,106 @@ export function useTournamentStore() {
         ),
       };
       emit();
+
+      if (isDoubles) {
+        addNotification({
+          type: "tournament_partner_invited",
+          title: "大会の招待が届きました",
+          message: `田中 太郎さんから「${t.title}」への招待が届きました。${PARTNER_INVITE_HOURS}時間以内に回答してください。`,
+        });
+      } else {
+        addNotification({
+          type: "tournament_registration_confirmed",
+          title: "大会のエントリーが完了しました",
+          message: `${t.title}のエントリーを受け付けました。`,
+        });
+      }
+      return { ok: true };
+    },
+    []
+  );
+
+  const acceptPartnerInvite = useCallback((entryId: string): { ok: boolean; error?: string } => {
+    let foundTournament: Tournament | undefined;
+    state = {
+      ...state,
+      tournaments: state.tournaments.map((t) => {
+        const idx = t.entries.findIndex(
+          (e) => e.id === entryId && e.status === "pending_partner_confirmation"
+        );
+        if (idx < 0) return t;
+        foundTournament = t;
+        const updated = [...t.entries];
+        updated[idx] = {
+          ...updated[idx],
+          status: "confirmed",
+          partnerRespondedAt: new Date().toISOString(),
+        };
+        return { ...t, entries: updated };
+      }),
+    };
+    if (!foundTournament) return { ok: false, error: "招待が見つかりません" };
+    emit();
+    addNotification({
+      type: "tournament_partner_accepted",
+      title: "パートナーが招待を承諾しました",
+      message: `${foundTournament.title} のエントリーが確定しました。`,
+    });
+    return { ok: true };
+  }, []);
+
+  const declinePartnerInvite = useCallback(
+    (entryId: string, reason?: string): { ok: boolean; error?: string } => {
+      let foundTournament: Tournament | undefined;
+      state = {
+        ...state,
+        tournaments: state.tournaments.map((t) => {
+          const idx = t.entries.findIndex(
+            (e) => e.id === entryId && e.status === "pending_partner_confirmation"
+          );
+          if (idx < 0) return t;
+          foundTournament = t;
+          const updated = [...t.entries];
+          updated[idx] = {
+            ...updated[idx],
+            status: "cancelled",
+            partnerRespondedAt: new Date().toISOString(),
+            partnerDeclineReason: reason,
+          };
+          return { ...t, entries: updated };
+        }),
+      };
+      if (!foundTournament) return { ok: false, error: "招待が見つかりません" };
+      emit();
       addNotification({
-        type: "tournament_registration_confirmed",
-        title: "大会のエントリーが完了しました",
-        message: `${t.title}のエントリーを受け付けました。`,
+        type: "tournament_partner_declined",
+        title: "パートナーが招待を辞退しました",
+        message: `${foundTournament.title} のエントリーがキャンセルされました。${reason ? `理由: ${reason}` : ""}`,
       });
       return { ok: true };
     },
     []
   );
+
+  const getEntry = useCallback((entryId: string) => {
+    for (const t of data.tournaments) {
+      const e = t.entries.find((x) => x.id === entryId);
+      if (e) return { entry: e, tournament: t };
+    }
+    return undefined;
+  }, [data.tournaments]);
+
+  const getPendingInvitesForUser = useCallback(() => {
+    const result: { entry: TournamentEntry; tournament: Tournament }[] = [];
+    for (const t of data.tournaments) {
+      for (const e of t.entries) {
+        if (e.status === "pending_partner_confirmation" && e.partnerUserId === CURRENT_USER) {
+          result.push({ entry: e, tournament: t });
+        }
+      }
+    }
+    return result;
+  }, [data.tournaments]);
 
   const getCompletedTournaments = useCallback(
     (sinceIso?: string) => {
@@ -437,6 +579,10 @@ export function useTournamentStore() {
     getTournament,
     getMyEntries,
     registerForTournament,
+    acceptPartnerInvite,
+    declinePartnerInvite,
+    getEntry,
+    getPendingInvitesForUser,
     getCompletedTournaments,
     computeMyMonthlyScore: (ym: string) => computePersonalMonthlyScore(CURRENT_USER, ym, data.tournaments),
     computeRanking: (ym: string) => computeMonthlyRanking(ym, data.tournaments),
