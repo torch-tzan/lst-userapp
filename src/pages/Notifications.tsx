@@ -3,7 +3,7 @@ import AnimatedTabs from "@/components/AnimatedTabs";
 import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { Separator } from "@/components/ui/separator";
-import { Bell, CalendarCheck, CalendarX, Play, CheckCircle2, RefreshCw, XCircle, Video, Star, Trophy } from "lucide-react";
+import { Bell, CalendarCheck, CalendarX, Play, CheckCircle2, RefreshCw, XCircle, Video, Star, Trophy, Mail, Check, X, Clock } from "lucide-react";
 import {
   getNotifications,
   markAllNotificationsRead,
@@ -23,7 +23,10 @@ const ICON_MAP: Record<PushNotification["type"], { icon: React.ElementType; colo
   online_link: { icon: Video, color: "text-primary" },
   review_request: { icon: Star, color: "text-accent-yellow" },
   tournament_registration_confirmed: { icon: Trophy, color: "text-primary" },
-  tournament_partner_invalid: { icon: XCircle, color: "text-destructive" },
+  tournament_partner_invited: { icon: Mail, color: "text-accent-yellow" },
+  tournament_partner_accepted: { icon: Check, color: "text-primary" },
+  tournament_partner_declined: { icon: X, color: "text-destructive" },
+  tournament_partner_expired: { icon: Clock, color: "text-muted-foreground" },
   tournament_starting_soon: { icon: Bell, color: "text-accent-yellow" },
   tournament_results_published: { icon: Trophy, color: "text-accent-yellow" },
   monthly_ranking_finalized: { icon: Trophy, color: "text-primary" },
