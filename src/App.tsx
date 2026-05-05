@@ -51,6 +51,12 @@ import RelatedSites from "./pages/RelatedSites.tsx";
 import PasswordChange from "./pages/PasswordChange.tsx";
 import NotificationSettings from "./pages/NotificationSettings.tsx";
 import PremiumPlan from "./pages/PremiumPlan.tsx";
+import PremiumPaymentConfirm from "./pages/PremiumPaymentConfirm.tsx";
+import PremiumWelcome from "./pages/PremiumWelcome.tsx";
+import PremiumManage from "./pages/PremiumManage.tsx";
+import PremiumPaymentMethod from "./pages/PremiumPaymentMethod.tsx";
+import PremiumBillingHistory from "./pages/PremiumBillingHistory.tsx";
+import PremiumCancel from "./pages/PremiumCancel.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -110,6 +116,12 @@ const App = () => (
           <Route path="/forgot-password/complete" element={<ForgotPasswordComplete />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/premium/plan" element={<PremiumPlan />} />
+          <Route path="/premium/payment-confirm" element={<PremiumPaymentConfirm />} />
+          <Route path="/premium/welcome" element={<PremiumWelcome />} />
+          <Route path="/premium/manage" element={<PremiumManage />} />
+          <Route path="/premium/payment-method" element={<PremiumPaymentMethod />} />
+          <Route path="/premium/billing-history" element={<PremiumBillingHistory />} />
+          <Route path="/premium/cancel" element={<PremiumCancel />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
