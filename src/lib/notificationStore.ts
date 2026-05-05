@@ -11,7 +11,10 @@ export interface PushNotification {
     | "online_link"
     | "review_request"
     | "tournament_registration_confirmed"
-    | "tournament_partner_invalid"
+    | "tournament_partner_invited"
+    | "tournament_partner_accepted"
+    | "tournament_partner_declined"
+    | "tournament_partner_expired"
     | "tournament_starting_soon"
     | "tournament_results_published"
     | "monthly_ranking_finalized";
@@ -82,6 +85,13 @@ export const seedDemoNotifications = (): void => {
       message: "4/20（日）10:00〜 パデルコート広島 コートA の予約が確定しました。",
       bookingId: "demo-bk1",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
+      read: false,
+    },
+    {
+      type: "tournament_partner_invited",
+      title: "大会の招待が届きました",
+      message: "佐藤 花子さんから「5月度 ダブルストーナメント」への招待が届きました。72時間以内に回答してください。",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
       read: false,
     },
     {
