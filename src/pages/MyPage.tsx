@@ -2,7 +2,21 @@ import { useState } from "react";
 import PhoneMockup from "@/components/PhoneMockup";
 import BottomNav from "@/components/BottomNav";
 import { Separator } from "@/components/ui/separator";
-import { History, Star, Trophy, Lock, Diamond, ChevronRight } from "lucide-react";
+import {
+  Bell,
+  ChevronRight,
+  Diamond,
+  ExternalLink,
+  Globe,
+  GraduationCap,
+  History,
+  Lock,
+  LogOut,
+  Star,
+  Ticket,
+  Trophy,
+  User,
+} from "lucide-react";
 import { useUserProfile } from "@/lib/userProfileStore";
 import { useSubscription } from "@/lib/subscriptionStore";
 import { formatJP } from "@/lib/utils";
@@ -16,15 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Bell,
-  ExternalLink,
-  Globe,
-  GraduationCap,
-  LogOut,
-  Ticket,
-  User,
-} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const MyPage = () => {
