@@ -27,10 +27,6 @@ import NotificationDetail from "./pages/NotificationDetail.tsx";
 import LanguageSettings from "./pages/LanguageSettings.tsx";
 import CampaignDetail from "./pages/CampaignDetail.tsx";
 import GameHome from "./pages/GameHome.tsx";
-import GameTeamNew from "./pages/GameTeamNew.tsx";
-import GameTeamDetail from "./pages/GameTeamDetail.tsx";
-import GameMatchNew from "./pages/GameMatchNew.tsx";
-import GameMatchDetail from "./pages/GameMatchDetail.tsx";
 import PointsHistory from "./pages/PointsHistory.tsx";
 import ProfileEdit from "./pages/ProfileEdit.tsx";
 import Messages from "./pages/Messages.tsx";
@@ -82,10 +78,6 @@ const App = () => (
           <Route path="/coupons" element={<Coupons />} />
           <Route path="/campaign/:id" element={<CampaignDetail />} />
           <Route path="/game" element={<GameHome />} />
-          <Route path="/game/team/new" element={<GameTeamNew />} />
-          <Route path="/game/team/:id" element={<GameTeamDetail />} />
-          <Route path="/game/match/new" element={<GameMatchNew />} />
-          <Route path="/game/match/:id" element={<GameMatchDetail />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/messages/:id" element={<MessageDetail />} />

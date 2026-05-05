@@ -3,7 +3,7 @@ import AnimatedTabs from "@/components/AnimatedTabs";
 import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { Separator } from "@/components/ui/separator";
-import { Bell, CalendarCheck, CalendarX, Play, CheckCircle2, RefreshCw, XCircle, Video, Star, UserPlus, Check, Users, Clock, Shuffle } from "lucide-react";
+import { Bell, CalendarCheck, CalendarX, Play, CheckCircle2, RefreshCw, XCircle, Video, Star, Trophy } from "lucide-react";
 import {
   getNotifications,
   markAllNotificationsRead,
@@ -22,13 +22,11 @@ const ICON_MAP: Record<PushNotification["type"], { icon: React.ElementType; colo
   booking_cancelled: { icon: CalendarX, color: "text-muted-foreground" },
   online_link: { icon: Video, color: "text-primary" },
   review_request: { icon: Star, color: "text-accent-yellow" },
-  team_invite: { icon: UserPlus, color: "text-accent" },
-  team_invite_accepted: { icon: Check, color: "text-available" },
-  team_invite_declined: { icon: XCircle, color: "text-muted-foreground" },
-  team_disbanded: { icon: Users, color: "text-muted-foreground" },
-  team_auto_matched: { icon: Shuffle, color: "text-primary" },
-  team_waiting_assignment: { icon: Clock, color: "text-accent" },
-  team_deadline_reminder: { icon: Clock, color: "text-destructive" },
+  tournament_registration_confirmed: { icon: Trophy, color: "text-primary" },
+  tournament_partner_invalid: { icon: XCircle, color: "text-destructive" },
+  tournament_starting_soon: { icon: Bell, color: "text-accent-yellow" },
+  tournament_results_published: { icon: Trophy, color: "text-accent-yellow" },
+  monthly_ranking_finalized: { icon: Trophy, color: "text-primary" },
 };
 
 interface SystemNotification {
@@ -91,10 +89,6 @@ const Notifications = () => {
     setPushNotifs(getNotifications());
     if (n.type === "review_request" && n.coachName) {
       navigate(`/review/submit?coach=${encodeURIComponent(n.coachName)}&bookingId=${n.bookingId || ""}`);
-    } else if ((n as any).matchId) {
-      navigate(`/game/match/${(n as any).matchId}`);
-    } else if (n.type === "team_invite" || n.type === "team_invite_accepted" || n.type === "team_disbanded") {
-      navigate("/game");
     } else if (n.bookingId) {
       navigate(`/booking/detail/${n.bookingId}`);
     }

@@ -1,13 +1,25 @@
 export interface PushNotification {
   id: string;
-  type: "booking_confirmed" | "booking_rejected" | "lesson_started" | "lesson_completed" | "change_approved" | "change_rejected" | "booking_cancelled" | "online_link" | "review_request" | "team_invite" | "team_invite_accepted" | "team_invite_declined" | "team_disbanded" | "team_auto_matched" | "team_waiting_assignment" | "team_deadline_reminder" | "match_confirm_request" | "match_settled" | "match_disputed";
+  type:
+    | "booking_confirmed"
+    | "booking_rejected"
+    | "lesson_started"
+    | "lesson_completed"
+    | "change_approved"
+    | "change_rejected"
+    | "booking_cancelled"
+    | "online_link"
+    | "review_request"
+    | "tournament_registration_confirmed"
+    | "tournament_partner_invalid"
+    | "tournament_starting_soon"
+    | "tournament_results_published"
+    | "monthly_ranking_finalized";
   title: string;
   message: string;
   bookingId?: string;
   coachName?: string;
   eventId?: string;
-  invitationId?: string;
-  matchId?: string;
   createdAt: string;
   read: boolean;
 }
@@ -73,11 +85,9 @@ export const seedDemoNotifications = (): void => {
       read: false,
     },
     {
-      type: "team_invite",
-      title: "チーム招待が届いています",
-      message: "佐藤 花子さんからミックスダブルス交流戦のチーム招待が届いています。",
-      eventId: "5",
-      invitationId: "inv-demo-1",
+      type: "tournament_results_published",
+      title: "大会の結果が発表されました",
+      message: "4月度 シングルス大会で第2位を獲得しました（+50積分）。",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       read: false,
     },
@@ -141,51 +151,17 @@ export const seedDemoNotifications = (): void => {
       read: true,
     },
     {
-      type: "team_invite_accepted",
-      title: "チーム招待が承認されました",
-      message: "山田 太郎さんがチーム招待を承認しました。",
-      eventId: "5",
+      type: "tournament_registration_confirmed",
+      title: "大会のエントリーが完了しました",
+      message: "5月度 ダブルス大会（5/12）のエントリーを受け付けました。",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 14).toISOString(),
       read: true,
     },
     {
-      type: "team_invite_declined",
-      title: "チーム招待が辞退されました",
-      message: "高橋 美咲さんがチーム招待を辞退しました。",
-      eventId: "5",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 16).toISOString(),
-      read: true,
-    },
-    {
-      type: "team_disbanded",
-      title: "チームが解散されました",
-      message: "ミックスダブルス交流戦のチームが解散されました。再編成してください。",
-      eventId: "5",
+      type: "monthly_ranking_finalized",
+      title: "4月度ランキングが確定しました",
+      message: "あなたの順位は5位です。今月もチャレンジしましょう。",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
-      read: true,
-    },
-    {
-      type: "team_auto_matched",
-      title: "チームが自動マッチングされました",
-      message: "ペア戦カップ 春のチームが自動マッチングで決定しました。",
-      eventId: "6",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
-      read: true,
-    },
-    {
-      type: "team_waiting_assignment",
-      title: "チーム割り当て待ち",
-      message: "ペア戦カップ 春のチーム割り当てをお待ちください。",
-      eventId: "6",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 22).toISOString(),
-      read: true,
-    },
-    {
-      type: "team_deadline_reminder",
-      title: "チーム編成の締切が近づいています",
-      message: "ミックスダブルス交流戦のチーム編成締切まであと1日です。",
-      eventId: "5",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
       read: true,
     },
     {

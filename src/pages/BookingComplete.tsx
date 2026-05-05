@@ -5,8 +5,6 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPendingBooking, clearPendingBooking, addBooking, type StoredBooking } from "@/lib/bookingStore";
 import { createReviewThread } from "@/lib/messageStore";
-import { useGameStore } from "@/lib/gameStore";
-import { Swords } from "lucide-react";
 
 const BookingComplete = () => {
   const navigate = useNavigate();
@@ -15,10 +13,7 @@ const BookingComplete = () => {
   const videoCountRef = useRef<number>(0);
   const reviewThreadIdRef = useRef<string | null>(null);
   const [failed, setFailed] = useState(false);
-  const [matchPrompt, setMatchPrompt] = useState<{ matchId: string; bookingId: string; opponentName: string } | null>(null);
-  const [notifySent, setNotifySent] = useState(false);
   const savedRef = useRef(false);
-  const { findSchedulableMatchForBooking, getTeam, notifyOpponentAboutBooking } = useGameStore();
 
   useEffect(() => {
     if (savedRef.current || failed) return;
@@ -93,24 +88,9 @@ const BookingComplete = () => {
       reviewThreadIdRef.current = thread.id;
     }
 
-    // Check if this court booking matches a scheduled game match
-    if (!isCoach && !isReview && booking.type === "court") {
-      const match = findSchedulableMatchForBooking(booking);
-      if (match && !match.notifiedOpponent) {
-        const opponentTeam = [match.team1Id, match.team2Id]
-          .map(getTeam)
-          .find((t) => !t?.members.some((m) => m.userId === "user-001"));
-        setMatchPrompt({
-          matchId: match.id,
-          bookingId: booking.id,
-          opponentName: opponentTeam?.name ?? "対戦相手",
-        });
-      }
-    }
-
     clearPendingBooking();
     savedRef.current = true;
-  }, [failed, findSchedulableMatchForBooking, getTeam]);
+  }, [failed]);
 
   return (
     <InnerPageLayout
@@ -185,41 +165,6 @@ const BookingComplete = () => {
             </Button>
           )}
 
-          {/* Match notify prompt */}
-          {matchPrompt && (
-            <div className="mt-6 mx-2 bg-primary/5 border border-primary/30 rounded-[12px] p-4 space-y-3 w-full max-w-[340px]">
-              <div className="flex items-center gap-2">
-                <Swords className="w-4 h-4 text-primary flex-shrink-0" />
-                <p className="text-sm font-bold text-foreground">
-                  今週の試合「vs {matchPrompt.opponentName}」のスケジュールに一致します
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                対戦相手にこの予約を通知しますか？
-              </p>
-              {notifySent ? (
-                <p className="text-xs text-accent font-bold text-center py-2">✓ 通知しました</p>
-              ) : (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      notifyOpponentAboutBooking(matchPrompt.matchId, matchPrompt.bookingId);
-                      setNotifySent(true);
-                    }}
-                    className="flex-1 h-10 rounded-[6px] bg-primary text-primary-foreground text-xs font-bold"
-                  >
-                    通知する
-                  </button>
-                  <button
-                    onClick={() => setMatchPrompt(null)}
-                    className="flex-1 h-10 rounded-[6px] border border-border text-xs font-bold"
-                  >
-                    スキップ
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 
