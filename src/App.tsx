@@ -50,6 +50,7 @@ import ForgotPasswordComplete from "./pages/ForgotPasswordComplete.tsx";
 import RelatedSites from "./pages/RelatedSites.tsx";
 import PasswordChange from "./pages/PasswordChange.tsx";
 import NotificationSettings from "./pages/NotificationSettings.tsx";
+import PremiumPlan from "./pages/PremiumPlan.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -108,6 +109,7 @@ const App = () => (
           <Route path="/forgot-password/reset" element={<ForgotPasswordReset />} />
           <Route path="/forgot-password/complete" element={<ForgotPasswordComplete />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/premium/plan" element={<PremiumPlan />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
