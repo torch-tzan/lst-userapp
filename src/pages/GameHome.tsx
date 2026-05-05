@@ -6,6 +6,8 @@ import AnimatedTabs from "@/components/AnimatedTabs";
 import { useTournamentStore, CURRENT_USER, type Tournament } from "@/lib/tournamentStore";
 import { useSubscription } from "@/lib/subscriptionStore";
 import { Trophy, Calendar, MapPin, Diamond, Lock, Users } from "lucide-react";
+import PendingInviteBanner from "@/components/game/PendingInviteBanner";
+import LiveMonthCard from "@/components/game/LiveMonthCard";
 
 function currentYearMonth(): string {
   const d = new Date();
@@ -163,6 +165,23 @@ const GameHome = () => {
             </div>
           </div>
         </div>
+
+        <div className="mt-4">
+          <PendingInviteBanner />
+        </div>
+
+        {isPremium && (
+          <div className="px-[20px] mt-3">
+            <LiveMonthCard
+              variant="compact"
+              yearMonthLabel={formatYM(thisMonth)}
+              totalScore={myScore.total}
+              rank={myCurrentRank >= 0 ? myCurrentRank + 1 : null}
+              played={myScore.played}
+              onClick={() => navigate("/game/my-results")}
+            />
+          </div>
+        )}
 
         <div className="mt-5">
           <AnimatedTabs tabs={TABS} activeKey={tab} onChange={setTab} className="px-[20px]" />
