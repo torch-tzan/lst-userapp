@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useTournamentStore, CURRENT_USER, getPlayer } from "@/lib/tournamentStore";
 import { useSubscription } from "@/lib/subscriptionStore";
-import { Calendar, MapPin, Users, Trophy, Diamond, Lock, Phone, Train, Info } from "lucide-react";
+import { Calendar, MapPin, Users, Trophy, Diamond, Lock, Phone, Train, Info, Clock } from "lucide-react";
 
 function formatDateTimeJP(iso: string): string {
   const d = new Date(iso);
@@ -34,7 +34,8 @@ const TournamentDetail = () => {
   }
 
   const myEntry = t.entries.find(
-    (e) => e.status === "confirmed" &&
+    (e) =>
+      (e.status === "confirmed" || e.status === "pending_partner_confirmation") &&
       (e.registrantUserId === CURRENT_USER || e.partnerUserId === CURRENT_USER)
   );
   const isOpen = t.status === "registration_open";
@@ -53,7 +54,9 @@ const TournamentDetail = () => {
       title="大会詳細"
       ctaLabel={
         myEntry
-          ? "エントリー済"
+          ? myEntry.status === "pending_partner_confirmation"
+            ? "パートナー確認待ち"
+            : "エントリー済"
           : !isOpen
           ? undefined
           : !canRegister
@@ -95,11 +98,19 @@ const TournamentDetail = () => {
             締切 {formatDateTimeJP(t.registrationDeadline)}
           </div>
         )}
-        {myEntry && (
+        {myEntry && myEntry.status === "confirmed" && (
           <div className="bg-primary/10 text-primary rounded-[6px] p-2 mt-3 text-[11px] font-bold flex items-center gap-1">
             <Diamond className="w-3 h-3" />
             エントリー済
             {myEntry.partnerUserId && ` ・ パートナー: ${getPlayer(myEntry.partnerUserId)?.name ?? "—"}`}
+          </div>
+        )}
+        {myEntry && myEntry.status === "pending_partner_confirmation" && (
+          <div className="bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/30 rounded-[6px] p-2 mt-3 text-[11px] font-bold flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {myEntry.registrantUserId === CURRENT_USER
+              ? `パートナー確認待ち (${getPlayer(myEntry.partnerUserId ?? "")?.name ?? "—"})`
+              : "あなたの承諾待ち"}
           </div>
         )}
       </div>
