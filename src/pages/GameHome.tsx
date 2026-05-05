@@ -44,6 +44,12 @@ const STATUS_CLS: Record<string, string> = {
   completed: "bg-muted text-muted-foreground",
 };
 
+const TABS = [
+  { key: "tournaments", label: "大会" },
+  { key: "my-entries", label: "マイエントリー" },
+  { key: "ranking", label: "ランキング" },
+];
+
 // Hoisted to module scope to avoid re-creation on parent re-renders.
 const TournamentCard = ({ t }: { t: Tournament }) => {
   const navigate = useNavigate();
@@ -102,12 +108,6 @@ const GameHome = () => {
     ["upcoming", "registration_open", "in_progress"].includes(t.status)
   );
   const completed = tournaments.filter((t) => t.status === "completed");
-
-  const TABS = [
-    { key: "tournaments", label: "大会" },
-    { key: "my-entries", label: "マイエントリー" },
-    { key: "ranking", label: "ランキング" },
-  ];
 
   return (
     <PhoneMockup bottomNav={<BottomNav active={2} />}>
