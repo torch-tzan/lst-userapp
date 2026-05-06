@@ -3,9 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import {
   useTournamentStore,
-  searchPlayersByName,
-  findPlayerByEmail,
-  findPlayerByPhone,
+  findPlayerByDisplayId,
   PREMIUM_USERS,
   CURRENT_USER,
   type PlayerRef,
@@ -13,8 +11,6 @@ import {
 import { useUserProfile } from "@/lib/userProfileStore";
 import { useToast } from "@/components/ui/use-toast";
 import { Check, X, AlertCircle, Diamond } from "lucide-react";
-
-type SearchMode = "name" | "email" | "phone";
 
 const TournamentEntry = () => {
   const { id } = useParams();
@@ -25,9 +21,7 @@ const TournamentEntry = () => {
 
   const t = id ? getTournament(id) : undefined;
 
-  const [mode, setMode] = useState<SearchMode>("name");
   const [query, setQuery] = useState("");
-  const [selectedPartner, setSelectedPartner] = useState<PlayerRef | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
   if (!t) {
@@ -40,25 +34,11 @@ const TournamentEntry = () => {
 
   const isDoubles = t.format === "doubles";
 
-  // Search results per mode
   const trimmed = query.trim();
-  const nameMatches = mode === "name" && trimmed && !selectedPartner ? searchPlayersByName(trimmed) : [];
-  const emailMatch = mode === "email" && trimmed ? findPlayerByEmail(trimmed) : undefined;
-  const phoneMatch = mode === "phone" && trimmed ? findPlayerByPhone(trimmed) : undefined;
-
-  const partner: PlayerRef | undefined =
-    selectedPartner ?? (mode === "email" ? emailMatch : mode === "phone" ? phoneMatch : undefined);
-
+  const partner: PlayerRef | undefined = trimmed ? findPlayerByDisplayId(trimmed) : undefined;
   const partnerIsPremium = partner ? PREMIUM_USERS.has(partner.userId) : undefined;
   const partnerIsSelf = partner?.userId === CURRENT_USER;
   const canSubmit = !isDoubles || (!!partner && partnerIsPremium && !partnerIsSelf);
-
-  const switchMode = (m: SearchMode) => {
-    setMode(m);
-    setQuery("");
-    setSelectedPartner(undefined);
-    setError(null);
-  };
 
   const submit = () => {
     setError(null);
@@ -101,67 +81,20 @@ const TournamentEntry = () => {
 
       {isDoubles && (
         <>
-          <p className="text-sm font-bold text-foreground mb-2">パートナー</p>
-
-          {/* Mode toggle */}
-          <div className="inline-flex bg-muted rounded-full p-1 mb-3">
-            {(["name", "email", "phone"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => switchMode(m)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                  mode === m ? "bg-background shadow text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                {m === "name" ? "姓名" : m === "email" ? "メール" : "電話"}
-              </button>
-            ))}
-          </div>
-
+          <p className="text-sm font-bold text-foreground mb-1">パートナーの ID</p>
+          <p className="text-[11px] text-muted-foreground mb-2">
+            パートナーのマイIDを入力してください（例: LST-AB12CD）
+          </p>
           <input
-            type={mode === "email" ? "email" : mode === "phone" ? "tel" : "text"}
+            type="text"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelectedPartner(undefined);
-            }}
-            placeholder={
-              mode === "name" ? "パートナーの氏名を入力（例：佐藤 花子）"
-              : mode === "email" ? "パートナーのメールアドレス"
-              : "パートナーの電話番号（例：090-1234-5678）"
-            }
-            className="w-full bg-card border border-border rounded-[8px] p-3 text-sm text-foreground mb-2"
+            onChange={(e) => setQuery(e.target.value.toUpperCase())}
+            placeholder="LST-XXXXXX"
+            autoCapitalize="characters"
+            className="w-full bg-card border border-border rounded-[8px] p-3 text-sm text-foreground mb-2 font-mono"
           />
 
-          {/* Name autocomplete dropdown */}
-          {mode === "name" && nameMatches.length > 0 && (
-            <div className="bg-card border border-border rounded-[8px] mb-2 divide-y divide-border overflow-hidden">
-              {nameMatches.map((p) => {
-                const isPrem = PREMIUM_USERS.has(p.userId);
-                return (
-                  <button
-                    key={p.userId}
-                    onClick={() => {
-                      setSelectedPartner(p);
-                      setQuery(p.name);
-                    }}
-                    className="w-full p-3 flex items-center justify-between hover:bg-muted/50 text-left"
-                  >
-                    <span className="text-sm text-foreground">{p.name}</span>
-                    {isPrem ? (
-                      <span className="text-[10px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded">
-                        プレミアム
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">一般</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Verification card — shown when a partner is determined */}
+          {/* Verification card */}
           {partner && partnerIsSelf && (
             <div className="bg-destructive/5 border border-destructive/30 rounded-[8px] p-3 flex items-center gap-2 mb-2">
               <X className="w-4 h-4 text-destructive" />
@@ -194,17 +127,9 @@ const TournamentEntry = () => {
             </div>
           )}
 
-          {/* Not found — only for email/phone modes (name mode uses dropdown) */}
-          {(mode === "email" || mode === "phone") && trimmed && !partner && (
+          {trimmed && !partner && (
             <div className="bg-muted border border-border rounded-[8px] p-3 text-xs text-muted-foreground mb-2">
-              該当するユーザーが見つかりません
-            </div>
-          )}
-
-          {/* Name mode: no match found */}
-          {mode === "name" && trimmed && !selectedPartner && nameMatches.length === 0 && (
-            <div className="bg-muted border border-border rounded-[8px] p-3 text-xs text-muted-foreground mb-2">
-              該当するユーザーが見つかりません
+              該当するユーザーが見つかりません。IDをご確認ください。
             </div>
           )}
         </>
