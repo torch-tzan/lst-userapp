@@ -580,7 +580,6 @@ export function computePersonalMonthlyScore(
       (e) => e.status === "confirmed" && (e.registrantUserId === userId || e.partnerUserId === userId)
     );
     if (!entry) continue;
-    participation += POINTS_PARTICIPATION;
 
     let mPlayed = 0;
     let mWon = 0;
@@ -592,6 +591,9 @@ export function computePersonalMonthlyScore(
       const isWin = (onSide1 && m.winnerSide === 1) || (onSide2 && m.winnerSide === 2);
       if (isWin) mWon++;
     }
+    const mLost = mPlayed - mWon;
+    // 每場比賽：勝 +50、敗 +10（兩者互斥）
+    participation += mLost * POINTS_PARTICIPATION;
     wins += mWon * POINTS_WIN;
     played += mPlayed;
     won += mWon;
@@ -605,7 +607,7 @@ export function computePersonalMonthlyScore(
       if (bestRank == null || ranking.rank < bestRank) bestRank = ranking.rank;
     }
 
-    const tScore = POINTS_PARTICIPATION + mWon * POINTS_WIN;
+    const tScore = mLost * POINTS_PARTICIPATION + mWon * POINTS_WIN;
     list.push({
       tournamentId: t.id,
       title: t.title,
