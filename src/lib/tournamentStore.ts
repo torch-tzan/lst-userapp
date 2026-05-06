@@ -4,7 +4,6 @@ import { addNotification } from "@/lib/notificationStore";
 export const CURRENT_USER = "user-001";
 export const POINTS_PARTICIPATION = 10;
 export const POINTS_WIN = 50;
-export const POINTS_PODIUM = { 1: 100, 2: 50, 3: 25 } as const;
 
 export const PARTNER_INVITE_HOURS = 72;
 
@@ -22,6 +21,7 @@ export interface PlayerRef {
   name: string;
   email: string;
   phone: string;
+  displayId: string;
 }
 
 export interface TournamentEntry {
@@ -71,18 +71,18 @@ export interface Tournament {
 }
 
 const PLAYER_DIRECTORY: PlayerRef[] = [
-  { userId: CURRENT_USER, name: "田中 太郎", email: "tanaka@example.com", phone: "090-1111-0001" },
-  { userId: "user-002", name: "佐藤 花子", email: "sato.h@example.com", phone: "090-1111-0002" },
-  { userId: "user-003", name: "鈴木 一郎", email: "suzuki@example.com", phone: "090-1111-0003" },
-  { userId: "user-004", name: "高橋 美咲", email: "takahashi@example.com", phone: "090-1111-0004" },
-  { userId: "user-005", name: "渡辺 健太", email: "watanabe@example.com", phone: "090-1111-0005" },
-  { userId: "user-006", name: "伊藤 愛", email: "ito.a@example.com", phone: "090-1111-0006" },
-  { userId: "user-007", name: "山本 大輝", email: "yamamoto@example.com", phone: "090-1111-0007" },
-  { userId: "user-008", name: "中村 裕子", email: "nakamura@example.com", phone: "090-1111-0008" },
-  { userId: "user-009", name: "吉田 恵", email: "yoshida@example.com", phone: "090-1111-0009" },
-  { userId: "user-010", name: "松本 翔太", email: "matsumoto@example.com", phone: "090-1111-0010" },
-  { userId: "user-011", name: "小林 優", email: "kobayashi@example.com", phone: "090-1111-0011" },
-  { userId: "user-012", name: "加藤 翼", email: "kato@example.com", phone: "090-1111-0012" },
+  { userId: CURRENT_USER, name: "田中 太郎", email: "tanaka@example.com", phone: "090-1111-0001", displayId: "LST-AB12CD" },
+  { userId: "user-002", name: "佐藤 花子", email: "sato.h@example.com", phone: "090-1111-0002", displayId: "LST-EF34GH" },
+  { userId: "user-003", name: "鈴木 一郎", email: "suzuki@example.com", phone: "090-1111-0003", displayId: "LST-IJ56KL" },
+  { userId: "user-004", name: "高橋 美咲", email: "takahashi@example.com", phone: "090-1111-0004", displayId: "LST-MN78OP" },
+  { userId: "user-005", name: "渡辺 健太", email: "watanabe@example.com", phone: "090-1111-0005", displayId: "LST-QR90ST" },
+  { userId: "user-006", name: "伊藤 愛", email: "ito.a@example.com", phone: "090-1111-0006", displayId: "LST-UV12WX" },
+  { userId: "user-007", name: "山本 大輝", email: "yamamoto@example.com", phone: "090-1111-0007", displayId: "LST-YZ34AB" },
+  { userId: "user-008", name: "中村 裕子", email: "nakamura@example.com", phone: "090-1111-0008", displayId: "LST-CD56EF" },
+  { userId: "user-009", name: "吉田 恵", email: "yoshida@example.com", phone: "090-1111-0009", displayId: "LST-GH78IJ" },
+  { userId: "user-010", name: "松本 翔太", email: "matsumoto@example.com", phone: "090-1111-0010", displayId: "LST-KL90MN" },
+  { userId: "user-011", name: "小林 優", email: "kobayashi@example.com", phone: "090-1111-0011", displayId: "LST-OP12QR" },
+  { userId: "user-012", name: "加藤 翼", email: "kato@example.com", phone: "090-1111-0012", displayId: "LST-ST34UV" },
 ];
 
 export const PREMIUM_USERS = new Set([
@@ -96,28 +96,10 @@ export const PREMIUM_USERS = new Set([
   "user-010",
 ]);
 
-export function searchPlayersByName(query: string): PlayerRef[] {
-  const trimmed = query.trim().replace(/\s/g, "");
-  if (!trimmed) return [];
-  return PLAYER_DIRECTORY
-    .filter((p) => p.name.replace(/\s/g, "").includes(trimmed))
-    .slice(0, 5);
-}
-
-export function findPlayerByEmail(email: string): PlayerRef | undefined {
-  const target = email.trim().toLowerCase();
+export function findPlayerByDisplayId(id: string): PlayerRef | undefined {
+  const target = id.trim().toUpperCase();
   if (!target) return undefined;
-  return PLAYER_DIRECTORY.find((p) => p.email.toLowerCase() === target);
-}
-
-function normalizePhone(p: string): string {
-  return p.replace(/\D/g, "");
-}
-
-export function findPlayerByPhone(phone: string): PlayerRef | undefined {
-  const target = normalizePhone(phone);
-  if (!target) return undefined;
-  return PLAYER_DIRECTORY.find((p) => normalizePhone(p.phone) === target);
+  return PLAYER_DIRECTORY.find((p) => p.displayId.toUpperCase() === target);
 }
 
 export function getPlayer(userId: string): PlayerRef | undefined {
@@ -563,7 +545,6 @@ export interface PersonalMonthlyScore {
   yearMonth: string;
   participation: number;
   wins: number;
-  podiumBonus: number;
   total: number;
   played: number;
   won: number;
@@ -589,7 +570,6 @@ export function computePersonalMonthlyScore(
   );
   let participation = 0;
   let wins = 0;
-  let podiumBonus = 0;
   let played = 0;
   let won = 0;
   let bestRank: number | null = null;
@@ -619,18 +599,13 @@ export function computePersonalMonthlyScore(
     const ranking = t.results!.rankings.find(
       (r) => r.userId === userId || r.partnerId === userId
     );
-    let podium = 0;
     let finalRank: number | null = null;
     if (ranking) {
       finalRank = ranking.rank;
       if (bestRank == null || ranking.rank < bestRank) bestRank = ranking.rank;
-      if (ranking.rank === 1) podium = POINTS_PODIUM[1];
-      else if (ranking.rank === 2) podium = POINTS_PODIUM[2];
-      else if (ranking.rank === 3) podium = POINTS_PODIUM[3];
     }
-    podiumBonus += podium;
 
-    const tScore = POINTS_PARTICIPATION + mWon * POINTS_WIN + podium;
+    const tScore = POINTS_PARTICIPATION + mWon * POINTS_WIN;
     list.push({
       tournamentId: t.id,
       title: t.title,
@@ -646,8 +621,7 @@ export function computePersonalMonthlyScore(
     yearMonth,
     participation,
     wins,
-    podiumBonus,
-    total: participation + wins + podiumBonus,
+    total: participation + wins,
     played,
     won,
     bestRank,
