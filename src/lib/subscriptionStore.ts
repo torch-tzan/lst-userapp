@@ -32,12 +32,11 @@ function addDaysISO(dateIso: string, days: number): string {
 }
 
 function buildInitialState(): SubscriptionState {
-  // Demo: 預設 active，加入日 2026-04-29
-  const startedAt = "2026-04-29T00:00:00.000Z";
+  // Demo: 預設 active，連續訂閱 5 個月（2025-12-29 起算）
   return {
     status: "active",
-    startedAt,
-    nextRenewAt: addDaysISO(startedAt, 30),
+    startedAt: "2025-12-29T00:00:00.000Z",
+    nextRenewAt: "2026-05-29T00:00:00.000Z",
     paymentMethod: { type: "cc", brand: "Mastercard", last4: "3456" },
     history: [
       { id: "bill-1", paidAt: "2025-12-29T00:00:00.000Z", amount: 500, status: "completed" },
