@@ -20,6 +20,8 @@ export type TournamentStatus =
 export interface PlayerRef {
   userId: string;
   name: string;
+  email: string;
+  phone: string;
 }
 
 export interface TournamentEntry {
@@ -69,18 +71,18 @@ export interface Tournament {
 }
 
 const PLAYER_DIRECTORY: PlayerRef[] = [
-  { userId: CURRENT_USER, name: "田中 太郎" },
-  { userId: "user-002", name: "佐藤 花子" },
-  { userId: "user-003", name: "鈴木 一郎" },
-  { userId: "user-004", name: "高橋 美咲" },
-  { userId: "user-005", name: "渡辺 健太" },
-  { userId: "user-006", name: "伊藤 愛" },
-  { userId: "user-007", name: "山本 大輝" },
-  { userId: "user-008", name: "中村 裕子" },
-  { userId: "user-009", name: "吉田 恵" },
-  { userId: "user-010", name: "松本 翔太" },
-  { userId: "user-011", name: "小林 優" },
-  { userId: "user-012", name: "加藤 翼" },
+  { userId: CURRENT_USER, name: "田中 太郎", email: "tanaka@example.com", phone: "090-1111-0001" },
+  { userId: "user-002", name: "佐藤 花子", email: "sato.h@example.com", phone: "090-1111-0002" },
+  { userId: "user-003", name: "鈴木 一郎", email: "suzuki@example.com", phone: "090-1111-0003" },
+  { userId: "user-004", name: "高橋 美咲", email: "takahashi@example.com", phone: "090-1111-0004" },
+  { userId: "user-005", name: "渡辺 健太", email: "watanabe@example.com", phone: "090-1111-0005" },
+  { userId: "user-006", name: "伊藤 愛", email: "ito.a@example.com", phone: "090-1111-0006" },
+  { userId: "user-007", name: "山本 大輝", email: "yamamoto@example.com", phone: "090-1111-0007" },
+  { userId: "user-008", name: "中村 裕子", email: "nakamura@example.com", phone: "090-1111-0008" },
+  { userId: "user-009", name: "吉田 恵", email: "yoshida@example.com", phone: "090-1111-0009" },
+  { userId: "user-010", name: "松本 翔太", email: "matsumoto@example.com", phone: "090-1111-0010" },
+  { userId: "user-011", name: "小林 優", email: "kobayashi@example.com", phone: "090-1111-0011" },
+  { userId: "user-012", name: "加藤 翼", email: "kato@example.com", phone: "090-1111-0012" },
 ];
 
 export const PREMIUM_USERS = new Set([
@@ -94,10 +96,33 @@ export const PREMIUM_USERS = new Set([
   "user-010",
 ]);
 
+export function searchPlayersByName(query: string): PlayerRef[] {
+  const trimmed = query.trim().replace(/\s/g, "");
+  if (!trimmed) return [];
+  return PLAYER_DIRECTORY
+    .filter((p) => p.name.replace(/\s/g, "").includes(trimmed))
+    .slice(0, 5);
+}
+
+export function findPlayerByEmail(email: string): PlayerRef | undefined {
+  const target = email.trim().toLowerCase();
+  if (!target) return undefined;
+  return PLAYER_DIRECTORY.find((p) => p.email.toLowerCase() === target);
+}
+
+function normalizePhone(p: string): string {
+  return p.replace(/\D/g, "");
+}
+
+export function findPlayerByPhone(phone: string): PlayerRef | undefined {
+  const target = normalizePhone(phone);
+  if (!target) return undefined;
+  return PLAYER_DIRECTORY.find((p) => normalizePhone(p.phone) === target);
+}
+
+// Deprecated: use searchPlayersByName instead. Kept for backward-compat until TournamentEntry is updated.
 export function findPlayerByName(query: string): PlayerRef | undefined {
-  return PLAYER_DIRECTORY.find(
-    (p) => p.name.replace(/\s/g, "").includes(query.replace(/\s/g, ""))
-  );
+  return searchPlayersByName(query)[0];
 }
 
 export function getPlayer(userId: string): PlayerRef | undefined {
@@ -545,6 +570,43 @@ export function useTournamentStore() {
     []
   );
 
+  const cancelMyPendingInvite = useCallback(
+    (entryId: string): { ok: boolean; error?: string } => {
+      let foundTournament: Tournament | undefined;
+      let cancelledEntry: TournamentEntry | undefined;
+      state = {
+        ...state,
+        tournaments: state.tournaments.map((t) => {
+          const idx = t.entries.findIndex(
+            (e) =>
+              e.id === entryId &&
+              e.status === "pending_partner_confirmation" &&
+              e.registrantUserId === CURRENT_USER
+          );
+          if (idx < 0) return t;
+          foundTournament = t;
+          cancelledEntry = t.entries[idx];
+          const updated = [...t.entries];
+          updated[idx] = {
+            ...updated[idx],
+            status: "cancelled",
+            partnerRespondedAt: new Date().toISOString(),
+          };
+          return { ...t, entries: updated };
+        }),
+      };
+      if (!foundTournament || !cancelledEntry) return { ok: false, error: "招待が見つかりません" };
+      emit();
+      addNotification({
+        type: "tournament_partner_cancelled",
+        title: "招待が取り消されました",
+        message: `${foundTournament.title} への招待が取り消されました。`,
+      });
+      return { ok: true };
+    },
+    []
+  );
+
   const getEntry = useCallback((entryId: string) => {
     for (const t of data.tournaments) {
       const e = t.entries.find((x) => x.id === entryId);
@@ -582,6 +644,7 @@ export function useTournamentStore() {
     registerForTournament,
     acceptPartnerInvite,
     declinePartnerInvite,
+    cancelMyPendingInvite,
     getEntry,
     getPendingInvitesForUser,
     getCompletedTournaments,
