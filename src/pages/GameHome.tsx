@@ -7,6 +7,7 @@ import { useTournamentStore, CURRENT_USER, type Tournament } from "@/lib/tournam
 import { useSubscription } from "@/lib/subscriptionStore";
 import { Calendar, MapPin, Diamond, Lock, Users } from "lucide-react";
 import PendingInviteBanner from "@/components/game/PendingInviteBanner";
+import MyEntryCard from "@/components/game/MyEntryCard";
 
 function currentYearMonth(): string {
   const d = new Date();
@@ -232,7 +233,15 @@ const GameHome = () => {
                   <p className="text-xs text-muted-foreground">エントリー中の大会はありません</p>
                 </div>
               )}
-              {isPremium && myEntries.map((t) => <TournamentCard key={t.id} t={t} />)}
+              {isPremium && myEntries.map((t) => {
+                const myEntry = t.entries.find(
+                  (e) =>
+                    (e.status === "confirmed" || e.status === "pending_partner_confirmation") &&
+                    (e.registrantUserId === CURRENT_USER || e.partnerUserId === CURRENT_USER)
+                );
+                if (!myEntry) return null;
+                return <MyEntryCard key={t.id} tournament={t} myEntry={myEntry} />;
+              })}
             </>
           )}
 
