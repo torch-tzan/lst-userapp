@@ -6,7 +6,6 @@ import AnimatedTabs from "@/components/AnimatedTabs";
 import { useTournamentStore, CURRENT_USER, type Tournament } from "@/lib/tournamentStore";
 import { useSubscription } from "@/lib/subscriptionStore";
 import { Calendar, MapPin, Diamond, Lock, Users } from "lucide-react";
-import PendingInviteBanner from "@/components/game/PendingInviteBanner";
 import MyEntryCard from "@/components/game/MyEntryCard";
 
 function currentYearMonth(): string {
@@ -46,7 +45,8 @@ const STATUS_CLS: Record<string, string> = {
   completed: "bg-muted text-muted-foreground",
 };
 
-const TABS = [
+// TABS_BASE defined at module scope; badge is injected per-render inside GameHome.
+const TABS_BASE = [
   { key: "tournaments", label: "大会" },
   { key: "my-entries", label: "マイエントリー" },
   { key: "ranking", label: "ランキング" },
@@ -91,7 +91,7 @@ const TournamentCard = ({ t }: { t: Tournament }) => {
 
 const GameHome = () => {
   const navigate = useNavigate();
-  const { tournaments, getMyEntries, computeMyMonthlyScore, computeRanking } = useTournamentStore();
+  const { tournaments, getMyEntries, computeMyMonthlyScore, computeRanking, getPendingInvitesForUser } = useTournamentStore();
   const sub = useSubscription();
   const isPremium = sub.isPremium();
 
@@ -100,6 +100,15 @@ const GameHome = () => {
 
   const thisMonth = currentYearMonth();
   const prevMonth = previousYearMonth();
+
+  const pendingInviteCount = getPendingInvitesForUser().length;
+
+  // Inject badge onto the my-entries tab when there are pending partner confirmations.
+  const TABS = TABS_BASE.map((t) =>
+    t.key === "my-entries"
+      ? { ...t, badge: pendingInviteCount || undefined }
+      : t
+  );
 
   const myScore = computeMyMonthlyScore(thisMonth);
   const myEntries = getMyEntries();
@@ -188,11 +197,6 @@ const GameHome = () => {
             </div>
           )}
         </div>
-
-        <div className="mt-4">
-          <PendingInviteBanner />
-        </div>
-
 
         <div className="mt-5">
           <AnimatedTabs tabs={TABS} activeKey={tab} onChange={setTab} className="px-[20px]" />
