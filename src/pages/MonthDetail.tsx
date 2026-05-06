@@ -80,7 +80,7 @@ const MonthDetail = () => {
 
       {/* Score breakdown */}
       <p className="text-sm font-bold text-foreground mb-2">積分内訳</p>
-      <div className="grid grid-cols-3 gap-2 mb-5 text-center">
+      <div className="grid grid-cols-2 gap-2 mb-5 text-center">
         <div className="bg-card border border-border rounded-[8px] p-3">
           <p className="text-[10px] text-muted-foreground">参加</p>
           <p className="text-base font-bold text-foreground mt-1">+{score.participation}</p>
@@ -88,10 +88,6 @@ const MonthDetail = () => {
         <div className="bg-card border border-border rounded-[8px] p-3">
           <p className="text-[10px] text-muted-foreground">勝利</p>
           <p className="text-base font-bold text-foreground mt-1">+{score.wins}</p>
-        </div>
-        <div className="bg-card border border-border rounded-[8px] p-3">
-          <p className="text-[10px] text-muted-foreground">入賞</p>
-          <p className="text-base font-bold text-foreground mt-1">+{score.podiumBonus}</p>
         </div>
       </div>
 
