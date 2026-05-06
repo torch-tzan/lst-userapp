@@ -5,7 +5,7 @@ import {
   type Tournament,
   type TournamentEntry,
 } from "@/lib/tournamentStore";
-import { Calendar, MapPin, Mail, Clock, Check, Users } from "lucide-react";
+import { Calendar, MapPin, Mail, Clock, Check, Users, ChevronRight } from "lucide-react";
 
 interface Props {
   tournament: Tournament;
@@ -31,13 +31,15 @@ const MyEntryCard = ({ tournament, myEntry }: Props) => {
   let statusIcon: typeof Mail;
   let statusCls: string;
   if (isInvitee) {
+    // 我要動作 — 黃底深字 filled badge（最搶眼）
     statusLabel = "招待が届いています";
     statusIcon = Mail;
-    statusCls = "bg-accent-yellow/15 text-accent-yellow border-accent-yellow/40";
+    statusCls = "bg-accent-yellow text-foreground border-transparent";
   } else if (isInviter) {
+    // 等對方動作 — 灰色 muted（passive）
     statusLabel = `${partner?.name ?? "—"} さんの確認待ち`;
     statusIcon = Clock;
-    statusCls = "bg-accent-yellow/15 text-accent-yellow border-accent-yellow/40";
+    statusCls = "bg-muted text-muted-foreground border-border";
   } else if (isConfirmed) {
     statusLabel = "エントリー確定";
     statusIcon = Check;
@@ -50,11 +52,13 @@ const MyEntryCard = ({ tournament, myEntry }: Props) => {
 
   const StatusIcon = statusIcon;
 
+  // Actionable card (invitee) gets thicker yellow border + brighter hover
+  const cardCls = isInvitee
+    ? "w-full bg-accent-yellow/5 border-2 border-accent-yellow/60 rounded-[8px] p-4 text-left hover:border-accent-yellow transition-colors"
+    : "w-full bg-card border border-border rounded-[8px] p-4 text-left hover:border-primary/40 transition-colors";
+
   return (
-    <button
-      onClick={() => navigate(`/game/tournament/${tournament.id}`)}
-      className="w-full bg-card border border-border rounded-[8px] p-4 text-left hover:border-primary/40 transition-colors"
-    >
+    <button onClick={() => navigate(`/game/tournament/${tournament.id}`)} className={cardCls}>
       <div className="flex items-center justify-between mb-2">
         <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded border ${statusCls}`}>
           <StatusIcon className="w-3 h-3" />
@@ -87,6 +91,16 @@ const MyEntryCard = ({ tournament, myEntry }: Props) => {
           </p>
         )}
       </div>
+
+      {/* Actionable hint for invitee — clear "you need to do something" cue */}
+      {isInvitee && (
+        <div className="flex items-center justify-end mt-3 pt-2 border-t border-accent-yellow/30">
+          <span className="text-[11px] font-bold text-accent-yellow flex items-center gap-0.5">
+            タップして確認
+            <ChevronRight className="w-3.5 h-3.5" />
+          </span>
+        </div>
+      )}
     </button>
   );
 };
