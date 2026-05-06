@@ -1,12 +1,29 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useTournamentStore, CURRENT_USER, getPlayer } from "@/lib/tournamentStore";
 import { useSubscription } from "@/lib/subscriptionStore";
+import { useToast } from "@/components/ui/use-toast";
 import { Calendar, MapPin, Users, Trophy, Diamond, Lock, Phone, Train, Info, Clock } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function formatDateTimeJP(iso: string): string {
   const d = new Date(iso);
   return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function hoursUntil(iso: string): number {
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / 3600000));
 }
 
 const ROUND_LABEL: Record<number, string> = {
@@ -19,9 +36,11 @@ const ROUND_LABEL: Record<number, string> = {
 const TournamentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getTournament } = useTournamentStore();
+  const { getTournament, acceptPartnerInvite, cancelMyPendingInvite } = useTournamentStore();
   const sub = useSubscription();
   const isPremium = sub.isPremium();
+  const { toast } = useToast();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const t = id ? getTournament(id) : undefined;
 
@@ -41,6 +60,9 @@ const TournamentDetail = () => {
   const isOpen = t.status === "registration_open";
   const canRegister = isOpen && !myEntry && t.entries.length < t.capacity;
 
+  const isInvitee = myEntry?.status === "pending_partner_confirmation" && myEntry.partnerUserId === CURRENT_USER;
+  const isInviter = myEntry?.status === "pending_partner_confirmation" && myEntry.registrantUserId === CURRENT_USER;
+
   const handleEntry = () => {
     if (!isPremium) {
       navigate("/premium/plan");
@@ -53,10 +75,12 @@ const TournamentDetail = () => {
     <InnerPageLayout
       title="大会詳細"
       ctaLabel={
-        myEntry
-          ? myEntry.status === "pending_partner_confirmation"
-            ? "パートナー確認待ち"
-            : "エントリー済"
+        isInvitee
+          ? undefined
+          : isInviter
+          ? "パートナーを変更する"
+          : myEntry
+          ? "エントリー済"
           : !isOpen
           ? undefined
           : !canRegister
@@ -65,8 +89,16 @@ const TournamentDetail = () => {
           ? "エントリーする"
           : "プレミアム会員になってエントリー"
       }
-      ctaDisabled={!!myEntry || !canRegister}
-      onCtaClick={handleEntry}
+      ctaDisabled={
+        isInviter
+          ? false
+          : !!myEntry || !canRegister
+      }
+      onCtaClick={
+        isInviter
+          ? () => setShowCancelDialog(true)
+          : handleEntry
+      }
     >
       {/* Hero image */}
       {t.heroImageUrl && (
@@ -105,15 +137,49 @@ const TournamentDetail = () => {
             {myEntry.partnerUserId && ` ・ パートナー: ${getPlayer(myEntry.partnerUserId)?.name ?? "—"}`}
           </div>
         )}
-        {myEntry && myEntry.status === "pending_partner_confirmation" && (
+        {/* Inviter view: show pending status (with name) — bottom CTA handles action */}
+        {isInviter && (
           <div className="bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/30 rounded-[6px] p-2 mt-3 text-[11px] font-bold flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {myEntry.registrantUserId === CURRENT_USER
-              ? `パートナー確認待ち (${getPlayer(myEntry.partnerUserId ?? "")?.name ?? "—"})`
-              : "あなたの承諾待ち"}
+            パートナー確認待ち ({getPlayer(myEntry.partnerUserId ?? "")?.name ?? "—"})
           </div>
         )}
       </div>
+
+      {/* Invitee CTA card */}
+      {isInvitee && myEntry && (
+        <div className="bg-accent-yellow/5 border-2 border-accent-yellow/40 rounded-[8px] p-4 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="w-4 h-4 text-accent-yellow" />
+            <p className="text-xs font-bold text-foreground">
+              残り {myEntry.expiresAt ? hoursUntil(myEntry.expiresAt) : 0} 時間
+            </p>
+          </div>
+          <p className="text-sm text-foreground mb-1">
+            <span className="font-bold">{getPlayer(myEntry.registrantUserId)?.name ?? "—"}</span> さんから招待が届いています
+          </p>
+          <p className="text-[11px] text-muted-foreground mb-4">
+            期限内に回答してください。
+          </p>
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                const r = acceptPartnerInvite(myEntry.id);
+                if (r.ok) toast({ title: "招待を承諾しました", description: `${t.title} のエントリーが確定しました` });
+              }}
+              className="w-full h-12 rounded-[8px] bg-primary text-primary-foreground font-bold"
+            >
+              承諾する
+            </button>
+            <button
+              onClick={() => navigate(`/game/invite/${myEntry.id}`)}
+              className="w-full h-12 rounded-[8px] border border-border bg-background text-foreground font-bold"
+            >
+              辞退する
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Description */}
       {t.description && (
@@ -213,6 +279,32 @@ const TournamentDetail = () => {
           </div>
         </>
       )}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>パートナーを変更しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              現在の招待をキャンセルして、再度エントリーします。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>戻る</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (myEntry) {
+                  const r = cancelMyPendingInvite(myEntry.id);
+                  if (r.ok) {
+                    toast({ title: "招待を取り消しました" });
+                    navigate(`/game/tournament/${t.id}/entry`);
+                  }
+                }
+              }}
+            >
+              変更する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </InnerPageLayout>
   );
 };
