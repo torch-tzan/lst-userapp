@@ -120,11 +120,6 @@ export function findPlayerByPhone(phone: string): PlayerRef | undefined {
   return PLAYER_DIRECTORY.find((p) => normalizePhone(p.phone) === target);
 }
 
-// Deprecated: use searchPlayersByName instead. Kept for backward-compat until TournamentEntry is updated.
-export function findPlayerByName(query: string): PlayerRef | undefined {
-  return searchPlayersByName(query)[0];
-}
-
 export function getPlayer(userId: string): PlayerRef | undefined {
   return PLAYER_DIRECTORY.find((p) => p.userId === userId);
 }
