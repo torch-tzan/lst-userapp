@@ -346,7 +346,6 @@ function buildInitialState(): StoreState {
 
   // Open singles tournament where user-001 is NOT registered yet (for demo)
   const in16days = new Date(now.getTime() + 16 * 86400000).toISOString();
-  const in15days = new Date(now.getTime() + 15 * 86400000).toISOString();
 
   const openSinglesTournament: Tournament = {
     id: "t-open-singles",
