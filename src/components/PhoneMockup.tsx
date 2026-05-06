@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 const PhoneMockup = ({ children, bottomNav, hideStatusBar }: { children: React.ReactNode; bottomNav?: React.ReactNode; hideStatusBar?: boolean }) => {
   const [isDark, setIsDark] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -43,8 +43,8 @@ const PhoneMockup = ({ children, bottomNav, hideStatusBar }: { children: React.R
           </div>
         </div>
         )}
-        {/* Toast container scoped to phone */}
-        <Toaster position="bottom-center" containerAriaLabel="notifications" style={{ position: 'absolute' }} />
+        {/* Toast container scoped to phone (bottom area, above bottomNav) */}
+        <Toaster />
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto" ref={scrollRef} onScroll={handleScroll}>
           {children}
