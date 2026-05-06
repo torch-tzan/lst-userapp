@@ -1,13 +1,11 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useTournamentStore, CURRENT_USER, computePersonalMonthlyScore } from "@/lib/tournamentStore";
 import { useSubscription } from "@/lib/subscriptionStore";
 import { deriveUserBadges } from "@/lib/tournamentBadges";
 import LiveMonthCard from "@/components/game/LiveMonthCard";
-import MonthRecapCard from "@/components/game/MonthRecapCard";
 import TrophyChip from "@/components/game/TrophyChip";
-import { Diamond, ChevronDown, ChevronUp } from "lucide-react";
+import { Diamond, ChevronRight } from "lucide-react";
 
 function yearMonthsBetween(startIso: string, endDate: Date): string[] {
   const start = new Date(startIso);
@@ -72,7 +70,7 @@ const MyResults = () => {
 
   const badges = deriveUserBadges(CURRENT_USER, tournaments);
 
-  // year grouping
+  // Group past months by year
   const yearGroups = new Map<string, typeof pastMonths>();
   for (const s of pastMonths) {
     const year = s.yearMonth.slice(0, 4);
@@ -80,13 +78,6 @@ const MyResults = () => {
     yearGroups.get(year)!.push(s);
   }
   const years = [...yearGroups.keys()].sort((a, b) => b.localeCompare(a));
-  const currentYear = String(now.getFullYear());
-  const [openYears, setOpenYears] = useState<Set<string>>(new Set([currentYear]));
-  const toggleYear = (y: string) => {
-    const next = new Set(openYears);
-    next.has(y) ? next.delete(y) : next.add(y);
-    setOpenYears(next);
-  };
 
   return (
     <InnerPageLayout title="大会成績">
@@ -121,51 +112,47 @@ const MyResults = () => {
         </div>
       )}
 
-      {/* Year accordion */}
+      {/* Past months — flat year-grouped list */}
       {pastMonths.length === 0 ? (
         <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center">
           <p className="text-xs text-muted-foreground">過去の参加記録はまだありません</p>
         </div>
       ) : (
-        <>
-          <p className="text-sm font-bold text-foreground mb-2">年度成績</p>
-          <div className="space-y-3">
-            {years.map((year) => {
-              const monthsInYear = yearGroups.get(year)!;
-              const totalScore = monthsInYear.reduce((sum, s) => sum + s.total, 0);
-              const totalTournaments = monthsInYear.reduce((sum, s) => sum + s.tournaments.length, 0);
-              const bestRank = monthsInYear.reduce<number | null>(
-                (best, s) => (s.bestRank !== null && (best === null || s.bestRank < best) ? s.bestRank : best),
-                null
-              );
-              const isOpen = openYears.has(year);
-              return (
-                <div key={year} className="bg-card border border-border rounded-[8px] overflow-hidden">
-                  <button
-                    onClick={() => toggleYear(year)}
-                    className="w-full p-3 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
-                  >
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-foreground">{year}年</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        出場 {totalTournaments} 大会 ・ 累計 {totalScore} 積分
-                        {bestRank ? ` ・ 最高 ${bestRank}位` : ""}
-                      </p>
-                    </div>
-                    {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                  </button>
-                  {isOpen && (
-                    <div className="border-t border-border p-3 bg-muted/10 space-y-2">
-                      {monthsInYear.map((s) => (
-                        <MonthRecapCard key={s.yearMonth} score={s} />
-                      ))}
-                    </div>
-                  )}
+        <div className="space-y-5">
+          {years.map((year) => {
+            const monthsInYear = yearGroups.get(year)!;
+            return (
+              <div key={year}>
+                <p className="text-sm font-bold text-foreground mb-2">{year}年</p>
+                <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden">
+                  {monthsInYear.map((s) => {
+                    const trophy = s.bestRank === 1 ? "🥇" : s.bestRank === 2 ? "🥈" : s.bestRank === 3 ? "🥉" : null;
+                    return (
+                      <button
+                        key={s.yearMonth}
+                        onClick={() => navigate(`/game/my-results/${s.yearMonth}`)}
+                        className="w-full p-3 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                            {formatYM(s.yearMonth)}
+                            {trophy && <span className="text-base">{trophy}</span>}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            出場 {s.tournaments.length} 大会 ・ {s.won}勝{s.played - s.won}敗
+                            {s.bestRank ? ` ・ 最高 ${s.bestRank}位` : ""}
+                          </p>
+                        </div>
+                        <p className="text-lg font-bold text-primary">{s.total}</p>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      </button>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
-        </>
+              </div>
+            );
+          })}
+        </div>
       )}
     </InnerPageLayout>
   );
