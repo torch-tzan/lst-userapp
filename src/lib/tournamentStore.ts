@@ -272,13 +272,183 @@ function buildInitialState(): StoreState {
     ],
   };
 
+  // 12月 — 3位
+  const completedDec2025: Tournament = {
+    id: "t-completed-dec-2025",
+    title: "12月度 シングルス大会",
+    format: "singles",
+    capacity: 8,
+    venue: "LST 本店コートA",
+    scheduledAt: "2025-12-15T14:00:00.000Z",
+    registrationDeadline: "2025-12-13T23:00:00.000Z",
+    status: "completed",
+    heroImageUrl: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&h=450&fit=crop",
+    description: "年末恒例のシングルストーナメント。\n参加者8名による単一エリミネーション。",
+    accessInfo: "JR 東京駅 八重洲口 徒歩7分",
+    contactInfo: "LST 本店 03-1234-5678",
+    entries: [
+      { id: "e-d1", tournamentId: "t-completed-dec-2025", registrantUserId: CURRENT_USER, registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d2", tournamentId: "t-completed-dec-2025", registrantUserId: "user-002", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d3", tournamentId: "t-completed-dec-2025", registrantUserId: "user-003", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d4", tournamentId: "t-completed-dec-2025", registrantUserId: "user-005", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d5", tournamentId: "t-completed-dec-2025", registrantUserId: "user-006", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d6", tournamentId: "t-completed-dec-2025", registrantUserId: "user-007", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d7", tournamentId: "t-completed-dec-2025", registrantUserId: "user-008", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d8", tournamentId: "t-completed-dec-2025", registrantUserId: "user-010", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+    ],
+    results: {
+      rankings: [
+        { rank: 1, userId: "user-007" },
+        { rank: 2, userId: "user-010" },
+        { rank: 3, userId: CURRENT_USER },
+        { rank: 4, userId: "user-006" },
+      ],
+      matches: [
+        // R1
+        { round: 1, p1UserId: CURRENT_USER, p2UserId: "user-002", winnerSide: 1, score: "6-3" },
+        { round: 1, p1UserId: "user-006", p2UserId: "user-008", winnerSide: 1, score: "6-2" },
+        { round: 1, p1UserId: "user-007", p2UserId: "user-003", winnerSide: 1, score: "6-1" },
+        { round: 1, p1UserId: "user-010", p2UserId: "user-005", winnerSide: 1, score: "6-4" },
+        // SF
+        { round: 2, p1UserId: CURRENT_USER, p2UserId: "user-007", winnerSide: 2, score: "3-6" },
+        { round: 2, p1UserId: "user-006", p2UserId: "user-010", winnerSide: 2, score: "4-6" },
+        // F
+        { round: 3, p1UserId: "user-007", p2UserId: "user-010", winnerSide: 1, score: "6-4" },
+      ],
+    },
+  };
+
+  // 1月 — 1位（ダブルス w/ user-002）
+  const completedJan2026: Tournament = {
+    id: "t-completed-jan-2026",
+    title: "1月度 ダブルストーナメント",
+    format: "doubles",
+    capacity: 8,
+    venue: "LST 本店コートB",
+    scheduledAt: "2026-01-18T14:00:00.000Z",
+    registrationDeadline: "2026-01-16T23:00:00.000Z",
+    status: "completed",
+    heroImageUrl: "https://images.unsplash.com/photo-1507398941214-572c25f4b1dc?w=800&h=450&fit=crop",
+    description: "新年最初のダブルストーナメント。\n4ペア参加、単一エリミネーション。",
+    accessInfo: "東京メトロ 渋谷駅 徒歩5分\nLST 本店コートB",
+    contactInfo: "LST 本店 03-1234-5678",
+    entries: [
+      { id: "e-j1", tournamentId: "t-completed-jan-2026", registrantUserId: CURRENT_USER, partnerUserId: "user-002", registeredAt: "2026-01-16T00:00:00.000Z", status: "confirmed" },
+      { id: "e-j2", tournamentId: "t-completed-jan-2026", registrantUserId: "user-003", partnerUserId: "user-008", registeredAt: "2026-01-16T00:00:00.000Z", status: "confirmed" },
+      { id: "e-j3", tournamentId: "t-completed-jan-2026", registrantUserId: "user-005", partnerUserId: "user-006", registeredAt: "2026-01-16T00:00:00.000Z", status: "confirmed" },
+      { id: "e-j4", tournamentId: "t-completed-jan-2026", registrantUserId: "user-007", partnerUserId: "user-010", registeredAt: "2026-01-16T00:00:00.000Z", status: "confirmed" },
+    ],
+    results: {
+      rankings: [
+        { rank: 1, userId: CURRENT_USER, partnerId: "user-002" },
+        { rank: 2, userId: "user-007", partnerId: "user-010" },
+        { rank: 3, userId: "user-005", partnerId: "user-006" },
+        { rank: 4, userId: "user-003", partnerId: "user-008" },
+      ],
+      matches: [
+        // SF
+        { round: 2, p1UserId: CURRENT_USER, p1PartnerId: "user-002", p2UserId: "user-003", p2PartnerId: "user-008", winnerSide: 1, score: "6-2" },
+        { round: 2, p1UserId: "user-005", p1PartnerId: "user-006", p2UserId: "user-007", p2PartnerId: "user-010", winnerSide: 2, score: "4-6" },
+        // F
+        { round: 3, p1UserId: CURRENT_USER, p1PartnerId: "user-002", p2UserId: "user-007", p2PartnerId: "user-010", winnerSide: 1, score: "6-3" },
+      ],
+    },
+  };
+
+  // 2月 — 4位
+  const completedFeb2026: Tournament = {
+    id: "t-completed-feb-2026",
+    title: "2月度 シングルス大会",
+    format: "singles",
+    capacity: 8,
+    venue: "LST 西支店コート1",
+    scheduledAt: "2026-02-22T14:00:00.000Z",
+    registrationDeadline: "2026-02-20T23:00:00.000Z",
+    status: "completed",
+    heroImageUrl: "https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=800&h=450&fit=crop",
+    description: "西支店主催のシングルス大会。\n参加者8名。",
+    accessInfo: "西武新宿線 上石神井駅 徒歩10分\nLST 西支店コート1",
+    contactInfo: "LST 西支店 042-345-6789",
+    entries: [
+      { id: "e-f1", tournamentId: "t-completed-feb-2026", registrantUserId: CURRENT_USER, registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f2", tournamentId: "t-completed-feb-2026", registrantUserId: "user-002", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f3", tournamentId: "t-completed-feb-2026", registrantUserId: "user-003", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f4", tournamentId: "t-completed-feb-2026", registrantUserId: "user-005", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f5", tournamentId: "t-completed-feb-2026", registrantUserId: "user-006", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f6", tournamentId: "t-completed-feb-2026", registrantUserId: "user-007", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f7", tournamentId: "t-completed-feb-2026", registrantUserId: "user-008", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f8", tournamentId: "t-completed-feb-2026", registrantUserId: "user-010", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+    ],
+    results: {
+      rankings: [
+        { rank: 1, userId: "user-006" },
+        { rank: 2, userId: "user-010" },
+        { rank: 3, userId: "user-007" },
+        { rank: 4, userId: CURRENT_USER },
+      ],
+      matches: [
+        // R1
+        { round: 1, p1UserId: CURRENT_USER, p2UserId: "user-008", winnerSide: 1, score: "6-3" },
+        { round: 1, p1UserId: "user-006", p2UserId: "user-002", winnerSide: 1, score: "6-1" },
+        { round: 1, p1UserId: "user-007", p2UserId: "user-003", winnerSide: 1, score: "6-2" },
+        { round: 1, p1UserId: "user-010", p2UserId: "user-005", winnerSide: 1, score: "6-4" },
+        // SF
+        { round: 2, p1UserId: CURRENT_USER, p2UserId: "user-006", winnerSide: 2, score: "2-6" },
+        { round: 2, p1UserId: "user-007", p2UserId: "user-010", winnerSide: 2, score: "4-6" },
+        // F
+        { round: 3, p1UserId: "user-006", p2UserId: "user-010", winnerSide: 1, score: "6-4" },
+      ],
+    },
+  };
+
+  // 3月 — 2位（ダブルス w/ user-005）
+  const completedMar2026: Tournament = {
+    id: "t-completed-mar-2026",
+    title: "3月度 ダブルス大会",
+    format: "doubles",
+    capacity: 8,
+    venue: "LST 本店コートB",
+    scheduledAt: "2026-03-15T14:00:00.000Z",
+    registrationDeadline: "2026-03-13T23:00:00.000Z",
+    status: "completed",
+    heroImageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&h=450&fit=crop",
+    description: "春のダブルス大会。\n4ペア参加、単一エリミネーション。",
+    accessInfo: "東京メトロ 渋谷駅 徒歩5分\nLST 本店コートB",
+    contactInfo: "LST 本店 03-1234-5678",
+    entries: [
+      { id: "e-m1", tournamentId: "t-completed-mar-2026", registrantUserId: CURRENT_USER, partnerUserId: "user-005", registeredAt: "2026-03-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-m2", tournamentId: "t-completed-mar-2026", registrantUserId: "user-002", partnerUserId: "user-007", registeredAt: "2026-03-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-m3", tournamentId: "t-completed-mar-2026", registrantUserId: "user-003", partnerUserId: "user-006", registeredAt: "2026-03-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-m4", tournamentId: "t-completed-mar-2026", registrantUserId: "user-008", partnerUserId: "user-010", registeredAt: "2026-03-13T00:00:00.000Z", status: "confirmed" },
+    ],
+    results: {
+      rankings: [
+        { rank: 1, userId: "user-003", partnerId: "user-006" },
+        { rank: 2, userId: CURRENT_USER, partnerId: "user-005" },
+        { rank: 3, userId: "user-002", partnerId: "user-007" },
+        { rank: 4, userId: "user-008", partnerId: "user-010" },
+      ],
+      matches: [
+        // SF
+        { round: 2, p1UserId: CURRENT_USER, p1PartnerId: "user-005", p2UserId: "user-002", p2PartnerId: "user-007", winnerSide: 1, score: "6-4" },
+        { round: 2, p1UserId: "user-003", p1PartnerId: "user-006", p2UserId: "user-008", p2PartnerId: "user-010", winnerSide: 1, score: "6-2" },
+        // F
+        { round: 3, p1UserId: CURRENT_USER, p1PartnerId: "user-005", p2UserId: "user-003", p2PartnerId: "user-006", winnerSide: 2, score: "3-6" },
+      ],
+    },
+  };
+
   return {
     tournaments: [
       inProgressTournament,
       openTournament,
       pendingInviteTournament,
       upcomingTournament,
-      completedTournament,
+      completedTournament,    // 4月 2026
+      completedMar2026,       // 3月
+      completedFeb2026,       // 2月
+      completedJan2026,       // 1月
+      completedDec2025,       // 12月 2025
     ],
   };
 }
