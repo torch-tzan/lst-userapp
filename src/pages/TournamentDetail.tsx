@@ -161,21 +161,21 @@ const TournamentDetail = () => {
           <p className="text-[11px] text-muted-foreground mb-4">
             期限内に回答してください。
           </p>
-          <div className="space-y-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate(`/game/invite/${myEntry.id}`)}
+              className="flex-1 h-12 rounded-[8px] border border-border bg-background text-foreground font-bold"
+            >
+              辞退する
+            </button>
             <button
               onClick={() => {
                 const r = acceptPartnerInvite(myEntry.id);
                 if (r.ok) toast({ title: "招待を承諾しました", description: `${t.title} のエントリーが確定しました` });
               }}
-              className="w-full h-12 rounded-[8px] bg-primary text-primary-foreground font-bold"
+              className="flex-1 h-12 rounded-[8px] bg-primary text-primary-foreground font-bold"
             >
               承諾する
-            </button>
-            <button
-              onClick={() => navigate(`/game/invite/${myEntry.id}`)}
-              className="w-full h-12 rounded-[8px] border border-border bg-background text-foreground font-bold"
-            >
-              辞退する
             </button>
           </div>
         </div>
