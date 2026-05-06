@@ -1,23 +1,17 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { useTournamentStore, CURRENT_USER, computePersonalMonthlyScore } from "@/lib/tournamentStore";
 import { useSubscription } from "@/lib/subscriptionStore";
-import { deriveUserBadges } from "@/lib/tournamentBadges";
 import LiveMonthCard from "@/components/game/LiveMonthCard";
-import TrophyChip from "@/components/game/TrophyChip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Diamond, ChevronRight } from "lucide-react";
-
-function yearMonthsBetween(startIso: string, endDate: Date): string[] {
-  const start = new Date(startIso);
-  const months: string[] = [];
-  const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
-  const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
-  while (cursor <= end) {
-    months.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
-    cursor.setMonth(cursor.getMonth() + 1);
-  }
-  return months.reverse();
-}
 
 function formatYM(ym: string): string {
   const [y, m] = ym.split("-");
@@ -38,9 +32,8 @@ const MyResults = () => {
   const { tournaments, computeRanking } = useTournamentStore();
   const sub = useSubscription();
   const isPremium = sub.isPremium();
-  const periodStart = sub.currentPeriodStartedAt();
 
-  if (!isPremium || !periodStart) {
+  if (!isPremium) {
     return (
       <InnerPageLayout title="大会成績">
         <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center space-y-2">
@@ -59,31 +52,48 @@ const MyResults = () => {
 
   const now = new Date();
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const months = yearMonthsBetween(periodStart, now);
-  const monthScores = months.map((ym) => computePersonalMonthlyScore(CURRENT_USER, ym, tournaments));
+
+  // Find earliest year with any user activity (completed entry where user participated)
+  const userYearMonths = new Set<string>();
+  for (const t of tournaments) {
+    if (t.status !== "completed") continue;
+    const userIn = t.entries.some(
+      (e) =>
+        e.status === "confirmed" &&
+        (e.registrantUserId === CURRENT_USER || e.partnerUserId === CURRENT_USER)
+    );
+    if (!userIn) continue;
+    const d = new Date(t.scheduledAt);
+    userYearMonths.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  // Always include current month so it appears for live ranking
+  userYearMonths.add(thisMonth);
+
+  const monthScores = [...userYearMonths]
+    .map((ym) => computePersonalMonthlyScore(CURRENT_USER, ym, tournaments))
+    .filter((s) => s.yearMonth === thisMonth || s.tournaments.length > 0 || s.total > 0)
+    .sort((a, b) => b.yearMonth.localeCompare(a.yearMonth));
+
   const liveScore = monthScores.find((s) => s.yearMonth === thisMonth);
-  const pastMonths = monthScores.filter((s) => s.yearMonth !== thisMonth && (s.tournaments.length > 0 || s.total > 0));
+  const pastMonths = monthScores.filter((s) => s.yearMonth !== thisMonth);
 
   const ranking = computeRanking(thisMonth);
   const myRank = ranking.findIndex((r) => r.userId === CURRENT_USER);
   const cta = liveScore ? nextRankCta(myRank >= 0 ? myRank + 1 : null, liveScore.total, ranking) : undefined;
 
-  const badges = deriveUserBadges(CURRENT_USER, tournaments);
+  // Year set for dropdown
+  const yearSet = new Set<string>(pastMonths.map((s) => s.yearMonth.slice(0, 4)));
+  const years = [...yearSet].sort((a, b) => b.localeCompare(a));
+  const currentYear = String(now.getFullYear());
+  const defaultYear = years.includes(currentYear) ? currentYear : years[0];
+  const [selectedYear, setSelectedYear] = useState<string>(defaultYear ?? currentYear);
 
-  // Group past months by year
-  const yearGroups = new Map<string, typeof pastMonths>();
-  for (const s of pastMonths) {
-    const year = s.yearMonth.slice(0, 4);
-    if (!yearGroups.has(year)) yearGroups.set(year, []);
-    yearGroups.get(year)!.push(s);
-  }
-  const years = [...yearGroups.keys()].sort((a, b) => b.localeCompare(a));
+  const visibleMonths = pastMonths.filter((s) => s.yearMonth.slice(0, 4) === selectedYear);
 
   return (
     <InnerPageLayout title="大会成績">
       <p className="text-[11px] text-muted-foreground mb-3">
-        プレミアム会員期間（{new Date(periodStart).getFullYear()}年
-        {new Date(periodStart).getMonth() + 1}月{new Date(periodStart).getDate()}日〜）の成績
+        あなたの参加履歴
       </p>
 
       {/* Live this-month card */}
@@ -100,59 +110,54 @@ const MyResults = () => {
         </div>
       )}
 
-      {/* Trophy section */}
-      {badges.length > 0 && (
-        <div className="mb-5">
-          <p className="text-sm font-bold text-foreground mb-2">獲得トロフィー</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-[20px] px-[20px]">
-            {badges.map((b) => (
-              <TrophyChip key={b.type} badge={b} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Past months — flat year-grouped list */}
+      {/* Past months — year dropdown + flat list */}
       {pastMonths.length === 0 ? (
         <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center">
           <p className="text-xs text-muted-foreground">過去の参加記録はまだありません</p>
         </div>
       ) : (
-        <div className="space-y-5">
-          {years.map((year) => {
-            const monthsInYear = yearGroups.get(year)!;
-            return (
-              <div key={year}>
-                <p className="text-sm font-bold text-foreground mb-2">{year}年</p>
-                <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden">
-                  {monthsInYear.map((s) => {
-                    const trophy = s.bestRank === 1 ? "🥇" : s.bestRank === 2 ? "🥈" : s.bestRank === 3 ? "🥉" : null;
-                    return (
-                      <button
-                        key={s.yearMonth}
-                        onClick={() => navigate(`/game/my-results/${s.yearMonth}`)}
-                        className="w-full p-3 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                            {formatYM(s.yearMonth)}
-                            {trophy && <span className="text-base">{trophy}</span>}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            出場 {s.tournaments.length} 大会 ・ {s.won}勝{s.played - s.won}敗
-                            {s.bestRank ? ` ・ 最高 ${s.bestRank}位` : ""}
-                          </p>
-                        </div>
-                        <p className="text-lg font-bold text-primary">{s.total}</p>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-bold text-foreground">過去の成績</p>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[100px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((y) => (
+                  <SelectItem key={y} value={y}>
+                    {y}年
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {visibleMonths.length === 0 ? (
+            <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center">
+              <p className="text-xs text-muted-foreground">{selectedYear}年の参加記録はありません</p>
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden">
+              {visibleMonths.map((s) => (
+                <button
+                  key={s.yearMonth}
+                  onClick={() => navigate(`/game/my-results/${s.yearMonth}`)}
+                  className="w-full p-3 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground">{formatYM(s.yearMonth)}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      出場 {s.tournaments.length} 大会 ・ {s.won}勝{s.played - s.won}敗
+                      {s.bestRank ? ` ・ 最高 ${s.bestRank}位` : ""}
+                    </p>
+                  </div>
+                  <p className="text-lg font-bold text-primary">{s.total}</p>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </InnerPageLayout>
   );
