@@ -30,6 +30,7 @@ import GameHome from "./pages/GameHome.tsx";
 import TournamentDetail from "./pages/TournamentDetail.tsx";
 import TournamentEntry from "./pages/TournamentEntry.tsx";
 import MyResults from "./pages/MyResults.tsx";
+import MonthDetail from "./pages/MonthDetail.tsx";
 import InviteConfirm from "./pages/InviteConfirm.tsx";
 import PointsHistory from "./pages/PointsHistory.tsx";
 import ProfileEdit from "./pages/ProfileEdit.tsx";
@@ -85,6 +86,7 @@ const App = () => (
           <Route path="/game/tournament/:id" element={<TournamentDetail />} />
           <Route path="/game/tournament/:id/entry" element={<TournamentEntry />} />
           <Route path="/game/my-results" element={<MyResults />} />
+          <Route path="/game/my-results/:yearMonth" element={<MonthDetail />} />
           <Route path="/game/invite/:entryId" element={<InviteConfirm />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/messages" element={<Messages />} />
