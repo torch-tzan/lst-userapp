@@ -5,9 +5,8 @@ import BottomNav from "@/components/BottomNav";
 import AnimatedTabs from "@/components/AnimatedTabs";
 import { useTournamentStore, CURRENT_USER, type Tournament } from "@/lib/tournamentStore";
 import { useSubscription } from "@/lib/subscriptionStore";
-import { Trophy, Calendar, MapPin, Diamond, Lock, Users } from "lucide-react";
+import { Calendar, MapPin, Diamond, Lock, Users } from "lucide-react";
 import PendingInviteBanner from "@/components/game/PendingInviteBanner";
-import LiveMonthCard from "@/components/game/LiveMonthCard";
 
 function currentYearMonth(): string {
   const d = new Date();
@@ -96,6 +95,7 @@ const GameHome = () => {
   const isPremium = sub.isPremium();
 
   const [tab, setTab] = useState("tournaments");
+  const [rankingTab, setRankingTab] = useState<"current" | "last">("current");
 
   const thisMonth = currentYearMonth();
   const prevMonth = previousYearMonth();
@@ -122,66 +122,76 @@ const GameHome = () => {
 
         {/* Hero */}
         <div className="-mt-[100px] relative z-10 px-[20px]">
-          <div className="rounded-[12px] overflow-hidden shadow-lg bg-primary text-primary-foreground">
-            <div className="px-5 py-4">
-              <p className="text-[11px] font-medium opacity-80">{formatYM(thisMonth)}（今月）</p>
-              <div className="grid grid-cols-3 gap-2 mt-3">
-                <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
-                  <p className="text-[9px] text-muted-foreground">今月積分</p>
-                  <p className="text-base font-bold text-primary">{myScore.total}</p>
-                </div>
-                <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
-                  <p className="text-[9px] text-muted-foreground">即時順位</p>
-                  <p className="text-base font-bold text-primary">
-                    {myCurrentRank >= 0 ? `${myCurrentRank + 1}位` : "—"}
-                  </p>
-                </div>
-                <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
-                  <p className="text-[9px] text-muted-foreground">出場</p>
-                  <p className="text-base font-bold text-foreground">{myScore.tournaments.length}回</p>
+          {isPremium ? (
+            <button
+              onClick={() => navigate("/game/my-results")}
+              className="w-full text-left rounded-[12px] overflow-hidden shadow-lg bg-primary text-primary-foreground"
+            >
+              <div className="px-5 py-4">
+                <p className="text-[11px] font-medium opacity-80">{formatYM(thisMonth)}（今月）</p>
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
+                    <p className="text-[9px] text-muted-foreground">今月積分</p>
+                    <p className="text-base font-bold text-primary">{myScore.total}</p>
+                  </div>
+                  <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
+                    <p className="text-[9px] text-muted-foreground">即時順位</p>
+                    <p className="text-base font-bold text-primary">
+                      {myCurrentRank >= 0 ? `${myCurrentRank + 1}位` : "—"}
+                    </p>
+                  </div>
+                  <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
+                    <p className="text-[9px] text-muted-foreground">出場</p>
+                    <p className="text-base font-bold text-foreground">{myScore.tournaments.length}回</p>
+                  </div>
                 </div>
               </div>
+              <div className="bg-foreground px-5 py-2.5 flex items-center justify-between text-[11px] text-primary-foreground">
+                <span className="flex items-center gap-1">
+                  <Diamond className="w-3 h-3 text-primary" />
+                  プレミアム会員
+                </span>
+                <span>エントリー可能</span>
+              </div>
+            </button>
+          ) : (
+            <div className="rounded-[12px] overflow-hidden shadow-lg bg-primary text-primary-foreground">
+              <div className="px-5 py-4">
+                <p className="text-[11px] font-medium opacity-80">{formatYM(thisMonth)}（今月）</p>
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
+                    <p className="text-[9px] text-muted-foreground">今月積分</p>
+                    <p className="text-base font-bold text-primary">{myScore.total}</p>
+                  </div>
+                  <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
+                    <p className="text-[9px] text-muted-foreground">即時順位</p>
+                    <p className="text-base font-bold text-primary">
+                      {myCurrentRank >= 0 ? `${myCurrentRank + 1}位` : "—"}
+                    </p>
+                  </div>
+                  <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
+                    <p className="text-[9px] text-muted-foreground">出場</p>
+                    <p className="text-base font-bold text-foreground">{myScore.tournaments.length}回</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-foreground px-5 py-2.5 flex items-center justify-between text-[11px] text-primary-foreground">
+                <span className="flex items-center gap-1">
+                  <Lock className="w-3 h-3" />
+                  一般会員
+                </span>
+                <button onClick={() => navigate("/premium/plan")} className="text-primary font-bold">
+                  プレミアム登録 ›
+                </button>
+              </div>
             </div>
-            <div className="bg-foreground px-5 py-2.5 flex items-center justify-between text-[11px] text-primary-foreground">
-              {isPremium ? (
-                <>
-                  <span className="flex items-center gap-1">
-                    <Diamond className="w-3 h-3 text-primary" />
-                    プレミアム会員
-                  </span>
-                  <span>エントリー可能</span>
-                </>
-              ) : (
-                <>
-                  <span className="flex items-center gap-1">
-                    <Lock className="w-3 h-3" />
-                    一般会員
-                  </span>
-                  <button onClick={() => navigate("/premium/plan")} className="text-primary font-bold">
-                    プレミアム登録 ›
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="mt-4">
           <PendingInviteBanner />
         </div>
 
-        {isPremium && (
-          <div className="px-[20px] mt-3">
-            <LiveMonthCard
-              variant="compact"
-              yearMonthLabel={formatYM(thisMonth)}
-              totalScore={myScore.total}
-              rank={myCurrentRank >= 0 ? myCurrentRank + 1 : null}
-              played={myScore.played}
-              onClick={() => navigate("/game/my-results")}
-            />
-          </div>
-        )}
 
         <div className="mt-5">
           <AnimatedTabs tabs={TABS} activeKey={tab} onChange={setTab} className="px-[20px]" />
@@ -228,64 +238,73 @@ const GameHome = () => {
 
           {tab === "ranking" && (
             <>
-              <div>
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-primary" />
-                  <p className="text-sm font-bold text-foreground">{formatYM(thisMonth)} 即時ランキング</p>
-                </div>
+              <div className="inline-flex bg-muted rounded-full p-1 self-start">
+                <button
+                  onClick={() => setRankingTab("current")}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                    rankingTab === "current" ? "bg-background shadow text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  即時（{formatYM(thisMonth)}）
+                </button>
+                <button
+                  onClick={() => setRankingTab("last")}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                    rankingTab === "last" ? "bg-background shadow text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  最終（{formatYM(prevMonth)}）
+                </button>
               </div>
-              {currentRanking.length === 0 ? (
-                <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center">
-                  <p className="text-xs text-muted-foreground">今月のデータはまだありません</p>
-                </div>
-              ) : (
-                <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden">
-                  {currentRanking.slice(0, 10).map((r, i) => {
-                    const isMine = r.userId === CURRENT_USER;
-                    return (
-                      <div key={r.userId} className={`p-3 flex items-center gap-3 ${isMine ? "bg-primary/5" : ""}`}>
-                        <div className="w-8 text-center font-bold text-sm text-muted-foreground">{i + 1}</div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-bold truncate ${isMine ? "text-primary" : "text-foreground"}`}>
-                            {r.name}{isMine && <span className="text-[10px] ml-1">（自分）</span>}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">{r.played}試合 {r.won}勝</p>
-                        </div>
-                        <p className="text-sm font-bold text-primary">{r.score}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
 
-              <div>
-                <div className="flex items-center gap-2 mt-2">
-                  <Trophy className="w-4 h-4 text-muted-foreground" />
-                  <p className="text-sm font-bold text-foreground">{formatYM(prevMonth)} 最終ランキング</p>
-                </div>
-              </div>
-              {lastRanking.length === 0 ? (
-                <div className="bg-muted/30 border border-border rounded-[8px] p-4 text-center">
-                  <p className="text-xs text-muted-foreground">先月のデータはありません</p>
-                </div>
-              ) : (
-                <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden">
-                  {lastRanking.slice(0, 10).map((r, i) => {
-                    const isMine = r.userId === CURRENT_USER;
-                    return (
-                      <div key={r.userId} className={`p-3 flex items-center gap-3 ${isMine ? "bg-primary/5" : ""}`}>
-                        <div className="w-8 text-center font-bold text-sm text-muted-foreground">{i + 1}</div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-bold truncate ${isMine ? "text-primary" : "text-foreground"}`}>
-                            {r.name}{isMine && <span className="text-[10px] ml-1">（自分）</span>}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">{r.played}試合 {r.won}勝</p>
+              {rankingTab === "current" ? (
+                currentRanking.length === 0 ? (
+                  <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center">
+                    <p className="text-xs text-muted-foreground">今月のデータはまだありません</p>
+                  </div>
+                ) : (
+                  <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden">
+                    {currentRanking.slice(0, 10).map((r, i) => {
+                      const isMine = r.userId === CURRENT_USER;
+                      return (
+                        <div key={r.userId} className={`p-3 flex items-center gap-3 ${isMine ? "bg-primary/5" : ""}`}>
+                          <div className="w-8 text-center font-bold text-sm text-muted-foreground">{i + 1}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-bold truncate ${isMine ? "text-primary" : "text-foreground"}`}>
+                              {r.name}{isMine && <span className="text-[10px] ml-1">（自分）</span>}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">{r.played}試合 {r.won}勝</p>
+                          </div>
+                          <p className="text-sm font-bold text-primary">{r.score}</p>
                         </div>
-                        <p className="text-sm font-bold text-foreground">{r.score}</p>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )
+              ) : (
+                lastRanking.length === 0 ? (
+                  <div className="bg-muted/30 border border-border rounded-[8px] p-4 text-center">
+                    <p className="text-xs text-muted-foreground">先月のデータはありません</p>
+                  </div>
+                ) : (
+                  <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden">
+                    {lastRanking.slice(0, 10).map((r, i) => {
+                      const isMine = r.userId === CURRENT_USER;
+                      return (
+                        <div key={r.userId} className={`p-3 flex items-center gap-3 ${isMine ? "bg-primary/5" : ""}`}>
+                          <div className="w-8 text-center font-bold text-sm text-muted-foreground">{i + 1}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-bold truncate ${isMine ? "text-primary" : "text-foreground"}`}>
+                              {r.name}{isMine && <span className="text-[10px] ml-1">（自分）</span>}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">{r.played}試合 {r.won}勝</p>
+                          </div>
+                          <p className="text-sm font-bold text-foreground">{r.score}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
               )}
             </>
           )}
