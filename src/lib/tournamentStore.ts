@@ -272,6 +272,96 @@ function buildInitialState(): StoreState {
     ],
   };
 
+  // User as registrant, partner pending — for demo "私が招待した、相手の確認待ち" state
+  const inviteSentByMeAt = new Date(now.getTime() - 12 * 3600000).toISOString(); // 12h ago
+  const in12days = new Date(now.getTime() + 12 * 86400000).toISOString();
+  const in11days = new Date(now.getTime() + 11 * 86400000).toISOString();
+
+  const selfSentPendingTournament: Tournament = {
+    id: "t-self-sent-pending",
+    title: "5月度 シニアダブルス交流",
+    format: "doubles",
+    capacity: 8,
+    venue: "LST 本店コートB",
+    scheduledAt: in12days,
+    registrationDeadline: in11days,
+    status: "registration_open",
+    heroImageUrl: "https://images.unsplash.com/photo-1622163642998-1ea32b0bbc67?w=800&h=450&fit=crop",
+    description: "シニア世代の交流ダブルス大会。",
+    accessInfo: "東京メトロ 渋谷駅 徒歩5分",
+    contactInfo: "LST 本店 03-1234-5678",
+    entries: [
+      {
+        id: "e-self-pending-1",
+        tournamentId: "t-self-sent-pending",
+        registrantUserId: CURRENT_USER,
+        partnerUserId: "user-008",
+        registeredAt: inviteSentByMeAt,
+        status: "pending_partner_confirmation",
+        invitedAt: inviteSentByMeAt,
+        expiresAt: computeExpiresAt(inviteSentByMeAt, in11days),
+      },
+    ],
+  };
+
+  // User confirmed singles
+  const in14days = new Date(now.getTime() + 14 * 86400000).toISOString();
+  const in13days = new Date(now.getTime() + 13 * 86400000).toISOString();
+
+  const selfConfirmedSinglesTournament: Tournament = {
+    id: "t-self-confirmed-singles",
+    title: "5月度 ナイトトーナメント",
+    format: "singles",
+    capacity: 16,
+    venue: "LST 本店コートA",
+    scheduledAt: in14days,
+    registrationDeadline: in13days,
+    status: "registration_open",
+    heroImageUrl: "https://images.unsplash.com/photo-1604167842076-e10b3c4f0a9e?w=800&h=450&fit=crop",
+    description: "夜の部開催のシングルス大会。\n仕事帰りでも参加可能。",
+    accessInfo: "JR 東京駅 八重洲口 徒歩7分\nLST 本店コートA",
+    contactInfo: "LST 本店 03-1234-5678",
+    entries: [
+      {
+        id: "e-self-singles-1",
+        tournamentId: "t-self-confirmed-singles",
+        registrantUserId: CURRENT_USER,
+        registeredAt: new Date(now.getTime() - 2 * 86400000).toISOString(),
+        status: "confirmed",
+      },
+    ],
+  };
+
+  // User confirmed doubles (with partner accepted)
+  const in18days = new Date(now.getTime() + 18 * 86400000).toISOString();
+  const in17days = new Date(now.getTime() + 17 * 86400000).toISOString();
+
+  const selfConfirmedDoublesTournament: Tournament = {
+    id: "t-self-confirmed-doubles",
+    title: "5月度 オープンダブルス",
+    format: "doubles",
+    capacity: 16,
+    venue: "LST 西支店コート2",
+    scheduledAt: in18days,
+    registrationDeadline: in17days,
+    status: "registration_open",
+    heroImageUrl: "https://images.unsplash.com/photo-1551958219-acbc608c6377?w=800&h=450&fit=crop",
+    description: "レベル制限なしのオープンダブルス。\n初心者から経験者まで歓迎。",
+    accessInfo: "西武新宿線 上石神井駅 徒歩10分",
+    contactInfo: "LST 西支店 042-345-6789",
+    entries: [
+      {
+        id: "e-self-doubles-1",
+        tournamentId: "t-self-confirmed-doubles",
+        registrantUserId: CURRENT_USER,
+        partnerUserId: "user-005",
+        registeredAt: new Date(now.getTime() - 3 * 86400000).toISOString(),
+        partnerRespondedAt: new Date(now.getTime() - 1 * 86400000).toISOString(),
+        status: "confirmed",
+      },
+    ],
+  };
+
   // 12月 — 3位
   const completedDec2025: Tournament = {
     id: "t-completed-dec-2025",
@@ -443,6 +533,9 @@ function buildInitialState(): StoreState {
       inProgressTournament,
       openTournament,
       pendingInviteTournament,
+      selfSentPendingTournament,
+      selfConfirmedSinglesTournament,
+      selfConfirmedDoublesTournament,
       upcomingTournament,
       completedTournament,    // 4月 2026
       completedMar2026,       // 3月
@@ -612,6 +705,7 @@ export function useTournamentStore() {
 
   const getMyEntries = useCallback(() => {
     return data.tournaments
+      .filter((t) => t.status !== "completed")
       .filter((t) =>
         t.entries.some(
           (e) =>
