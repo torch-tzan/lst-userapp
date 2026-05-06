@@ -27,6 +27,7 @@ const ICON_MAP: Record<PushNotification["type"], { icon: React.ElementType; colo
   tournament_partner_accepted: { icon: Check, color: "text-primary" },
   tournament_partner_declined: { icon: X, color: "text-destructive" },
   tournament_partner_expired: { icon: Clock, color: "text-muted-foreground" },
+  tournament_partner_cancelled: { icon: X, color: "text-muted-foreground" },
   tournament_starting_soon: { icon: Bell, color: "text-accent-yellow" },
   tournament_results_published: { icon: Trophy, color: "text-accent-yellow" },
   monthly_ranking_finalized: { icon: Trophy, color: "text-primary" },

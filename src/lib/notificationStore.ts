@@ -15,6 +15,7 @@ export interface PushNotification {
     | "tournament_partner_accepted"
     | "tournament_partner_declined"
     | "tournament_partner_expired"
+    | "tournament_partner_cancelled"
     | "tournament_starting_soon"
     | "tournament_results_published"
     | "monthly_ranking_finalized";
