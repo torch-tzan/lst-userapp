@@ -132,6 +132,26 @@ const TournamentEntry = () => {
               該当するユーザーが見つかりません。IDをご確認ください。
             </div>
           )}
+
+          {/* DEMO ONLY — sample IDs for client demo. Remove before production. */}
+          <div className="mt-3 bg-blue-50 border border-blue-200 rounded-[8px] p-3">
+            <p className="text-[10px] font-bold text-blue-700 mb-2">[ DEMO 用 ] テストID（タップで入力）</p>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { id: "LST-EF34GH", name: "佐藤 花子" },
+                { id: "LST-IJ56KL", name: "鈴木 一郎" },
+                { id: "LST-QR90ST", name: "渡辺 健太" },
+              ].map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => setQuery(d.id)}
+                  className="bg-white border border-blue-300 rounded px-2 py-1 text-[10px] font-mono text-blue-700 hover:bg-blue-100"
+                >
+                  {d.id} <span className="text-blue-500">({d.name})</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </>
       )}
 

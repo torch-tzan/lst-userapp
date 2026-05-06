@@ -344,6 +344,30 @@ function buildInitialState(): StoreState {
     ],
   };
 
+  // Open singles tournament where user-001 is NOT registered yet (for demo)
+  const in16days = new Date(now.getTime() + 16 * 86400000).toISOString();
+  const in15days = new Date(now.getTime() + 15 * 86400000).toISOString();
+
+  const openSinglesTournament: Tournament = {
+    id: "t-open-singles",
+    title: "5月度 シングルス交流戦",
+    format: "singles",
+    capacity: 16,
+    venue: "LST 本店コートA",
+    scheduledAt: in16days,
+    registrationDeadline: in15days,
+    status: "registration_open",
+    heroImageUrl: "https://images.unsplash.com/photo-1530915534180-dffae4f63a01?w=800&h=450&fit=crop",
+    description: "気軽に参加できるシングルス交流戦。\n初級〜中級向け、16名定員。",
+    accessInfo: "JR 東京駅 八重洲口 徒歩7分\nLST 本店コートA",
+    contactInfo: "LST 本店 03-1234-5678",
+    entries: [
+      { id: "e-os-1", tournamentId: "t-open-singles", registrantUserId: "user-003", registeredAt: now.toISOString(), status: "confirmed" },
+      { id: "e-os-2", tournamentId: "t-open-singles", registrantUserId: "user-006", registeredAt: now.toISOString(), status: "confirmed" },
+      { id: "e-os-3", tournamentId: "t-open-singles", registrantUserId: "user-010", registeredAt: now.toISOString(), status: "confirmed" },
+    ],
+  };
+
   // 12月 — 3位
   const completedDec2025: Tournament = {
     id: "t-completed-dec-2025",
@@ -518,6 +542,7 @@ function buildInitialState(): StoreState {
       selfSentPendingTournament,
       selfConfirmedSinglesTournament,
       selfConfirmedDoublesTournament,
+      openSinglesTournament,
       upcomingTournament,
       completedTournament,    // 4月 2026
       completedMar2026,       // 3月
