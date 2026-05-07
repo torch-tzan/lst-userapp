@@ -16,7 +16,8 @@ import {
 import { useLeagueMatchBoardStore } from "@/lib/leagueMatchBoardStore";
 import { useSubscription } from "@/lib/subscriptionStore";
 import MyEntryCard from "@/components/game/MyEntryCard";
-import { Trophy, Calendar, MapPin, Diamond, Lock, Users, Plus } from "lucide-react";
+import LeagueMatchList from "@/components/game/LeagueMatchList";
+import { Calendar, MapPin, Diamond, Lock, Users } from "lucide-react";
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
@@ -78,7 +79,7 @@ const TournamentCard = ({ t }: { t: Tournament }) => {
 const GameHome = () => {
   const navigate = useNavigate();
   const { tournaments, getMyEntries, computeMySeasonalSummary, computeSeasonalRanking, getPendingInvitesForUser, computeMyTotalPadelPoints } = useTournamentStore();
-  const { getOpenMatches, getMyHostedMatches, getMyApplications } = useLeagueMatchBoardStore();
+  const { getMyHostedMatches, getMyApplications } = useLeagueMatchBoardStore();
   const sub = useSubscription();
   const isPremium = sub.isPremium();
 
@@ -108,8 +109,6 @@ const GameHome = () => {
   const myLeagueOpenCount =
     getMyHostedMatches().filter((m) => m.status === "open" || m.status === "filled").length +
     getMyApplications().filter(({ match }) => match.status === "open" || match.status === "filled").length;
-  const allOpenLeagueMatches = getOpenMatches();
-
   const upcomingAndOpen = tournaments.filter((t) =>
     ["upcoming", "registration_open", "in_progress"].includes(t.status)
   );
@@ -225,35 +224,7 @@ const GameHome = () => {
                   </button>
                 </div>
               ) : (
-                <>
-                  <button
-                    onClick={() => navigate("/game/league")}
-                    className="w-full bg-card border-2 border-primary/30 rounded-[8px] p-4 flex items-center gap-3 text-left hover:border-primary transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-foreground">リーグ募集板を開く</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{allOpenLeagueMatches.length} 件の募集が進行中</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => navigate("/game/league/new")}
-                    className="w-full bg-primary text-primary-foreground rounded-[8px] p-4 flex items-center gap-3 text-left hover:opacity-90"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">
-                      <Plus className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold">募集を作成</p>
-                      <p className="text-[11px] opacity-80 mt-0.5">時間・場所・希望レベルを指定して仲間を集める</p>
-                    </div>
-                  </button>
-                  <div className="bg-muted/30 border border-border rounded-[8px] p-3 text-[11px] text-muted-foreground">
-                    リーグ試合では、ホストが場館・時間を決めて募集 → 参加者が応募 → ホストが承認 → 4 名揃ったら成立。場館代は各自負担です。
-                  </div>
-                </>
+                <LeagueMatchList />
               )}
             </>
           )}
