@@ -3,7 +3,7 @@ import AnimatedTabs from "@/components/AnimatedTabs";
 import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { Separator } from "@/components/ui/separator";
-import { Bell, CalendarCheck, CalendarX, Play, CheckCircle2, RefreshCw, XCircle, Video, Star, Trophy, Mail, Check, X, Clock, AlertCircle } from "lucide-react";
+import { Bell, CalendarCheck, CalendarX, Play, CheckCircle2, RefreshCw, XCircle, Video, Star, Trophy, Mail, Check, X, Clock, AlertCircle, Users } from "lucide-react";
 import {
   getNotifications,
   markAllNotificationsRead,
@@ -32,6 +32,13 @@ const ICON_MAP: Record<PushNotification["type"], { icon: React.ElementType; colo
   tournament_starting_soon: { icon: Bell, color: "text-accent-yellow" },
   tournament_results_published: { icon: Trophy, color: "text-accent-yellow" },
   monthly_ranking_finalized: { icon: Trophy, color: "text-primary" },
+  league_match_application_received: { icon: Mail, color: "text-accent-yellow" },
+  league_match_application_approved: { icon: Check, color: "text-primary" },
+  league_match_application_rejected: { icon: X, color: "text-destructive" },
+  league_match_filled: { icon: Users, color: "text-primary" },
+  league_match_cancelled: { icon: AlertCircle, color: "text-muted-foreground" },
+  league_score_submitted: { icon: Trophy, color: "text-accent-yellow" },
+  league_score_confirmed: { icon: Trophy, color: "text-primary" },
 };
 
 interface SystemNotification {

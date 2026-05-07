@@ -19,13 +19,21 @@ export interface PushNotification {
     | "tournament_participant_cancelled"
     | "tournament_starting_soon"
     | "tournament_results_published"
-    | "monthly_ranking_finalized";
+    | "monthly_ranking_finalized"
+    | "league_match_application_received"
+    | "league_match_application_approved"
+    | "league_match_application_rejected"
+    | "league_match_filled"
+    | "league_match_cancelled"
+    | "league_score_submitted"
+    | "league_score_confirmed";
   title: string;
   message: string;
   bookingId?: string;
   coachName?: string;
   eventId?: string;
   entryId?: string;
+  postedMatchId?: string;
   createdAt: string;
   read: boolean;
 }
@@ -219,6 +227,30 @@ export const seedDemoNotifications = (): void => {
       coachName: "鈴木 健太",
       bookingId: "demo-be",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString(),
+      read: true,
+    },
+    {
+      type: "league_match_application_received",
+      title: "リーグ試合への応募が届きました",
+      message: "渡辺 健太さんから「土曜午後ダブルス」への参加申し込みがあります。",
+      postedMatchId: "lm-1",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+      read: false,
+    },
+    {
+      type: "league_match_application_approved",
+      title: "リーグ試合の参加が承認されました",
+      message: "佐藤 花子さんが「金曜夜の部」への参加を承認しました。",
+      postedMatchId: "lm-2",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 9).toISOString(),
+      read: true,
+    },
+    {
+      type: "league_match_filled",
+      title: "リーグ試合が成立しました",
+      message: "「土曜午後ダブルス」のメンバーが揃いました。試合当日はコートでお会いしましょう。",
+      postedMatchId: "lm-1",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
       read: true,
     },
   ];
