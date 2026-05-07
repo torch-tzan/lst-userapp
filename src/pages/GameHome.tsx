@@ -200,6 +200,9 @@ const GameHome = () => {
         <div className="px-[20px] mt-4 space-y-5">
           {tab === "tournaments" && (
             <>
+              <p className="text-[11px] text-muted-foreground mb-1 px-1">
+                LST が主催する特別大会。場地費はLST負担。
+              </p>
               <div className="space-y-2">
                 <p className="text-xs font-bold text-muted-foreground">開催予定・受付中</p>
                 {upcomingAndOpen.map((t) => <TournamentCard key={t.id} t={t} />)}
@@ -224,7 +227,12 @@ const GameHome = () => {
                   </button>
                 </div>
               ) : (
-                <LeagueMatchList />
+                <>
+                  <p className="text-[11px] text-muted-foreground mb-2 px-1">
+                    自分で仲間を集めて試合を組む場所。場地費は各自負担。
+                  </p>
+                  <LeagueMatchList />
+                </>
               )}
             </>
           )}
