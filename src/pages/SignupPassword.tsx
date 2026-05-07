@@ -25,7 +25,7 @@ const SignupPassword = () => {
       title="会員登録"
       ctaLabel="会員登録する"
       ctaDisabled={!canSubmit}
-      onCtaClick={() => navigate("/signup/complete")}
+      onCtaClick={() => navigate("/signup/level")}
       onBack={() => navigate(-1)}
     >
       <div className="space-y-5">

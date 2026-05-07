@@ -9,6 +9,12 @@ import SignupOtp from "./pages/SignupOtp.tsx";
 import SignupSocial from "./pages/SignupSocial.tsx";
 import SignupPassword from "./pages/SignupPassword.tsx";
 import SignupComplete from "./pages/SignupComplete.tsx";
+import SignupLevel from "./pages/SignupLevel.tsx";
+import LeagueBoardList from "./pages/league/LeagueBoardList.tsx";
+import LeagueBoardNew from "./pages/league/LeagueBoardNew.tsx";
+import LeagueBoardDetail from "./pages/league/LeagueBoardDetail.tsx";
+import LeagueBoardScore from "./pages/league/LeagueBoardScore.tsx";
+import Profile from "./pages/Profile.tsx";
 import Login from "./pages/Login.tsx";
 import Terms from "./pages/Terms.tsx";
 import SearchResults from "./pages/SearchResults.tsx";
@@ -121,6 +127,12 @@ const App = () => (
           <Route path="/premium/payment-method" element={<PremiumPaymentMethod />} />
           <Route path="/premium/billing-history" element={<PremiumBillingHistory />} />
           <Route path="/premium/cancel" element={<PremiumCancel />} />
+          <Route path="/signup/level" element={<SignupLevel />} />
+          <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="/game/league" element={<LeagueBoardList />} />
+          <Route path="/game/league/new" element={<LeagueBoardNew />} />
+          <Route path="/game/league/:id" element={<LeagueBoardDetail />} />
+          <Route path="/game/league/:id/score" element={<LeagueBoardScore />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
