@@ -7,7 +7,7 @@ export const POINTS_WIN = 50;
 
 export const PARTNER_INVITE_HOURS = 72;
 
-export type TournamentFormat = "singles" | "doubles";
+export type TournamentFormat = "doubles";
 export type TournamentCapacity = 8 | 16 | 32;
 export type TournamentStatus =
   | "upcoming"
@@ -126,44 +126,39 @@ function buildInitialState(): StoreState {
   const in15days = new Date(now.getTime() + 15 * 86400000).toISOString();
   const lastWeek = new Date(now.getTime() - 7 * 86400000).toISOString();
 
-  // 已結束的大會：自己得第 2 名
+  // 已結束的大會：自己（＋user-002）得第 2 名（ダブルス）
   const completedTournament: Tournament = {
     id: "t-completed",
-    title: "4月度 シングルス大会",
-    format: "singles",
+    title: "4月度 ダブルストーナメント",
+    format: "doubles",
     capacity: 8,
     venue: "LST 本店コートA",
     scheduledAt: lastWeek,
     registrationDeadline: lastWeek,
     status: "completed",
     heroImageUrl: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&h=450&fit=crop",
-    description: "毎月恒例のシングルストーナメント。\n初級〜上級まで実力に応じてご参加いただけます。\n試合形式は8名による単一エリミネーションです。",
+    description: "毎月恒例のダブルストーナメント。\n4ペア参加、単一エリミネーション形式です。",
     accessInfo: "JR 東京駅 八重洲口 徒歩7分\n地下駐車場あり（100台、有料）",
     contactInfo: "LST 本店 03-1234-5678\nlst-tournament@example.co.jp",
     entries: [
-      { id: "e-c1", tournamentId: "t-completed", registrantUserId: CURRENT_USER, registeredAt: lastWeek, status: "confirmed" },
-      ...["user-002","user-003","user-005","user-006","user-007","user-010","user-008"].map((u, i) => ({
-        id: `e-c${i+2}`, tournamentId: "t-completed", registrantUserId: u, registeredAt: lastWeek, status: "confirmed" as const,
-      })),
+      { id: "e-c1", tournamentId: "t-completed", registrantUserId: CURRENT_USER, partnerUserId: "user-002", registeredAt: lastWeek, status: "confirmed" },
+      { id: "e-c2", tournamentId: "t-completed", registrantUserId: "user-003", partnerUserId: "user-008", registeredAt: lastWeek, status: "confirmed" },
+      { id: "e-c3", tournamentId: "t-completed", registrantUserId: "user-006", partnerUserId: "user-007", registeredAt: lastWeek, status: "confirmed" },
+      { id: "e-c4", tournamentId: "t-completed", registrantUserId: "user-005", partnerUserId: "user-010", registeredAt: lastWeek, status: "confirmed" },
     ],
     results: {
       rankings: [
-        { rank: 1, userId: "user-010" },
-        { rank: 2, userId: CURRENT_USER },
-        { rank: 3, userId: "user-006" },
-        { rank: 4, userId: "user-003" },
+        { rank: 1, userId: "user-005", partnerId: "user-010" },
+        { rank: 2, userId: CURRENT_USER, partnerId: "user-002" },
+        { rank: 3, userId: "user-006", partnerId: "user-007" },
+        { rank: 4, userId: "user-003", partnerId: "user-008" },
       ],
       matches: [
-        // R1
-        { round: 1, p1UserId: CURRENT_USER, p2UserId: "user-008", winnerSide: 1, score: "6-2" },
-        { round: 1, p1UserId: "user-006", p2UserId: "user-007", winnerSide: 1, score: "6-3" },
-        { round: 1, p1UserId: "user-010", p2UserId: "user-005", winnerSide: 1, score: "6-1" },
-        { round: 1, p1UserId: "user-003", p2UserId: "user-002", winnerSide: 1, score: "6-4" },
         // SF
-        { round: 2, p1UserId: CURRENT_USER, p2UserId: "user-006", winnerSide: 1, score: "6-3" },
-        { round: 2, p1UserId: "user-010", p2UserId: "user-003", winnerSide: 1, score: "6-2" },
+        { round: 2, p1UserId: CURRENT_USER, p1PartnerId: "user-002", p2UserId: "user-003", p2PartnerId: "user-008", winnerSide: 1, score: "6-3" },
+        { round: 2, p1UserId: "user-006", p1PartnerId: "user-007", p2UserId: "user-005", p2PartnerId: "user-010", winnerSide: 2, score: "4-6" },
         // F
-        { round: 3, p1UserId: CURRENT_USER, p2UserId: "user-010", winnerSide: 2, score: "4-6" },
+        { round: 3, p1UserId: CURRENT_USER, p1PartnerId: "user-002", p2UserId: "user-005", p2PartnerId: "user-010", winnerSide: 2, score: "3-6" },
       ],
     },
   };
@@ -209,15 +204,15 @@ function buildInitialState(): StoreState {
   // 即將舉辦
   const upcomingTournament: Tournament = {
     id: "t-upcoming",
-    title: "5月度 シングルストーナメント",
-    format: "singles",
+    title: "5月度 ビッグダブルス大会",
+    format: "doubles",
     capacity: 32,
     venue: "LST 本店コートA",
     scheduledAt: in20days,
     registrationDeadline: in15days,
     status: "upcoming",
     heroImageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&h=450&fit=crop",
-    description: "5月最大のシングルストーナメント。\n32名定員、3週間にわたる本格大会。\nランキング上位入賞で月間積分大幅獲得。",
+    description: "5月最大のダブルストーナメント。\n32ペア定員、3週間にわたる本格大会。\nランキング上位入賞で月間積分大幅獲得。",
     accessInfo: "JR 東京駅 八重洲口 徒歩7分\nLST 本店コートA",
     contactInfo: "LST 本店 03-1234-5678",
     entries: [],
@@ -286,29 +281,31 @@ function buildInitialState(): StoreState {
     ],
   };
 
-  // User confirmed singles
+  // User confirmed doubles (ナイトダブルス)
   const in14days = new Date(now.getTime() + 14 * 86400000).toISOString();
   const in13days = new Date(now.getTime() + 13 * 86400000).toISOString();
 
-  const selfConfirmedSinglesTournament: Tournament = {
-    id: "t-self-confirmed-singles",
-    title: "5月度 ナイトトーナメント",
-    format: "singles",
+  const selfConfirmedNightDoublesTournament: Tournament = {
+    id: "t-self-confirmed-night-doubles",
+    title: "5月度 ナイトダブルス大会",
+    format: "doubles",
     capacity: 16,
     venue: "LST 本店コートA",
     scheduledAt: in14days,
     registrationDeadline: in13days,
     status: "registration_open",
     heroImageUrl: "https://images.unsplash.com/photo-1604167842076-e10b3c4f0a9e?w=800&h=450&fit=crop",
-    description: "夜の部開催のシングルス大会。\n仕事帰りでも参加可能。",
+    description: "夜の部開催のダブルス大会。\n仕事帰りでも参加可能。",
     accessInfo: "JR 東京駅 八重洲口 徒歩7分\nLST 本店コートA",
     contactInfo: "LST 本店 03-1234-5678",
     entries: [
       {
-        id: "e-self-singles-1",
-        tournamentId: "t-self-confirmed-singles",
+        id: "e-self-night-doubles-1",
+        tournamentId: "t-self-confirmed-night-doubles",
         registrantUserId: CURRENT_USER,
+        partnerUserId: "user-003",
         registeredAt: new Date(now.getTime() - 2 * 86400000).toISOString(),
+        partnerRespondedAt: new Date(now.getTime() - 1 * 86400000).toISOString(),
         status: "confirmed",
       },
     ],
@@ -344,71 +341,62 @@ function buildInitialState(): StoreState {
     ],
   };
 
-  // Open singles tournament where user-001 is NOT registered yet (for demo)
+  // Open doubles tournament where user-001 is NOT registered yet (for demo registration flow)
   const in16days = new Date(now.getTime() + 16 * 86400000).toISOString();
 
-  const openSinglesTournament: Tournament = {
-    id: "t-open-singles",
-    title: "5月度 シングルス交流戦",
-    format: "singles",
+  const extraDoublesTournament: Tournament = {
+    id: "t-extra-doubles",
+    title: "5月度 オープンダブルス交流",
+    format: "doubles",
     capacity: 16,
     venue: "LST 本店コートA",
     scheduledAt: in16days,
     registrationDeadline: in15days,
     status: "registration_open",
     heroImageUrl: "https://images.unsplash.com/photo-1530915534180-dffae4f63a01?w=800&h=450&fit=crop",
-    description: "気軽に参加できるシングルス交流戦。\n初級〜中級向け、16名定員。",
+    description: "気軽に参加できるオープンダブルス交流戦。\n初級〜中級向け、16ペア定員。",
     accessInfo: "JR 東京駅 八重洲口 徒歩7分\nLST 本店コートA",
     contactInfo: "LST 本店 03-1234-5678",
     entries: [
-      { id: "e-os-1", tournamentId: "t-open-singles", registrantUserId: "user-003", registeredAt: now.toISOString(), status: "confirmed" },
-      { id: "e-os-2", tournamentId: "t-open-singles", registrantUserId: "user-006", registeredAt: now.toISOString(), status: "confirmed" },
-      { id: "e-os-3", tournamentId: "t-open-singles", registrantUserId: "user-010", registeredAt: now.toISOString(), status: "confirmed" },
+      { id: "e-ed-1", tournamentId: "t-extra-doubles", registrantUserId: "user-003", partnerUserId: "user-006", registeredAt: now.toISOString(), status: "confirmed" },
+      { id: "e-ed-2", tournamentId: "t-extra-doubles", registrantUserId: "user-007", partnerUserId: "user-010", registeredAt: now.toISOString(), status: "confirmed" },
+      { id: "e-ed-3", tournamentId: "t-extra-doubles", registrantUserId: "user-008", partnerUserId: "user-012", registeredAt: now.toISOString(), status: "confirmed" },
     ],
   };
 
-  // 12月 — 3位
+  // 12月 — 3位（ダブルス w/ user-007）
   const completedDec2025: Tournament = {
     id: "t-completed-dec-2025",
-    title: "12月度 シングルス大会",
-    format: "singles",
+    title: "12月度 ダブルストーナメント",
+    format: "doubles",
     capacity: 8,
     venue: "LST 本店コートA",
     scheduledAt: "2025-12-15T14:00:00.000Z",
     registrationDeadline: "2025-12-13T23:00:00.000Z",
     status: "completed",
     heroImageUrl: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&h=450&fit=crop",
-    description: "年末恒例のシングルストーナメント。\n参加者8名による単一エリミネーション。",
+    description: "年末恒例のダブルストーナメント。\n4ペア参加、単一エリミネーション。",
     accessInfo: "JR 東京駅 八重洲口 徒歩7分",
     contactInfo: "LST 本店 03-1234-5678",
     entries: [
-      { id: "e-d1", tournamentId: "t-completed-dec-2025", registrantUserId: CURRENT_USER, registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
-      { id: "e-d2", tournamentId: "t-completed-dec-2025", registrantUserId: "user-002", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
-      { id: "e-d3", tournamentId: "t-completed-dec-2025", registrantUserId: "user-003", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
-      { id: "e-d4", tournamentId: "t-completed-dec-2025", registrantUserId: "user-005", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
-      { id: "e-d5", tournamentId: "t-completed-dec-2025", registrantUserId: "user-006", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
-      { id: "e-d6", tournamentId: "t-completed-dec-2025", registrantUserId: "user-007", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
-      { id: "e-d7", tournamentId: "t-completed-dec-2025", registrantUserId: "user-008", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
-      { id: "e-d8", tournamentId: "t-completed-dec-2025", registrantUserId: "user-010", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d1", tournamentId: "t-completed-dec-2025", registrantUserId: CURRENT_USER, partnerUserId: "user-007", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d2", tournamentId: "t-completed-dec-2025", registrantUserId: "user-002", partnerUserId: "user-003", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d3", tournamentId: "t-completed-dec-2025", registrantUserId: "user-005", partnerUserId: "user-006", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
+      { id: "e-d4", tournamentId: "t-completed-dec-2025", registrantUserId: "user-008", partnerUserId: "user-010", registeredAt: "2025-12-13T00:00:00.000Z", status: "confirmed" },
     ],
     results: {
       rankings: [
-        { rank: 1, userId: "user-007" },
-        { rank: 2, userId: "user-010" },
-        { rank: 3, userId: CURRENT_USER },
-        { rank: 4, userId: "user-006" },
+        { rank: 1, userId: "user-008", partnerId: "user-010" },
+        { rank: 2, userId: "user-002", partnerId: "user-003" },
+        { rank: 3, userId: CURRENT_USER, partnerId: "user-007" },
+        { rank: 4, userId: "user-005", partnerId: "user-006" },
       ],
       matches: [
-        // R1
-        { round: 1, p1UserId: CURRENT_USER, p2UserId: "user-002", winnerSide: 1, score: "6-3" },
-        { round: 1, p1UserId: "user-006", p2UserId: "user-008", winnerSide: 1, score: "6-2" },
-        { round: 1, p1UserId: "user-007", p2UserId: "user-003", winnerSide: 1, score: "6-1" },
-        { round: 1, p1UserId: "user-010", p2UserId: "user-005", winnerSide: 1, score: "6-4" },
         // SF
-        { round: 2, p1UserId: CURRENT_USER, p2UserId: "user-007", winnerSide: 2, score: "3-6" },
-        { round: 2, p1UserId: "user-006", p2UserId: "user-010", winnerSide: 2, score: "4-6" },
+        { round: 2, p1UserId: CURRENT_USER, p1PartnerId: "user-007", p2UserId: "user-002", p2PartnerId: "user-003", winnerSide: 2, score: "3-6" },
+        { round: 2, p1UserId: "user-005", p1PartnerId: "user-006", p2UserId: "user-008", p2PartnerId: "user-010", winnerSide: 2, score: "4-6" },
         // F
-        { round: 3, p1UserId: "user-007", p2UserId: "user-010", winnerSide: 1, score: "6-4" },
+        { round: 3, p1UserId: "user-002", p1PartnerId: "user-003", p2UserId: "user-008", p2PartnerId: "user-010", winnerSide: 2, score: "4-6" },
       ],
     },
   };
@@ -450,48 +438,39 @@ function buildInitialState(): StoreState {
     },
   };
 
-  // 2月 — 4位
+  // 2月 — 4位（ダブルス w/ user-005）
   const completedFeb2026: Tournament = {
     id: "t-completed-feb-2026",
-    title: "2月度 シングルス大会",
-    format: "singles",
+    title: "2月度 ダブルス交流戦",
+    format: "doubles",
     capacity: 8,
     venue: "LST 西支店コート1",
     scheduledAt: "2026-02-22T14:00:00.000Z",
     registrationDeadline: "2026-02-20T23:00:00.000Z",
     status: "completed",
     heroImageUrl: "https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=800&h=450&fit=crop",
-    description: "西支店主催のシングルス大会。\n参加者8名。",
+    description: "西支店主催のダブルス交流戦。\n4ペア参加。",
     accessInfo: "西武新宿線 上石神井駅 徒歩10分\nLST 西支店コート1",
     contactInfo: "LST 西支店 042-345-6789",
     entries: [
-      { id: "e-f1", tournamentId: "t-completed-feb-2026", registrantUserId: CURRENT_USER, registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
-      { id: "e-f2", tournamentId: "t-completed-feb-2026", registrantUserId: "user-002", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
-      { id: "e-f3", tournamentId: "t-completed-feb-2026", registrantUserId: "user-003", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
-      { id: "e-f4", tournamentId: "t-completed-feb-2026", registrantUserId: "user-005", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
-      { id: "e-f5", tournamentId: "t-completed-feb-2026", registrantUserId: "user-006", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
-      { id: "e-f6", tournamentId: "t-completed-feb-2026", registrantUserId: "user-007", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
-      { id: "e-f7", tournamentId: "t-completed-feb-2026", registrantUserId: "user-008", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
-      { id: "e-f8", tournamentId: "t-completed-feb-2026", registrantUserId: "user-010", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f1", tournamentId: "t-completed-feb-2026", registrantUserId: CURRENT_USER, partnerUserId: "user-005", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f2", tournamentId: "t-completed-feb-2026", registrantUserId: "user-002", partnerUserId: "user-003", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f3", tournamentId: "t-completed-feb-2026", registrantUserId: "user-006", partnerUserId: "user-007", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
+      { id: "e-f4", tournamentId: "t-completed-feb-2026", registrantUserId: "user-008", partnerUserId: "user-010", registeredAt: "2026-02-20T00:00:00.000Z", status: "confirmed" },
     ],
     results: {
       rankings: [
-        { rank: 1, userId: "user-006" },
-        { rank: 2, userId: "user-010" },
-        { rank: 3, userId: "user-007" },
-        { rank: 4, userId: CURRENT_USER },
+        { rank: 1, userId: "user-006", partnerId: "user-007" },
+        { rank: 2, userId: "user-008", partnerId: "user-010" },
+        { rank: 3, userId: "user-002", partnerId: "user-003" },
+        { rank: 4, userId: CURRENT_USER, partnerId: "user-005" },
       ],
       matches: [
-        // R1
-        { round: 1, p1UserId: CURRENT_USER, p2UserId: "user-008", winnerSide: 1, score: "6-3" },
-        { round: 1, p1UserId: "user-006", p2UserId: "user-002", winnerSide: 1, score: "6-1" },
-        { round: 1, p1UserId: "user-007", p2UserId: "user-003", winnerSide: 1, score: "6-2" },
-        { round: 1, p1UserId: "user-010", p2UserId: "user-005", winnerSide: 1, score: "6-4" },
         // SF
-        { round: 2, p1UserId: CURRENT_USER, p2UserId: "user-006", winnerSide: 2, score: "2-6" },
-        { round: 2, p1UserId: "user-007", p2UserId: "user-010", winnerSide: 2, score: "4-6" },
+        { round: 2, p1UserId: CURRENT_USER, p1PartnerId: "user-005", p2UserId: "user-006", p2PartnerId: "user-007", winnerSide: 2, score: "2-6" },
+        { round: 2, p1UserId: "user-002", p1PartnerId: "user-003", p2UserId: "user-008", p2PartnerId: "user-010", winnerSide: 2, score: "4-6" },
         // F
-        { round: 3, p1UserId: "user-006", p2UserId: "user-010", winnerSide: 1, score: "6-4" },
+        { round: 3, p1UserId: "user-006", p1PartnerId: "user-007", p2UserId: "user-008", p2PartnerId: "user-010", winnerSide: 1, score: "6-4" },
       ],
     },
   };
@@ -539,9 +518,9 @@ function buildInitialState(): StoreState {
       openTournament,
       pendingInviteTournament,
       selfSentPendingTournament,
-      selfConfirmedSinglesTournament,
+      selfConfirmedNightDoublesTournament,
       selfConfirmedDoublesTournament,
-      openSinglesTournament,
+      extraDoublesTournament,
       upcomingTournament,
       completedTournament,    // 4月 2026
       completedMar2026,       // 3月
@@ -720,25 +699,22 @@ export function useTournamentStore() {
       const t = state.tournaments.find((x) => x.id === tournamentId);
       if (!t) return { ok: false, error: "大会が見つかりません" };
       if (t.status !== "registration_open") return { ok: false, error: "現在エントリーを受け付けていません" };
-      if (t.format === "doubles" && !partnerUserId) return { ok: false, error: "パートナーを指定してください" };
-      if (partnerUserId && !PREMIUM_USERS.has(partnerUserId)) {
+      if (!partnerUserId) return { ok: false, error: "パートナーを指定してください" };
+      if (!PREMIUM_USERS.has(partnerUserId)) {
         return { ok: false, error: "パートナーがプレミアム会員ではないため、エントリーできません" };
       }
       if (t.entries.length >= t.capacity) return { ok: false, error: "定員に達しました" };
 
       const now = new Date().toISOString();
-      const isDoubles = t.format === "doubles";
       const entry: TournamentEntry = {
         id: `e-${Date.now()}`,
         tournamentId,
         registrantUserId: CURRENT_USER,
         partnerUserId,
         registeredAt: now,
-        status: isDoubles ? "pending_partner_confirmation" : "confirmed",
-        ...(isDoubles && {
-          invitedAt: now,
-          expiresAt: computeExpiresAt(now, t.registrationDeadline),
-        }),
+        status: "pending_partner_confirmation",
+        invitedAt: now,
+        expiresAt: computeExpiresAt(now, t.registrationDeadline),
       };
       state = {
         ...state,
@@ -748,20 +724,12 @@ export function useTournamentStore() {
       };
       emit();
 
-      if (isDoubles) {
-        addNotification({
-          type: "tournament_partner_invited",
-          title: "大会の招待が届きました",
-          message: `田中 太郎さんから「${t.title}」への招待が届きました。${PARTNER_INVITE_HOURS}時間以内に回答してください。`,
-          entryId: entry.id,
-        });
-      } else {
-        addNotification({
-          type: "tournament_registration_confirmed",
-          title: "大会のエントリーが完了しました",
-          message: `${t.title}のエントリーを受け付けました。`,
-        });
-      }
+      addNotification({
+        type: "tournament_partner_invited",
+        title: "大会の招待が届きました",
+        message: `田中 太郎さんから「${t.title}」への招待が届きました。${PARTNER_INVITE_HOURS}時間以内に回答してください。`,
+        entryId: entry.id,
+      });
       return { ok: true };
     },
     []

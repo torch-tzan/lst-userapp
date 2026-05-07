@@ -65,7 +65,7 @@ const TournamentCard = ({ t }: { t: Tournament }) => {
           {STATUS_LABEL[t.status]}
         </span>
         <span className="text-[10px] font-bold text-muted-foreground">
-          {t.format === "singles" ? "シングルス" : "ダブルス"} / {t.capacity}枠
+          ダブルス / {t.capacity}枠
         </span>
       </div>
       <p className="text-sm font-bold text-foreground">{t.title}</p>

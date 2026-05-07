@@ -65,7 +65,7 @@ const MyEntryCard = ({ tournament, myEntry }: Props) => {
           {statusLabel}
         </span>
         <span className="text-[10px] font-bold text-muted-foreground">
-          {tournament.format === "singles" ? "シングルス" : "ダブルス"} / {tournament.capacity}枠
+          ダブルス / {tournament.capacity}枠
         </span>
       </div>
 
@@ -80,16 +80,14 @@ const MyEntryCard = ({ tournament, myEntry }: Props) => {
           <MapPin className="w-3 h-3" />
           {tournament.venue}
         </p>
-        {tournament.format === "doubles" && (
-          <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-1">
-            <Users className="w-3 h-3" />
-            {isInvitee
-              ? `${inviter?.name ?? "—"} さんからの招待`
-              : isInviter
-              ? `パートナー: ${partner?.name ?? "—"}（確認待ち）`
-              : `パートナー: ${partner?.name ?? "—"}`}
-          </p>
-        )}
+        <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-1">
+          <Users className="w-3 h-3" />
+          {isInvitee
+            ? `${inviter?.name ?? "—"} さんからの招待`
+            : isInviter
+            ? `パートナー: ${partner?.name ?? "—"}（確認待ち）`
+            : `パートナー: ${partner?.name ?? "—"}`}
+        </p>
       </div>
 
       {/* Actionable hint for invitee — clear "you need to do something" cue */}

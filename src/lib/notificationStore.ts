@@ -91,13 +91,6 @@ export const seedDemoNotifications = (): void => {
     },
     {
       type: "tournament_registration_confirmed",
-      title: "エントリーが完了しました（シングルス）",
-      message: "5月度 ナイトトーナメントのエントリーが確定しました。",
-      createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      read: false,
-    },
-    {
-      type: "tournament_registration_confirmed",
       title: "エントリーを送信しました（ダブルス）",
       message: "5月度 オープンダブルスへの招待を渡辺 健太さんに送信しました。承諾をお待ちください。",
       createdAt: new Date(Date.now() - 1000 * 60 * 50).toISOString(),
@@ -141,7 +134,7 @@ export const seedDemoNotifications = (): void => {
     {
       type: "tournament_results_published",
       title: "大会の結果が発表されました",
-      message: "4月度 シングルス大会で第2位を獲得しました（+160積分）。",
+      message: "4月度 ダブルストーナメントで第2位を獲得しました（+160積分）。",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       read: false,
     },

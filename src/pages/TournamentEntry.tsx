@@ -32,24 +32,22 @@ const TournamentEntry = () => {
     );
   }
 
-  const isDoubles = t.format === "doubles";
-
   const trimmed = query.trim();
   const partner: PlayerRef | undefined = trimmed ? findPlayerByDisplayId(trimmed) : undefined;
   const partnerIsPremium = partner ? PREMIUM_USERS.has(partner.userId) : undefined;
   const partnerIsSelf = partner?.userId === CURRENT_USER;
-  const canSubmit = !isDoubles || (!!partner && partnerIsPremium && !partnerIsSelf);
+  const canSubmit = !!partner && partnerIsPremium && !partnerIsSelf;
 
   const submit = () => {
     setError(null);
-    const result = registerForTournament(t.id, isDoubles ? partner?.userId : undefined);
+    const result = registerForTournament(t.id, partner?.userId);
     if (!result.ok) {
       setError(result.error ?? "エントリーに失敗しました");
       return;
     }
     toast({
-      title: isDoubles ? "パートナーに招待を送信しました" : "エントリーが完了しました",
-      description: isDoubles ? "72時間以内にパートナーが承諾すると確定します" : undefined,
+      title: "パートナーに招待を送信しました",
+      description: "72時間以内にパートナーが承諾すると確定します",
     });
     navigate(`/game/tournament/${t.id}`);
   };
@@ -64,7 +62,7 @@ const TournamentEntry = () => {
       <div className="bg-card border border-border rounded-[8px] p-4 mb-4">
         <p className="text-sm font-bold text-foreground">{t.title}</p>
         <p className="text-[11px] text-muted-foreground mt-1">
-          {t.format === "singles" ? "シングルス" : "ダブルス"} / {t.capacity}枠
+          ダブルス / {t.capacity}枠
         </p>
       </div>
 
@@ -79,81 +77,77 @@ const TournamentEntry = () => {
         </div>
       </div>
 
-      {isDoubles && (
-        <>
-          <p className="text-sm font-bold text-foreground mb-1">パートナーの ID</p>
-          <p className="text-[11px] text-muted-foreground mb-2">
-            パートナーのマイIDを入力してください（例: LST-AB12CD）
-          </p>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value.toUpperCase())}
-            placeholder="LST-XXXXXX"
-            autoCapitalize="characters"
-            className="w-full bg-card border border-border rounded-[8px] p-3 text-sm text-foreground mb-2 font-mono"
-          />
+      <p className="text-sm font-bold text-foreground mb-1">パートナーの ID</p>
+      <p className="text-[11px] text-muted-foreground mb-2">
+        パートナーのマイIDを入力してください（例: LST-AB12CD）
+      </p>
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value.toUpperCase())}
+        placeholder="LST-XXXXXX"
+        autoCapitalize="characters"
+        className="w-full bg-card border border-border rounded-[8px] p-3 text-sm text-foreground mb-2 font-mono"
+      />
 
-          {/* Verification card */}
-          {partner && partnerIsSelf && (
-            <div className="bg-destructive/5 border border-destructive/30 rounded-[8px] p-3 flex items-center gap-2 mb-2">
-              <X className="w-4 h-4 text-destructive" />
-              <p className="text-xs text-destructive">自分自身は指定できません</p>
-            </div>
-          )}
-
-          {partner && !partnerIsSelf && partnerIsPremium && (
-            <div className="bg-primary/5 border border-primary/30 rounded-[8px] p-3 flex items-center gap-2 mb-2">
-              <Check className="w-4 h-4 text-primary" />
-              <div>
-                <p className="text-sm font-bold text-foreground">{partner.name}</p>
-                <p className="text-[11px] text-primary">プレミアム会員 / エントリー可能</p>
-              </div>
-            </div>
-          )}
-
-          {partner && !partnerIsSelf && !partnerIsPremium && (
-            <div className="bg-accent-yellow/10 border border-accent-yellow/40 rounded-[8px] p-3 flex gap-2 mb-2">
-              <AlertCircle className="w-4 h-4 text-accent-yellow flex-shrink-0" />
-              <div>
-                <p className="text-xs font-bold text-foreground">
-                  {partner.name} さんはプレミアム会員ではありません
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  パートナーがプレミアム会員でないとエントリーできません。<br />
-                  相手にプレミアム登録を依頼してください。
-                </p>
-              </div>
-            </div>
-          )}
-
-          {trimmed && !partner && (
-            <div className="bg-muted border border-border rounded-[8px] p-3 text-xs text-muted-foreground mb-2">
-              該当するユーザーが見つかりません。IDをご確認ください。
-            </div>
-          )}
-
-          {/* DEMO ONLY — sample IDs for client demo. Remove before production. */}
-          <div className="mt-3 bg-blue-50 border border-blue-200 rounded-[8px] p-3">
-            <p className="text-[10px] font-bold text-blue-700 mb-2">[ DEMO 用 ] テストID（タップで入力）</p>
-            <div className="flex flex-wrap gap-1.5">
-              {[
-                { id: "LST-EF34GH", name: "佐藤 花子" },
-                { id: "LST-IJ56KL", name: "鈴木 一郎" },
-                { id: "LST-QR90ST", name: "渡辺 健太" },
-              ].map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => setQuery(d.id)}
-                  className="bg-white border border-blue-300 rounded px-2 py-1 text-[10px] font-mono text-blue-700 hover:bg-blue-100"
-                >
-                  {d.id} <span className="text-blue-500">({d.name})</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
+      {/* Verification card */}
+      {partner && partnerIsSelf && (
+        <div className="bg-destructive/5 border border-destructive/30 rounded-[8px] p-3 flex items-center gap-2 mb-2">
+          <X className="w-4 h-4 text-destructive" />
+          <p className="text-xs text-destructive">自分自身は指定できません</p>
+        </div>
       )}
+
+      {partner && !partnerIsSelf && partnerIsPremium && (
+        <div className="bg-primary/5 border border-primary/30 rounded-[8px] p-3 flex items-center gap-2 mb-2">
+          <Check className="w-4 h-4 text-primary" />
+          <div>
+            <p className="text-sm font-bold text-foreground">{partner.name}</p>
+            <p className="text-[11px] text-primary">プレミアム会員 / エントリー可能</p>
+          </div>
+        </div>
+      )}
+
+      {partner && !partnerIsSelf && !partnerIsPremium && (
+        <div className="bg-accent-yellow/10 border border-accent-yellow/40 rounded-[8px] p-3 flex gap-2 mb-2">
+          <AlertCircle className="w-4 h-4 text-accent-yellow flex-shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-foreground">
+              {partner.name} さんはプレミアム会員ではありません
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              パートナーがプレミアム会員でないとエントリーできません。<br />
+              相手にプレミアム登録を依頼してください。
+            </p>
+          </div>
+        </div>
+      )}
+
+      {trimmed && !partner && (
+        <div className="bg-muted border border-border rounded-[8px] p-3 text-xs text-muted-foreground mb-2">
+          該当するユーザーが見つかりません。IDをご確認ください。
+        </div>
+      )}
+
+      {/* DEMO ONLY — sample IDs for client demo. Remove before production. */}
+      <div className="mt-3 bg-blue-50 border border-blue-200 rounded-[8px] p-3">
+        <p className="text-[10px] font-bold text-blue-700 mb-2">[ DEMO 用 ] テストID（タップで入力）</p>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { id: "LST-EF34GH", name: "佐藤 花子" },
+            { id: "LST-IJ56KL", name: "鈴木 一郎" },
+            { id: "LST-QR90ST", name: "渡辺 健太" },
+          ].map((d) => (
+            <button
+              key={d.id}
+              onClick={() => setQuery(d.id)}
+              className="bg-white border border-blue-300 rounded px-2 py-1 text-[10px] font-mono text-blue-700 hover:bg-blue-100"
+            >
+              {d.id} <span className="text-blue-500">({d.name})</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {error && (
         <div className="bg-destructive/5 border border-destructive/30 rounded-[8px] p-3 text-xs text-destructive mt-2">

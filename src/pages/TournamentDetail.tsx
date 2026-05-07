@@ -121,7 +121,7 @@ const TournamentDetail = () => {
           </p>
           <p className="text-xs text-muted-foreground flex items-center gap-2">
             <Users className="w-3.5 h-3.5" />
-            {t.format === "singles" ? "シングルス" : "ダブルス"} / 上限 {t.capacity} 枠
+            ダブルス / 上限 {t.capacity} 枠
           </p>
         </div>
         {isOpen && (
