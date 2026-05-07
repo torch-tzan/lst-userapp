@@ -22,7 +22,7 @@ import {
 import { useUserProfile } from "@/lib/userProfileStore";
 import { useSubscription } from "@/lib/subscriptionStore";
 import { useToast } from "@/components/ui/use-toast";
-import { getPlayer, CURRENT_USER } from "@/lib/tournamentStore";
+import { getPlayer, getRankTier, useTournamentStore, CURRENT_USER, type SkillLevel } from "@/lib/tournamentStore";
 import { formatJP } from "@/lib/utils";
 import {
   AlertDialog,
@@ -43,8 +43,13 @@ const MyPage = () => {
   const [showLogout, setShowLogout] = useState(false);
   const [copied, setCopied] = useState(false);
   const isPremium = sub.isPremium();
+  const { computeMyTotalPadelPoints } = useTournamentStore();
   const myProfile = getPlayer(CURRENT_USER);
   const myDisplayId = myProfile?.displayId ?? "";
+  const myRating = myProfile?.rating ?? 1400;
+  const mySkillLevel = myProfile?.skillLevel;
+  const myTier = getRankTier(myRating);
+  const myPadelPoints = computeMyTotalPadelPoints();
   const { toast } = useToast();
 
   const copyId = async () => {
@@ -122,6 +127,44 @@ const MyPage = () => {
               >
                 {copied ? <CheckIcon className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 {copied ? "コピー済" : "コピー"}
+              </button>
+            </div>
+          </div>
+
+          {/* Game Status: Rating + Tier + PP */}
+          <div className="px-[20px] mb-4">
+            <div className="bg-gray-5 rounded-[8px] px-5 py-4 text-primary-foreground">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs opacity-70 font-medium">ゲームステータス</p>
+                {mySkillLevel && (
+                  <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded">
+                    自申告：{({ beginner: "初心者", intermediate: "中級", advanced: "上級" } as Record<SkillLevel, string>)[mySkillLevel]}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[10px] opacity-70 mb-1">レーティング</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold text-primary">{myRating}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 ${myTier.cls}`}>
+                      {myTier.emoji} {myTier.label}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] opacity-70 mb-1">Padel Points</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold text-primary">{myPadelPoints.toLocaleString()}</span>
+                    <span className="text-[11px] opacity-70">PP</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate(`/profile/${CURRENT_USER}`)}
+                className="mt-3 w-full bg-white/10 hover:bg-white/15 rounded-[6px] py-2 text-[11px] font-bold flex items-center justify-center gap-1"
+              >
+                プロフィールを見る ›
               </button>
             </div>
           </div>
