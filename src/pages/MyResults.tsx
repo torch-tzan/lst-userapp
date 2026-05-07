@@ -1,35 +1,27 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
-import { useTournamentStore, CURRENT_USER, computePersonalMonthlyScore } from "@/lib/tournamentStore";
-import { useSubscription } from "@/lib/subscriptionStore";
-import LiveMonthCard from "@/components/game/LiveMonthCard";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  useTournamentStore,
+  CURRENT_USER,
+  computePersonalSeasonalSummary,
+  getSeasonOf,
+  seasonKey,
+  formatSeasonLabel,
+  getRankTier,
+  getPlayer,
+  computeTotalPadelPoints,
+  type Season,
+} from "@/lib/tournamentStore";
+import { useSubscription } from "@/lib/subscriptionStore";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Diamond, ChevronRight } from "lucide-react";
-
-function formatYM(ym: string): string {
-  const [y, m] = ym.split("-");
-  return `${y}年${parseInt(m)}月`;
-}
-
-function nextRankCta(currentRank: number | null, currentScore: number, currentRanking: { score: number; userId: string }[]): string | undefined {
-  if (currentRank === null || currentRank <= 3) return undefined;
-  const targetIdx = 2; // 3位
-  const targetScore = currentRanking[targetIdx]?.score ?? 0;
-  const diff = targetScore - currentScore;
-  if (diff <= 0) return undefined;
-  return `あと ${diff} 点で 3位`;
-}
+import { Diamond, ChevronRight, Trophy, TrendingUp } from "lucide-react";
 
 const MyResults = () => {
   const navigate = useNavigate();
-  const { tournaments, computeRanking } = useTournamentStore();
+  const { tournaments, computeSeasonalRanking } = useTournamentStore();
   const sub = useSubscription();
   const isPremium = sub.isPremium();
 
@@ -39,10 +31,7 @@ const MyResults = () => {
         <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center space-y-2">
           <Diamond className="w-8 h-8 text-primary mx-auto" />
           <p className="text-xs text-muted-foreground">大会成績はプレミアム会員限定です</p>
-          <button
-            onClick={() => navigate("/premium/plan")}
-            className="text-xs text-primary font-bold mt-1"
-          >
+          <button onClick={() => navigate("/premium/plan")} className="text-xs text-primary font-bold mt-1">
             プレミアム登録 ›
           </button>
         </div>
@@ -51,110 +40,134 @@ const MyResults = () => {
   }
 
   const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const currentSeason = getSeasonOf(now);
+  const currentKey = seasonKey(currentSeason);
 
-  // Find earliest year with any user activity (completed entry where user participated)
-  const userYearMonths = new Set<string>();
+  // Find all seasons with user activity
+  const seasonsWithActivity = new Set<string>();
   for (const t of tournaments) {
     if (t.status !== "completed") continue;
     const userIn = t.entries.some(
-      (e) =>
-        e.status === "confirmed" &&
-        (e.registrantUserId === CURRENT_USER || e.partnerUserId === CURRENT_USER)
+      (e) => e.status === "confirmed" && (e.registrantUserId === CURRENT_USER || e.partnerUserId === CURRENT_USER)
     );
     if (!userIn) continue;
-    const d = new Date(t.scheduledAt);
-    userYearMonths.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    seasonsWithActivity.add(seasonKey(getSeasonOf(t.scheduledAt)));
   }
-  // Always include current month so it appears for live ranking
-  userYearMonths.add(thisMonth);
+  seasonsWithActivity.add(currentKey); // always include current
 
-  const monthScores = [...userYearMonths]
-    .map((ym) => computePersonalMonthlyScore(CURRENT_USER, ym, tournaments))
-    .filter((s) => s.yearMonth === thisMonth || s.tournaments.length > 0 || s.total > 0)
-    .sort((a, b) => b.yearMonth.localeCompare(a.yearMonth));
+  const allSeasons = [...seasonsWithActivity].sort((a, b) => b.localeCompare(a));
+  const seasonSummaries = allSeasons.map((sk) => computePersonalSeasonalSummary(CURRENT_USER, sk, tournaments));
 
-  const liveScore = monthScores.find((s) => s.yearMonth === thisMonth);
-  const pastMonths = monthScores.filter((s) => s.yearMonth !== thisMonth);
+  const liveSummary = seasonSummaries.find((s) => s.seasonKey === currentKey);
+  const pastSummaries = seasonSummaries.filter((s) => s.seasonKey !== currentKey && (s.tournaments.length > 0 || s.played > 0));
 
-  const ranking = computeRanking(thisMonth);
+  const ranking = computeSeasonalRanking(currentKey);
   const myRank = ranking.findIndex((r) => r.userId === CURRENT_USER);
-  const cta = liveScore ? nextRankCta(myRank >= 0 ? myRank + 1 : null, liveScore.total, ranking) : undefined;
+
+  const me = getPlayer(CURRENT_USER);
+  const myTier = me ? getRankTier(me.rating) : null;
+  const totalPP = computeTotalPadelPoints(CURRENT_USER, tournaments);
 
   // Year set for dropdown
-  const yearSet = new Set<string>(pastMonths.map((s) => s.yearMonth.slice(0, 4)));
+  const yearSet = new Set<string>(pastSummaries.map((s) => s.seasonKey.slice(0, 4)));
   const years = [...yearSet].sort((a, b) => b.localeCompare(a));
   const currentYear = String(now.getFullYear());
-  const defaultYear = years.includes(currentYear) ? currentYear : years[0];
-  const [selectedYear, setSelectedYear] = useState<string>(defaultYear ?? currentYear);
+  const defaultYear = years.includes(currentYear) ? currentYear : (years[0] ?? currentYear);
+  const [selectedYear, setSelectedYear] = useState<string>(defaultYear);
 
-  const visibleMonths = pastMonths.filter((s) => s.yearMonth.slice(0, 4) === selectedYear);
+  const visibleSeasons = pastSummaries.filter((s) => s.seasonKey.slice(0, 4) === selectedYear);
 
   return (
     <InnerPageLayout title="大会成績">
-      <p className="text-[11px] text-muted-foreground mb-3">
-        あなたの参加履歴
-      </p>
+      <p className="text-[11px] text-muted-foreground mb-3">あなたの参加履歴</p>
 
-      {/* Live this-month card */}
-      {liveScore && (
-        <div className="mb-5">
-          <LiveMonthCard
-            variant="full"
-            yearMonthLabel={formatYM(liveScore.yearMonth)}
-            totalScore={liveScore.total}
-            rank={myRank >= 0 ? myRank + 1 : null}
-            played={liveScore.played}
-            cta={cta}
-          />
+      {/* Live this-season hero card */}
+      {liveSummary && (
+        <div className="bg-gray-5 text-primary-foreground rounded-[12px] p-5 mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] opacity-80">{formatSeasonLabel(currentSeason)}（進行中）</p>
+            {myTier && (
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded bg-white/10 ${myTier.cls}`}>
+                {myTier.emoji} {myTier.label}
+              </span>
+            )}
+          </div>
+          <div className="flex items-baseline gap-2 mb-3">
+            <span className="text-4xl font-bold text-primary">{me?.rating ?? 1400}</span>
+            <span className="text-sm opacity-80">レーティング</span>
+            <span className={`text-xs ml-2 font-bold flex items-center gap-0.5 ${liveSummary.ratingChange >= 0 ? "text-primary" : "text-destructive"}`}>
+              {liveSummary.ratingChange >= 0 && <TrendingUp className="w-3 h-3" />}
+              {liveSummary.ratingChange >= 0 ? "+" : ""}{liveSummary.ratingChange}
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <p className="text-[10px] opacity-70">即時順位</p>
+              <p className="text-base font-bold">{myRank >= 0 ? `${myRank + 1}位` : "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] opacity-70">勝率</p>
+              <p className="text-base font-bold">{liveSummary.played === 0 ? "—" : `${Math.round((liveSummary.won / liveSummary.played) * 100)}%`}</p>
+              <p className="text-[10px] opacity-70">{liveSummary.won}勝{liveSummary.played - liveSummary.won}敗</p>
+            </div>
+            <div>
+              <p className="text-[10px] opacity-70">PP</p>
+              <p className="text-base font-bold">{totalPP.toLocaleString()}</p>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Past months — year dropdown + flat list */}
-      {pastMonths.length === 0 ? (
+      {/* Past seasons — year dropdown */}
+      {pastSummaries.length === 0 ? (
         <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center">
           <p className="text-xs text-muted-foreground">過去の参加記録はまだありません</p>
         </div>
       ) : (
         <>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-bold text-foreground">過去の成績</p>
+            <p className="text-sm font-bold text-foreground">過去のシーズン</p>
             <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-[100px] h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {years.map((y) => (
-                  <SelectItem key={y} value={y}>
-                    {y}年
-                  </SelectItem>
+                  <SelectItem key={y} value={y}>{y}年</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          {visibleMonths.length === 0 ? (
+          {visibleSeasons.length === 0 ? (
             <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center">
               <p className="text-xs text-muted-foreground">{selectedYear}年の参加記録はありません</p>
             </div>
           ) : (
             <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden">
-              {visibleMonths.map((s) => (
-                <button
-                  key={s.yearMonth}
-                  onClick={() => navigate(`/game/my-results/${s.yearMonth}`)}
-                  className="w-full p-3 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground">{formatYM(s.yearMonth)}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      出場 {s.tournaments.length} 大会 ・ {s.won}勝{s.played - s.won}敗
-                      {s.bestRank ? ` ・ 最高 ${s.bestRank}位` : ""}
-                    </p>
-                  </div>
-                  <p className="text-lg font-bold text-primary">{s.total}</p>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                </button>
-              ))}
+              {visibleSeasons.map((s) => {
+                const trophy = s.bestRank === 1 ? "🥇" : s.bestRank === 2 ? "🥈" : s.bestRank === 3 ? "🥉" : null;
+                return (
+                  <button
+                    key={s.seasonKey}
+                    onClick={() => navigate(`/game/my-results/${s.seasonKey}`)}
+                    className="w-full p-3 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                        {formatSeasonLabel({ year: parseInt(s.seasonKey.split("-Q")[0]), quarter: parseInt(s.seasonKey.split("-Q")[1]) as 1 | 2 | 3 | 4 })}
+                        {trophy && <span className="text-base">{trophy}</span>}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {s.tournaments.length} 大会 ・ {s.won}勝{s.played - s.won}敗
+                        {s.bestRank ? ` ・ 最高 ${s.bestRank}位` : ""}
+                        ・ レート変動 {s.ratingChange >= 0 ? "+" : ""}{s.ratingChange}
+                      </p>
+                    </div>
+                    <p className="text-sm font-bold text-primary">{s.padelPoints}<span className="text-[10px] ml-0.5">PP</span></p>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                );
+              })}
             </div>
           )}
         </>
