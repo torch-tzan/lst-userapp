@@ -2,10 +2,41 @@ import { useCallback, useSyncExternalStore } from "react";
 import { addNotification } from "@/lib/notificationStore";
 
 export const CURRENT_USER = "user-001";
-export const POINTS_PARTICIPATION = 10;
-export const POINTS_WIN = 50;
 
 export const PARTNER_INVITE_HOURS = 72;
+
+// ── ELO / Tier types ──
+
+export type SkillLevel = "beginner" | "intermediate" | "advanced";
+export type RankTier = "bronze" | "silver" | "gold" | "platinum" | "master";
+
+export const STARTING_RATING: Record<SkillLevel, number> = {
+  beginner: 1400,
+  intermediate: 1600,
+  advanced: 1800,
+};
+
+export const RANK_TIER_RANGES: { tier: RankTier; min: number; max: number; emoji: string; label: string; cls: string }[] = [
+  { tier: "bronze",   min: 1400, max: 1599, emoji: "🥉", label: "Bronze",   cls: "text-amber-700" },
+  { tier: "silver",   min: 1600, max: 1799, emoji: "🥈", label: "Silver",   cls: "text-gray-500" },
+  { tier: "gold",     min: 1800, max: 1999, emoji: "🥇", label: "Gold",     cls: "text-yellow-600" },
+  { tier: "platinum", min: 2000, max: 2199, emoji: "💎", label: "Platinum", cls: "text-cyan-500" },
+  { tier: "master",   min: 2200, max: 9999, emoji: "👑", label: "Master",   cls: "text-purple-600" },
+];
+
+export function getRankTier(rating: number): typeof RANK_TIER_RANGES[number] {
+  return RANK_TIER_RANGES.find((r) => rating >= r.min && rating <= r.max) ?? RANK_TIER_RANGES[0];
+}
+
+// Padel Points constants
+export const PP_MATCH_WIN = 20;
+export const PP_TOURNAMENT_CHAMPION = 1000;
+export const PP_TOURNAMENT_RUNNER_UP = 500;
+export const PP_TOURNAMENT_THIRD = 200;
+export const PP_LEAGUE_MATCH_WIN = 30;
+export const PP_SEASON_CHAMPION = 5000;
+export const PP_SEASON_RUNNER_UP = 2000;
+export const PP_SEASON_THIRD = 1000;
 
 export type TournamentFormat = "doubles";
 export type TournamentCapacity = 8 | 16 | 32;
@@ -22,6 +53,8 @@ export interface PlayerRef {
   email: string;
   phone: string;
   displayId: string;
+  skillLevel: SkillLevel;
+  rating: number;
 }
 
 export interface TournamentEntry {
@@ -71,18 +104,18 @@ export interface Tournament {
 }
 
 const PLAYER_DIRECTORY: PlayerRef[] = [
-  { userId: CURRENT_USER, name: "田中 太郎", email: "tanaka@example.com", phone: "090-1111-0001", displayId: "LST-AB12CD" },
-  { userId: "user-002", name: "佐藤 花子", email: "sato.h@example.com", phone: "090-1111-0002", displayId: "LST-EF34GH" },
-  { userId: "user-003", name: "鈴木 一郎", email: "suzuki@example.com", phone: "090-1111-0003", displayId: "LST-IJ56KL" },
-  { userId: "user-004", name: "高橋 美咲", email: "takahashi@example.com", phone: "090-1111-0004", displayId: "LST-MN78OP" },
-  { userId: "user-005", name: "渡辺 健太", email: "watanabe@example.com", phone: "090-1111-0005", displayId: "LST-QR90ST" },
-  { userId: "user-006", name: "伊藤 愛", email: "ito.a@example.com", phone: "090-1111-0006", displayId: "LST-UV12WX" },
-  { userId: "user-007", name: "山本 大輝", email: "yamamoto@example.com", phone: "090-1111-0007", displayId: "LST-YZ34AB" },
-  { userId: "user-008", name: "中村 裕子", email: "nakamura@example.com", phone: "090-1111-0008", displayId: "LST-CD56EF" },
-  { userId: "user-009", name: "吉田 恵", email: "yoshida@example.com", phone: "090-1111-0009", displayId: "LST-GH78IJ" },
-  { userId: "user-010", name: "松本 翔太", email: "matsumoto@example.com", phone: "090-1111-0010", displayId: "LST-KL90MN" },
-  { userId: "user-011", name: "小林 優", email: "kobayashi@example.com", phone: "090-1111-0011", displayId: "LST-OP12QR" },
-  { userId: "user-012", name: "加藤 翼", email: "kato@example.com", phone: "090-1111-0012", displayId: "LST-ST34UV" },
+  { userId: CURRENT_USER, name: "田中 太郎",  email: "tanaka@example.com",     phone: "090-1111-0001", displayId: "LST-AB12CD", skillLevel: "intermediate", rating: 1700 },
+  { userId: "user-002",   name: "佐藤 花子",  email: "sato.h@example.com",     phone: "090-1111-0002", displayId: "LST-EF34GH", skillLevel: "intermediate", rating: 1820 },
+  { userId: "user-003",   name: "鈴木 一郎",  email: "suzuki@example.com",     phone: "090-1111-0003", displayId: "LST-IJ56KL", skillLevel: "advanced",     rating: 1950 },
+  { userId: "user-004",   name: "高橋 美咲",  email: "takahashi@example.com",  phone: "090-1111-0004", displayId: "LST-MN78OP", skillLevel: "beginner",     rating: 1450 },
+  { userId: "user-005",   name: "渡辺 健太",  email: "watanabe@example.com",   phone: "090-1111-0005", displayId: "LST-QR90ST", skillLevel: "intermediate", rating: 1650 },
+  { userId: "user-006",   name: "伊藤 愛",    email: "ito.a@example.com",      phone: "090-1111-0006", displayId: "LST-UV12WX", skillLevel: "advanced",     rating: 2050 },
+  { userId: "user-007",   name: "山本 大輝",  email: "yamamoto@example.com",   phone: "090-1111-0007", displayId: "LST-YZ34AB", skillLevel: "intermediate", rating: 1720 },
+  { userId: "user-008",   name: "中村 裕子",  email: "nakamura@example.com",   phone: "090-1111-0008", displayId: "LST-CD56EF", skillLevel: "beginner",     rating: 1480 },
+  { userId: "user-009",   name: "吉田 恵",    email: "yoshida@example.com",    phone: "090-1111-0009", displayId: "LST-GH78IJ", skillLevel: "intermediate", rating: 1580 },
+  { userId: "user-010",   name: "松本 翔太",  email: "matsumoto@example.com",  phone: "090-1111-0010", displayId: "LST-KL90MN", skillLevel: "advanced",     rating: 2230 },
+  { userId: "user-011",   name: "小林 優",    email: "kobayashi@example.com",  phone: "090-1111-0011", displayId: "LST-OP12QR", skillLevel: "beginner",     rating: 1420 },
+  { userId: "user-012",   name: "加藤 翼",    email: "kato@example.com",       phone: "090-1111-0012", displayId: "LST-ST34UV", skillLevel: "intermediate", rating: 1610 },
 ];
 
 export const PREMIUM_USERS = new Set([
@@ -111,6 +144,67 @@ function computeExpiresAt(invitedAt: string, registrationDeadline: string): stri
   expireFrom72h.setHours(expireFrom72h.getHours() + PARTNER_INVITE_HOURS);
   const deadline = new Date(registrationDeadline);
   return (expireFrom72h < deadline ? expireFrom72h : deadline).toISOString();
+}
+
+// ── ELO rating calculation ──
+
+export interface RatingChange {
+  userId: string;
+  before: number;
+  after: number;
+  delta: number;
+}
+
+/**
+ * Compute ELO-style rating change for a doubles match.
+ * Same tier (rating diff < 100): ±18
+ * 1 tier diff (100-300): higher rank loses big (-25), lower rank wins big (+25)
+ *                        higher rank wins small (+10), lower rank loses small (-10)
+ * 2+ tier diff: capped at 1-tier values
+ */
+export function computeRatingDelta(myRating: number, opponentAvgRating: number, won: boolean): number {
+  const diff = opponentAvgRating - myRating; // positive if opponent is higher rank
+  const isSameTier = Math.abs(diff) < 100;
+  if (isSameTier) return won ? 18 : -18;
+  // 1+ tier difference
+  const opponentIsHigher = diff > 0;
+  if (opponentIsHigher) {
+    return won ? 25 : -10;
+  } else {
+    return won ? 10 : -25;
+  }
+}
+
+// ── Season helpers ──
+
+export interface Season {
+  year: number;
+  quarter: 1 | 2 | 3 | 4;
+}
+
+export function getSeasonOf(date: Date | string): Season {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const month = d.getMonth() + 1; // 1-12
+  const quarter = Math.ceil(month / 3) as 1 | 2 | 3 | 4;
+  return { year: d.getFullYear(), quarter };
+}
+
+export function seasonKey(s: Season): string {
+  return `${s.year}-Q${s.quarter}`;
+}
+
+export function parseSeasonKey(key: string): Season {
+  const [y, q] = key.split("-Q");
+  return { year: parseInt(y), quarter: parseInt(q) as 1 | 2 | 3 | 4 };
+}
+
+export function formatSeasonLabel(s: Season): string {
+  return `${s.year}年 Q${s.quarter}`;
+}
+
+export function seasonMonthRange(s: Season): { startMonth: number; endMonth: number } {
+  const startMonth = (s.quarter - 1) * 3 + 1;
+  return { startMonth, endMonth: startMonth + 2 };
 }
 
 interface StoreState {
@@ -212,7 +306,7 @@ function buildInitialState(): StoreState {
     registrationDeadline: in15days,
     status: "upcoming",
     heroImageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&h=450&fit=crop",
-    description: "5月最大のダブルストーナメント。\n32ペア定員、3週間にわたる本格大会。\nランキング上位入賞で月間積分大幅獲得。",
+    description: "5月最大のダブルストーナメント。\n32ペア定員、3週間にわたる本格大会。\nランキング上位入賞でシーズン積分大幅獲得。",
     accessInfo: "JR 東京駅 八重洲口 徒歩7分\nLST 本店コートA",
     contactInfo: "LST 本店 03-1234-5678",
     entries: [],
@@ -537,21 +631,16 @@ const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
 const getSnapshot = () => state;
 
-/* ── Personal scoring ── */
+// ── Personal seasonal scoring ──
 
-function yearMonthOf(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-export interface PersonalMonthlyScore {
-  yearMonth: string;
-  participation: number;
-  wins: number;
-  total: number;
+export interface PersonalSeasonalSummary {
+  seasonKey: string;
+  ratingChange: number;     // sum of all rating deltas in this season
+  endingRating: number;     // rating at end of season (or current if ongoing)
+  padelPoints: number;
   played: number;
   won: number;
-  bestRank: number | null;
+  bestRank: number | null;  // best tournament rank
   tournaments: {
     tournamentId: string;
     title: string;
@@ -559,26 +648,31 @@ export interface PersonalMonthlyScore {
     matchesPlayed: number;
     matchesWon: number;
     finalRank: number | null;
-    score: number;
+    ratingDelta: number;    // rating change from this tournament
+    padelPoints: number;    // padel points from this tournament
   }[];
 }
 
-export function computePersonalMonthlyScore(
+export function computePersonalSeasonalSummary(
   userId: string,
-  yearMonth: string,
+  season: string,
   tournaments: Tournament[]
-): PersonalMonthlyScore {
-  const inMonth = tournaments.filter(
-    (t) => t.status === "completed" && yearMonthOf(t.scheduledAt) === yearMonth && t.results
+): PersonalSeasonalSummary {
+  const player = getPlayer(userId);
+  const startingRating = player?.rating ?? 1400;
+
+  const inSeason = tournaments.filter(
+    (t) => t.status === "completed" && seasonKey(getSeasonOf(t.scheduledAt)) === season && t.results
   );
-  let participation = 0;
-  let wins = 0;
+
   let played = 0;
   let won = 0;
   let bestRank: number | null = null;
-  const list: PersonalMonthlyScore["tournaments"] = [];
+  let totalRatingDelta = 0;
+  let totalPadelPoints = 0;
+  const list: PersonalSeasonalSummary["tournaments"] = [];
 
-  for (const t of inMonth) {
+  for (const t of inSeason) {
     const entry = t.entries.find(
       (e) => e.status === "confirmed" && (e.registrantUserId === userId || e.partnerUserId === userId)
     );
@@ -586,6 +680,8 @@ export function computePersonalMonthlyScore(
 
     let mPlayed = 0;
     let mWon = 0;
+    let tRatingDelta = 0;
+
     for (const m of t.results!.matches) {
       const onSide1 = m.p1UserId === userId || m.p1PartnerId === userId;
       const onSide2 = m.p2UserId === userId || m.p2PartnerId === userId;
@@ -593,24 +689,45 @@ export function computePersonalMonthlyScore(
       mPlayed++;
       const isWin = (onSide1 && m.winnerSide === 1) || (onSide2 && m.winnerSide === 2);
       if (isWin) mWon++;
+
+      // Compute rating delta for this match
+      const myPair = onSide1
+        ? [m.p1UserId, m.p1PartnerId].filter(Boolean) as string[]
+        : [m.p2UserId, m.p2PartnerId].filter(Boolean) as string[];
+      const oppPair = onSide1
+        ? [m.p2UserId, m.p2PartnerId].filter(Boolean) as string[]
+        : [m.p1UserId, m.p1PartnerId].filter(Boolean) as string[];
+
+      const myAvg = myPair.length > 0
+        ? myPair.map((u) => getPlayer(u)?.rating ?? 1400).reduce((a, b) => a + b, 0) / myPair.length
+        : startingRating;
+      const oppAvg = oppPair.length > 0
+        ? oppPair.map((u) => getPlayer(u)?.rating ?? 1400).reduce((a, b) => a + b, 0) / oppPair.length
+        : 1400;
+
+      tRatingDelta += computeRatingDelta(myAvg, oppAvg, isWin);
     }
-    const mLost = mPlayed - mWon;
-    // 每場比賽：勝 +50、敗 +10（兩者互斥）
-    participation += mLost * POINTS_PARTICIPATION;
-    wins += mWon * POINTS_WIN;
+
     played += mPlayed;
     won += mWon;
+    totalRatingDelta += tRatingDelta;
 
     const ranking = t.results!.rankings.find(
       (r) => r.userId === userId || r.partnerId === userId
     );
     let finalRank: number | null = null;
+    let podiumPP = 0;
     if (ranking) {
       finalRank = ranking.rank;
       if (bestRank == null || ranking.rank < bestRank) bestRank = ranking.rank;
+      if (ranking.rank === 1) podiumPP = PP_TOURNAMENT_CHAMPION;
+      else if (ranking.rank === 2) podiumPP = PP_TOURNAMENT_RUNNER_UP;
+      else if (ranking.rank === 3) podiumPP = PP_TOURNAMENT_THIRD;
     }
 
-    const tScore = mLost * POINTS_PARTICIPATION + mWon * POINTS_WIN;
+    const tPadelPoints = mWon * PP_MATCH_WIN + podiumPP;
+    totalPadelPoints += tPadelPoints;
+
     list.push({
       tournamentId: t.id,
       title: t.title,
@@ -618,15 +735,16 @@ export function computePersonalMonthlyScore(
       matchesPlayed: mPlayed,
       matchesWon: mWon,
       finalRank,
-      score: tScore,
+      ratingDelta: tRatingDelta,
+      padelPoints: tPadelPoints,
     });
   }
 
   return {
-    yearMonth,
-    participation,
-    wins,
-    total: participation + wins,
+    seasonKey: season,
+    ratingChange: totalRatingDelta,
+    endingRating: startingRating + totalRatingDelta, // simplified — assumes player.rating is the current cumulative
+    padelPoints: totalPadelPoints,
     played,
     won,
     bestRank,
@@ -634,22 +752,25 @@ export function computePersonalMonthlyScore(
   };
 }
 
-export interface MonthlyRankingRow {
+export interface SeasonalRankingRow {
   userId: string;
   name: string;
-  score: number;
+  rating: number;
+  tier: RankTier;
   played: number;
   won: number;
-  bestRank: number | null;
+  ratingChange: number;
 }
 
-export function computeMonthlyRanking(
-  yearMonth: string,
+export function computeSeasonalRanking(
+  season: string,
   tournaments: Tournament[]
-): MonthlyRankingRow[] {
+): SeasonalRankingRow[] {
+  // Collect all userIds who participated in this season's tournaments
   const allUserIds = new Set<string>();
   tournaments.forEach((t) => {
-    if (yearMonthOf(t.scheduledAt) !== yearMonth) return;
+    if (t.status !== "completed") return;
+    if (seasonKey(getSeasonOf(t.scheduledAt)) !== season) return;
     t.entries.forEach((e) => {
       if (e.status !== "confirmed") return;
       allUserIds.add(e.registrantUserId);
@@ -657,20 +778,48 @@ export function computeMonthlyRanking(
     });
   });
 
-  const rows: MonthlyRankingRow[] = [];
+  const rows: SeasonalRankingRow[] = [];
   for (const uid of allUserIds) {
-    const s = computePersonalMonthlyScore(uid, yearMonth, tournaments);
+    const summary = computePersonalSeasonalSummary(uid, season, tournaments);
     const player = getPlayer(uid);
+    const finalRating = player?.rating ?? 1400; // current/cumulative rating
     rows.push({
       userId: uid,
       name: player?.name ?? uid,
-      score: s.total,
-      played: s.played,
-      won: s.won,
-      bestRank: s.bestRank,
+      rating: finalRating,
+      tier: getRankTier(finalRating).tier,
+      played: summary.played,
+      won: summary.won,
+      ratingChange: summary.ratingChange,
     });
   }
-  return rows.sort((a, b) => b.score - a.score || b.won - a.won);
+  return rows.sort((a, b) => b.rating - a.rating);
+}
+
+/** Total Padel Points accumulated across ALL completed tournaments for a user */
+export function computeTotalPadelPoints(userId: string, tournaments: Tournament[]): number {
+  let total = 0;
+  for (const t of tournaments) {
+    if (t.status !== "completed" || !t.results) continue;
+    const entry = t.entries.find(
+      (e) => e.status === "confirmed" && (e.registrantUserId === userId || e.partnerUserId === userId)
+    );
+    if (!entry) continue;
+    let mWon = 0;
+    for (const m of t.results.matches) {
+      const onSide1 = m.p1UserId === userId || m.p1PartnerId === userId;
+      const onSide2 = m.p2UserId === userId || m.p2PartnerId === userId;
+      if (!onSide1 && !onSide2) continue;
+      const isWin = (onSide1 && m.winnerSide === 1) || (onSide2 && m.winnerSide === 2);
+      if (isWin) mWon++;
+    }
+    total += mWon * PP_MATCH_WIN;
+    const ranking = t.results.rankings.find((r) => r.userId === userId || r.partnerId === userId);
+    if (ranking?.rank === 1) total += PP_TOURNAMENT_CHAMPION;
+    else if (ranking?.rank === 2) total += PP_TOURNAMENT_RUNNER_UP;
+    else if (ranking?.rank === 3) total += PP_TOURNAMENT_THIRD;
+  }
+  return total;
 }
 
 /* ── Hook ── */
@@ -940,7 +1089,8 @@ export function useTournamentStore() {
     getEntry,
     getPendingInvitesForUser,
     getCompletedTournaments,
-    computeMyMonthlyScore: (ym: string) => computePersonalMonthlyScore(CURRENT_USER, ym, data.tournaments),
-    computeRanking: (ym: string) => computeMonthlyRanking(ym, data.tournaments),
+    computeMySeasonalSummary: (season: string) => computePersonalSeasonalSummary(CURRENT_USER, season, data.tournaments),
+    computeSeasonalRanking: (season: string) => computeSeasonalRanking(season, data.tournaments),
+    computeMyTotalPadelPoints: () => computeTotalPadelPoints(CURRENT_USER, data.tournaments),
   };
 }
