@@ -36,11 +36,12 @@ const ROUND_LABEL: Record<number, string> = {
 const TournamentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getTournament, acceptPartnerInvite, cancelMyPendingInvite } = useTournamentStore();
+  const { getTournament, acceptPartnerInvite, cancelMyPendingInvite, cancelMyConfirmedEntry } = useTournamentStore();
   const sub = useSubscription();
   const isPremium = sub.isPremium();
   const { toast } = useToast();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showCancelConfirmedDialog, setShowCancelConfirmedDialog] = useState(false);
 
   const t = id ? getTournament(id) : undefined;
 
@@ -63,6 +64,10 @@ const TournamentDetail = () => {
   const isInvitee = myEntry?.status === "pending_partner_confirmation" && myEntry.partnerUserId === CURRENT_USER;
   const isInviter = myEntry?.status === "pending_partner_confirmation" && myEntry.registrantUserId === CURRENT_USER;
 
+  const isConfirmedAndCancellable =
+    myEntry?.status === "confirmed" &&
+    (t.status === "registration_open" || t.status === "registration_closed");
+
   const handleEntry = () => {
     if (!isPremium) {
       navigate("/premium/plan");
@@ -79,6 +84,8 @@ const TournamentDetail = () => {
           ? undefined
           : isInviter
           ? "パートナーを変更する"
+          : isConfirmedAndCancellable
+          ? "エントリーを取り消す"
           : myEntry
           ? "エントリー済"
           : !isOpen
@@ -90,13 +97,15 @@ const TournamentDetail = () => {
           : "プレミアム会員になってエントリー"
       }
       ctaDisabled={
-        isInviter
+        isInviter || isConfirmedAndCancellable
           ? false
           : !!myEntry || !canRegister
       }
       onCtaClick={
         isInviter
           ? () => setShowCancelDialog(true)
+          : isConfirmedAndCancellable
+          ? () => setShowCancelConfirmedDialog(true)
           : handleEntry
       }
     >
@@ -301,6 +310,36 @@ const TournamentDetail = () => {
               }}
             >
               変更する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showCancelConfirmedDialog} onOpenChange={setShowCancelConfirmedDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>エントリーを取り消しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              エントリーをキャンセルすると、他の参加者にも通知されます。再エントリーが必要な場合は受付期間内に手続きしてください。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>戻る</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (myEntry) {
+                  const r = cancelMyConfirmedEntry(myEntry.id);
+                  if (r.ok) {
+                    toast({ title: "エントリーを取り消しました", description: "他の参加者にも通知されました" });
+                    setShowCancelConfirmedDialog(false);
+                  } else {
+                    toast({ title: "取り消しに失敗しました", description: r.error });
+                  }
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              取り消す
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

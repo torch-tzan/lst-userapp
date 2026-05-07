@@ -16,6 +16,7 @@ export interface PushNotification {
     | "tournament_partner_declined"
     | "tournament_partner_expired"
     | "tournament_partner_cancelled"
+    | "tournament_participant_cancelled"
     | "tournament_starting_soon"
     | "tournament_results_published"
     | "monthly_ranking_finalized";
@@ -123,6 +124,13 @@ export const seedDemoNotifications = (): void => {
       message: "「3月度 ダブルストーナメント」への招待が72時間経過したため失効しました。",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
       read: true,
+    },
+    {
+      type: "tournament_participant_cancelled",
+      title: "他の参加者がエントリーを取り消しました",
+      message: "山本 大輝さんが「5月度 ダブルストーナメント」のエントリーを取り消しました。",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+      read: false,
     },
     {
       type: "tournament_starting_soon",

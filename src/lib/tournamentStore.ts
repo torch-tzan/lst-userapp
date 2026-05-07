@@ -834,6 +834,70 @@ export function useTournamentStore() {
     []
   );
 
+  const cancelMyConfirmedEntry = useCallback(
+    (entryId: string): { ok: boolean; error?: string } => {
+      let foundTournament: Tournament | undefined;
+      let myCancelledEntry: TournamentEntry | undefined;
+      state = {
+        ...state,
+        tournaments: state.tournaments.map((t) => {
+          const idx = t.entries.findIndex(
+            (e) =>
+              e.id === entryId &&
+              e.status === "confirmed" &&
+              (e.registrantUserId === CURRENT_USER || e.partnerUserId === CURRENT_USER)
+          );
+          if (idx < 0) return t;
+          foundTournament = t;
+          myCancelledEntry = t.entries[idx];
+          const updated = [...t.entries];
+          updated[idx] = {
+            ...updated[idx],
+            status: "cancelled",
+            partnerRespondedAt: new Date().toISOString(),
+          };
+          return { ...t, entries: updated };
+        }),
+      };
+      if (!foundTournament || !myCancelledEntry) {
+        return { ok: false, error: "エントリーが見つかりません" };
+      }
+      emit();
+
+      // Notification to ME (confirmation of my own cancellation)
+      addNotification({
+        type: "tournament_partner_cancelled",
+        title: "エントリーを取り消しました",
+        message: `「${foundTournament.title}」のエントリーを取り消しました。`,
+      });
+
+      // Broadcast to OTHER confirmed entries in the same tournament
+      const otherConfirmedUsers = new Set<string>();
+      for (const e of foundTournament.entries) {
+        if (e.id === entryId) continue;
+        if (e.status !== "confirmed") continue;
+        if (e.registrantUserId && e.registrantUserId !== CURRENT_USER) {
+          otherConfirmedUsers.add(e.registrantUserId);
+        }
+        if (e.partnerUserId && e.partnerUserId !== CURRENT_USER) {
+          otherConfirmedUsers.add(e.partnerUserId);
+        }
+      }
+      // For demo purposes: fire ONE broadcast notification representing what other participants would receive.
+      // In production this would be a per-user push notification from the backend.
+      if (otherConfirmedUsers.size > 0) {
+        const myName = getPlayer(CURRENT_USER)?.name ?? "—";
+        addNotification({
+          type: "tournament_participant_cancelled",
+          title: "他の参加者がエントリーを取り消しました",
+          message: `${myName}さんが「${foundTournament.title}」のエントリーを取り消しました。（デモ：本来は他の参加者に届く通知）`,
+        });
+      }
+      return { ok: true };
+    },
+    []
+  );
+
   const getEntry = useCallback((entryId: string) => {
     for (const t of data.tournaments) {
       const e = t.entries.find((x) => x.id === entryId);
@@ -872,6 +936,7 @@ export function useTournamentStore() {
     acceptPartnerInvite,
     declinePartnerInvite,
     cancelMyPendingInvite,
+    cancelMyConfirmedEntry,
     getEntry,
     getPendingInvitesForUser,
     getCompletedTournaments,
