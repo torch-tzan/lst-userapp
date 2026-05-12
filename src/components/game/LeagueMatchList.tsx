@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useLeagueMatchBoardStore, type PostedMatch } from "@/lib/leagueMatchBoardStore";
 import { CURRENT_USER, getPlayer, getRankTier, type SkillLevel } from "@/lib/tournamentStore";
@@ -144,6 +145,11 @@ const LeagueMatchList = () => {
     navigate(`/profile/${hostUserId}`);
   };
 
+  const [fabPortalTarget, setFabPortalTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setFabPortalTarget(document.getElementById("phone-container"));
+  }, []);
+
   return (
     <>
       {/* Filter chips */}
@@ -220,15 +226,19 @@ const LeagueMatchList = () => {
         </div>
       )}
 
-      {/* Floating action button — pinned to bottom-right of phone container.
-          Phone is 390px wide centered in browser viewport, so right CSS uses 50% calc. */}
-      <button
-        onClick={() => navigate("/game/league/new")}
-        className="fixed bottom-[100px] right-[calc(50%-176px)] z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center hover:opacity-90 active:scale-95 transition-transform"
-        aria-label="募集を作成"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
+      {/* Floating action button — portaled into #phone-container so it sits
+          above the bottom nav inside the phone frame, independent of viewport size. */}
+      {fabPortalTarget &&
+        createPortal(
+          <button
+            onClick={() => navigate("/game/league/new")}
+            className="absolute bottom-[90px] right-5 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center hover:opacity-90 active:scale-95 transition-transform"
+            aria-label="募集を作成"
+          >
+            <Plus className="w-6 h-6" />
+          </button>,
+          fabPortalTarget
+        )}
     </>
   );
 };
