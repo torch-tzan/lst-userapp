@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
-import type { SkillLevel } from "@/lib/tournamentStore";
+import { setCurrentUserSkillLevel, type SkillLevel } from "@/lib/tournamentStore";
 import { Trophy, Award, Star } from "lucide-react";
 
 const LEVELS: {
@@ -44,7 +44,7 @@ const SignupLevel = () => {
 
   const submit = () => {
     if (!selected) return;
-    // For demo: just navigate to complete. In production, save to backend.
+    setCurrentUserSkillLevel(selected);
     navigate("/signup/complete");
   };
 

@@ -55,23 +55,36 @@ function LeagueBoardScoreForm({
   const [side1User2, setSide1User2] = useState<string>(allMembers[1] ?? "");
   const [side2User1, setSide2User1] = useState<string>(allMembers[2] ?? "");
   const [side2User2, setSide2User2] = useState<string>(allMembers[3] ?? "");
-  const [winnerSide, setWinnerSide] = useState<1 | 2>(1);
-  const [score, setScore] = useState("6-3");
+  const [side1Score, setSide1Score] = useState<string>("");
+  const [side2Score, setSide2Score] = useState<string>("");
 
   const selectedUsers = [side1User1, side1User2, side2User1, side2User2].filter(Boolean);
-  const isValid =
-    selectedUsers.length === 4 && new Set(selectedUsers).size === 4 && score.trim().length > 0;
+  const side1Num = Number(side1Score);
+  const side2Num = Number(side2Score);
+  const bothScoresFilled = side1Score !== "" && side2Score !== "";
+  const scoresValid =
+    bothScoresFilled && Number.isFinite(side1Num) && Number.isFinite(side2Num) && side1Num !== side2Num;
+  const allFourPickedUnique =
+    selectedUsers.length === 4 && new Set(selectedUsers).size === 4;
+  const isValid = allFourPickedUnique && scoresValid;
+  const derivedWinnerSide: 1 | 2 | null = bothScoresFilled
+    ? side1Num > side2Num
+      ? 1
+      : side1Num < side2Num
+      ? 2
+      : null
+    : null;
 
   const submit = () => {
-    if (!isValid) return;
+    if (!isValid || derivedWinnerSide === null) return;
     const r = submitMatchScore(matchId, {
       side1UserIds: [side1User1, side1User2],
       side2UserIds: [side2User1, side2User2],
-      winnerSide,
-      score: score.trim(),
+      winnerSide: derivedWinnerSide,
+      score: `${side1Num}-${side2Num}`,
     });
     if (r.ok) {
-      toast({ title: "比分を入力しました", description: "場館の確認をお待ちください" });
+      toast({ title: "比分を入力しました", description: "参加者全員の承認をお待ちください" });
       navigate(`/game/league/${matchId}`);
     } else {
       toast({ title: "失敗しました", description: r.error });
@@ -107,7 +120,7 @@ function LeagueBoardScoreForm({
       onCtaClick={submit}
     >
       <div className="bg-muted/30 border border-border rounded-[8px] p-3 mb-4 text-[11px] text-muted-foreground">
-        ホストとして比分を入力してください。送信後は場館の受付員が確認 → 確定となります。
+        ホストとして比分を入力してください。送信後は参加者全員（4名）の承認をお待ちください。
       </div>
 
       <p className="text-sm font-bold text-foreground mb-2">サイド 1（ペア）</p>
@@ -122,38 +135,46 @@ function LeagueBoardScoreForm({
         <PlayerSelect value={side2User2} onChange={setSide2User2} />
       </div>
 
-      <p className="text-sm font-bold text-foreground mb-2">勝者サイド</p>
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setWinnerSide(1)}
-          className={`flex-1 h-12 rounded-[8px] font-bold ${
-            winnerSide === 1
-              ? "bg-primary text-primary-foreground"
-              : "border border-border bg-background text-foreground"
-          }`}
-        >
-          サイド 1
-        </button>
-        <button
-          onClick={() => setWinnerSide(2)}
-          className={`flex-1 h-12 rounded-[8px] font-bold ${
-            winnerSide === 2
-              ? "bg-primary text-primary-foreground"
-              : "border border-border bg-background text-foreground"
-          }`}
-        >
-          サイド 2
-        </button>
-      </div>
-
       <p className="text-sm font-bold text-foreground mb-2">スコア</p>
-      <input
-        type="text"
-        value={score}
-        onChange={(e) => setScore(e.target.value)}
-        placeholder="例：6-3"
-        className="w-full bg-card border border-border rounded-[8px] p-3 text-sm mb-4"
-      />
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 mb-2">
+        <div>
+          <label className="text-[11px] text-muted-foreground block mb-1">サイド 1</label>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={99}
+            value={side1Score}
+            onChange={(e) => setSide1Score(e.target.value)}
+            placeholder="0"
+            className="w-full bg-card border border-border rounded-[8px] p-3 text-center text-2xl font-bold focus:border-primary outline-none"
+          />
+        </div>
+        <span className="text-xl font-bold text-muted-foreground pt-5">−</span>
+        <div>
+          <label className="text-[11px] text-muted-foreground block mb-1">サイド 2</label>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={99}
+            value={side2Score}
+            onChange={(e) => setSide2Score(e.target.value)}
+            placeholder="0"
+            className="w-full bg-card border border-border rounded-[8px] p-3 text-center text-2xl font-bold focus:border-primary outline-none"
+          />
+        </div>
+      </div>
+      {bothScoresFilled && derivedWinnerSide !== null && (
+        <p className="text-[11px] font-bold text-primary mb-4">
+          ✓ サイド {derivedWinnerSide} の勝ち
+        </p>
+      )}
+      {bothScoresFilled && derivedWinnerSide === null && (
+        <p className="text-[11px] font-bold text-destructive mb-4">
+          ※ スコアが同じです。勝者が決められません。
+        </p>
+      )}
     </InnerPageLayout>
   );
 }

@@ -50,7 +50,9 @@ const InnerPageLayout = ({
                 <ChevronLeft className="w-6 h-6" />
               </button>
             )}
-            <h1 className="text-xl font-bold text-center text-foreground">{title}</h1>
+            <h1 className="text-lg font-bold text-center text-foreground truncate px-12 w-full">
+              {title}
+            </h1>
             {statusBadge && (
               <div className="absolute right-[20px] flex items-center">
                 {statusBadge}

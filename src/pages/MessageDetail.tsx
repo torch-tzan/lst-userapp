@@ -85,6 +85,12 @@ const MessageDetail = () => {
       const updatedMessages = [...thread.messages, msg];
       setThread({ ...thread, messages: updatedMessages });
 
+      // Skip coach auto-reply for group threads — no coach to respond.
+      if (thread.threadKind === "group") {
+        setInput("");
+        return;
+      }
+
       // Auto-reply after delay
       setTimeout(() => {
         const replyText = getAutoReply(userText);
@@ -123,7 +129,11 @@ const MessageDetail = () => {
   }
 
   const isReview = thread.threadType === "review";
+  const isGroup = thread.threadKind === "group";
   const inputLocked = isThreadInputLocked(thread);
+  const titleSuffix = isGroup && thread.participantList
+    ? `（${thread.participantList.length}人）`
+    : "";
 
   // Human-readable countdown helpers
   const formatMsDiff = (targetMs: number): string => {
@@ -421,7 +431,7 @@ const MessageDetail = () => {
   };
 
   return (
-    <InnerPageLayout title={thread.coachName}>
+    <InnerPageLayout title={`${thread.coachName}${titleSuffix}`}>
       <div className="-mx-[20px] -mt-6 -mb-6 flex flex-col" style={{ height: "calc(100vh - 200px)" }}>
         {/* Review state banner (sticky) */}
         {banner && (

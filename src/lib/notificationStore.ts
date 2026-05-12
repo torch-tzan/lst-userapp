@@ -26,7 +26,10 @@ export interface PushNotification {
     | "league_match_filled"
     | "league_match_cancelled"
     | "league_score_submitted"
-    | "league_score_confirmed";
+    | "league_score_confirmed"
+    | "league_score_approval"
+    | "league_match_completed"
+    | "league_match_application_withdrawn";
   title: string;
   message: string;
   bookingId?: string;

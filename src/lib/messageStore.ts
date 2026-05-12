@@ -32,9 +32,15 @@ export interface ChatMessage {
 
 export type ReviewState = "awaiting_coach" | "in_review" | "completed" | "refunded";
 
+export interface ThreadParticipant {
+  userId: string;
+  name: string;
+  role: "host" | "participant";
+}
+
 export interface MessageThread {
   id: string;
-  coachName: string;
+  coachName: string; // doubles as display title for group threads
   coachInitial: string;
   coachAvatar?: string;
   bookingId: string;
@@ -42,6 +48,11 @@ export interface MessageThread {
   createdAt: string;
   readCount?: number; // number of messages the user has seen
   threadType?: "normal" | "review"; // review = online video review thread
+  // ── Group / linked-entity (league match chats) ──
+  threadKind?: "1on1" | "group"; // undefined → treat as "1on1"
+  linkedEntityType?: "league-match" | "booking";
+  linkedEntityId?: string;
+  participantList?: ThreadParticipant[];
   // Review lifecycle (review threads only)
   reviewState?: ReviewState;
   reviewSubmittedAt?: string;        // ISO — thread 建立時間（7天退費倒數起點）
@@ -74,6 +85,15 @@ export const getThreadByBookingId = (bookingId: string): MessageThread | undefin
 
 export const getThreadById = (threadId: string): MessageThread | undefined => {
   return getThreads().find((t) => t.id === threadId);
+};
+
+export const getThreadByLinkedEntity = (
+  entityType: "league-match" | "booking",
+  entityId: string,
+): MessageThread | undefined => {
+  return getThreads().find(
+    (t) => t.linkedEntityType === entityType && t.linkedEntityId === entityId,
+  );
 };
 
 const now = () => {
@@ -348,6 +368,79 @@ export const createReviewThread = (
   threads.unshift(thread);
   saveThreads(threads);
   return thread;
+};
+
+/**
+ * Create a group thread linked to an entity (e.g. a league match).
+ * Idempotent: if a thread for the same entity already exists, returns it.
+ */
+export const createGroupThread = (opts: {
+  linkedEntityType: "league-match";
+  linkedEntityId: string;
+  title: string;
+  participants: ThreadParticipant[];
+  initialSystemMessage?: string;
+  initialMessages?: ChatMessage[];
+}): MessageThread => {
+  const threads = getThreads();
+  const existing = threads.find(
+    (t) => t.linkedEntityType === opts.linkedEntityType && t.linkedEntityId === opts.linkedEntityId,
+  );
+  if (existing) return existing;
+
+  const messages: ChatMessage[] = [];
+  if (opts.initialSystemMessage) {
+    messages.push({
+      id: `msg-sys-${Date.now()}`,
+      sender: "system",
+      text: opts.initialSystemMessage,
+      time: now(),
+    });
+  }
+  if (opts.initialMessages) {
+    messages.push(...opts.initialMessages);
+  }
+
+  const thread: MessageThread = {
+    id: `thread-${opts.linkedEntityType}-${opts.linkedEntityId}`,
+    coachName: opts.title,
+    coachInitial: "👥",
+    bookingId: "", // unused for group threads
+    createdAt: new Date().toISOString(),
+    threadKind: "group",
+    linkedEntityType: opts.linkedEntityType,
+    linkedEntityId: opts.linkedEntityId,
+    participantList: opts.participants,
+    messages,
+  };
+
+  threads.unshift(thread);
+  saveThreads(threads);
+  return thread;
+};
+
+/** Add a participant to a group thread, with a system "joined" message. */
+export const addParticipantToThread = (
+  threadId: string,
+  participant: ThreadParticipant,
+): { ok: boolean; error?: string } => {
+  const threads = getThreads();
+  const thread = threads.find((t) => t.id === threadId);
+  if (!thread) return { ok: false, error: "thread not found" };
+  if (thread.threadKind !== "group") return { ok: false, error: "not a group thread" };
+  if (!thread.participantList) thread.participantList = [];
+  if (thread.participantList.some((p) => p.userId === participant.userId)) {
+    return { ok: true }; // already in
+  }
+  thread.participantList.push(participant);
+  thread.messages.push({
+    id: `msg-sys-join-${Date.now()}`,
+    sender: "system",
+    text: `${participant.name} さんが参加しました`,
+    time: now(),
+  });
+  saveThreads(threads);
+  return { ok: true };
 };
 
 /** Add a video upload message to a review thread */

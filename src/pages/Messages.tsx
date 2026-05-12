@@ -2,7 +2,7 @@ import PhoneMockup from "@/components/PhoneMockup";
 import BottomNav from "@/components/BottomNav";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
-import { getThreads, seedDemoThreads, type MessageThread } from "@/lib/messageStore";
+import { getThreads, seedDemoThreads } from "@/lib/messageStore";
 import { getCoachAvatar } from "@/lib/coachData";
 import { useState, useEffect } from "react";
 
@@ -14,6 +14,8 @@ interface DisplayThread {
   lastMessage: string;
   date: string;
   unread: boolean;
+  isGroup: boolean;
+  participantCount: number;
 }
 
 const Messages = () => {
@@ -26,6 +28,7 @@ const Messages = () => {
     const stored = getThreads();
     const display: DisplayThread[] = stored.map((t) => {
       const lastMsg = t.messages[t.messages.length - 1];
+      const isGroup = t.threadKind === "group";
       return {
         id: t.id,
         coachName: t.coachName,
@@ -34,6 +37,8 @@ const Messages = () => {
         lastMessage: lastMsg?.text || "",
         date: lastMsg?.time?.split(" ")[0] || "",
         unread: true,
+        isGroup,
+        participantCount: t.participantList?.length ?? 0,
       };
     });
     setThreads(display);
@@ -69,7 +74,11 @@ const Messages = () => {
                   }`}
                 >
                   {/* Avatar */}
-                  {(() => {
+                  {thread.isGroup ? (
+                    <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xl">
+                      👥
+                    </div>
+                  ) : (() => {
                     const avatar = getCoachAvatar(thread.coachName) || thread.coachAvatar;
                     return avatar ? (
                       <img src={avatar} alt={thread.coachName} loading="lazy" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
@@ -85,6 +94,11 @@ const Messages = () => {
                     <div className="flex items-center justify-between">
                       <p className={`text-sm truncate ${thread.unread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
                         {thread.coachName}
+                        {thread.isGroup && (
+                          <span className="text-[10px] font-normal text-muted-foreground ml-1.5">
+                            （{thread.participantCount}人）
+                          </span>
+                        )}
                       </p>
                       <span className="text-[10px] text-muted-foreground/60 flex-shrink-0 ml-2">{thread.date}</span>
                     </div>

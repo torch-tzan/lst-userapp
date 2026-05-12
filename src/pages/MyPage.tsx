@@ -4,9 +4,7 @@ import BottomNav from "@/components/BottomNav";
 import { Separator } from "@/components/ui/separator";
 import {
   Bell,
-  Check as CheckIcon,
   ChevronRight,
-  Copy,
   Diamond,
   ExternalLink,
   Globe,
@@ -21,8 +19,8 @@ import {
 } from "lucide-react";
 import { useUserProfile } from "@/lib/userProfileStore";
 import { useSubscription } from "@/lib/subscriptionStore";
-import { useToast } from "@/components/ui/use-toast";
 import { getPlayer, getRankTier, useTournamentStore, CURRENT_USER, type SkillLevel } from "@/lib/tournamentStore";
+import { useLeagueMatchBoardStore, computeLeaguePP } from "@/lib/leagueMatchBoardStore";
 import { formatJP } from "@/lib/utils";
 import {
   AlertDialog,
@@ -41,28 +39,14 @@ const MyPage = () => {
   const { profile } = useUserProfile();
   const sub = useSubscription();
   const [showLogout, setShowLogout] = useState(false);
-  const [copied, setCopied] = useState(false);
   const isPremium = sub.isPremium();
   const { computeMyTotalPadelPoints } = useTournamentStore();
+  const { postedMatches } = useLeagueMatchBoardStore();
   const myProfile = getPlayer(CURRENT_USER);
-  const myDisplayId = myProfile?.displayId ?? "";
   const myRating = myProfile?.rating ?? 1400;
   const mySkillLevel = myProfile?.skillLevel;
   const myTier = getRankTier(myRating);
-  const myPadelPoints = computeMyTotalPadelPoints();
-  const { toast } = useToast();
-
-  const copyId = async () => {
-    if (!myDisplayId) return;
-    try {
-      await navigator.clipboard.writeText(myDisplayId);
-      setCopied(true);
-      toast({ title: "マイIDをコピーしました", description: myDisplayId });
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast({ title: "コピーに失敗しました" });
-    }
-  };
+  const myPadelPoints = computeMyTotalPadelPoints() + computeLeaguePP(CURRENT_USER, postedMatches);
 
   const handleLogout = () => {
     setShowLogout(false);
@@ -112,24 +96,6 @@ const MyPage = () => {
               </div>
             </div>
           </button>
-
-          {/* My ID for partner invitation */}
-          <div className="px-[20px] mb-4">
-            <div className="bg-card border border-border rounded-[8px] p-3 flex items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-muted-foreground">マイID（パートナー招待用）</p>
-                <p className="text-sm font-mono font-bold text-foreground mt-0.5">{myDisplayId || "—"}</p>
-              </div>
-              <button
-                onClick={copyId}
-                disabled={!myDisplayId}
-                className="px-3 py-2 rounded-[6px] bg-primary/10 text-primary text-xs font-bold flex items-center gap-1 disabled:opacity-40"
-              >
-                {copied ? <CheckIcon className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? "コピー済" : "コピー"}
-              </button>
-            </div>
-          </div>
 
           {/* Game Status: Rating + Tier + PP */}
           <div className="px-[20px] mb-4">

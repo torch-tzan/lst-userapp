@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PhoneMockup from "@/components/PhoneMockup";
 import BottomNav from "@/components/BottomNav";
-import AnimatedTabs from "@/components/AnimatedTabs";
+import SegmentedTabs from "@/components/SegmentedTabs";
 import {
   useTournamentStore,
   CURRENT_USER,
@@ -11,79 +11,21 @@ import {
   formatSeasonLabel,
   getRankTier,
   getPlayer,
-  type Tournament,
 } from "@/lib/tournamentStore";
 import { useLeagueMatchBoardStore } from "@/lib/leagueMatchBoardStore";
 import { useSubscription } from "@/lib/subscriptionStore";
-import MyEntryCard from "@/components/game/MyEntryCard";
 import LeagueMatchList from "@/components/game/LeagueMatchList";
-import { Calendar, MapPin, Diamond, Lock, Users } from "lucide-react";
-
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  upcoming: "近日開催",
-  registration_open: "エントリー受付中",
-  registration_closed: "受付終了",
-  in_progress: "開催中",
-  completed: "終了",
-};
-
-const STATUS_CLS: Record<string, string> = {
-  upcoming: "bg-muted text-muted-foreground",
-  registration_open: "bg-primary/10 text-primary",
-  registration_closed: "bg-accent-yellow/10 text-accent-yellow",
-  in_progress: "bg-green-100 text-green-700",
-  completed: "bg-muted text-muted-foreground",
-};
-
-const TournamentCard = ({ t }: { t: Tournament }) => {
-  const navigate = useNavigate();
-  return (
-    <button
-      onClick={() => navigate(`/game/tournament/${t.id}`)}
-      className="w-full bg-card border border-border rounded-[8px] p-4 text-left hover:border-primary/40 transition-colors"
-    >
-      <div className="flex items-start justify-between mb-2">
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${STATUS_CLS[t.status]}`}>
-          {STATUS_LABEL[t.status]}
-        </span>
-        <span className="text-[10px] font-bold text-muted-foreground">
-          ダブルス / {t.capacity}枠
-        </span>
-      </div>
-      <p className="text-sm font-bold text-foreground">{t.title}</p>
-      <div className="mt-2 space-y-0.5">
-        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-          <Calendar className="w-3 h-3" />
-          {formatDateTime(t.scheduledAt)}
-        </p>
-        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-          <MapPin className="w-3 h-3" />
-          {t.venue}
-        </p>
-        {t.status === "registration_open" && (
-          <p className="text-[11px] text-primary font-bold flex items-center gap-1 mt-1.5">
-            <Users className="w-3 h-3" />
-            {t.entries.length} / {t.capacity} エントリー済
-          </p>
-        )}
-      </div>
-    </button>
-  );
-};
+import TierProgressHero from "@/components/game/TierProgressHero";
+import { Diamond } from "lucide-react";
 
 const GameHome = () => {
   const navigate = useNavigate();
-  const { tournaments, getMyEntries, computeMySeasonalSummary, computeSeasonalRanking, getPendingInvitesForUser, computeMyTotalPadelPoints } = useTournamentStore();
+  const { computeSeasonalRanking } = useTournamentStore();
   const { getMyHostedMatches, getMyApplications } = useLeagueMatchBoardStore();
   const sub = useSubscription();
   const isPremium = sub.isPremium();
 
-  const [tab, setTab] = useState("tournaments");
+  const [tab, setTab] = useState("league");
   const [rankingTab, setRankingTab] = useState<"current" | "last">("current");
 
   const now = new Date();
@@ -95,127 +37,62 @@ const GameHome = () => {
   const currentSeasonKey = seasonKey(currentSeason);
   const prevSeasonKey = seasonKey(prevSeason);
 
-  const mySeasonSummary = computeMySeasonalSummary(currentSeasonKey);
-  const myEntries = getMyEntries();
   const currentRanking = computeSeasonalRanking(currentSeasonKey);
   const lastRanking = computeSeasonalRanking(prevSeasonKey);
   const myCurrentRank = currentRanking.findIndex((r) => r.userId === CURRENT_USER);
 
   const me = getPlayer(CURRENT_USER);
-  const myTier = me ? getRankTier(me.rating) : null;
-  const myPadelPoints = computeMyTotalPadelPoints();
 
-  const pendingInviteCount = getPendingInvitesForUser().length;
   const myLeagueOpenCount =
     getMyHostedMatches().filter((m) => m.status === "open" || m.status === "filled").length +
     getMyApplications().filter(({ match }) => match.status === "open" || match.status === "filled").length;
-  const upcomingAndOpen = tournaments.filter((t) =>
-    ["upcoming", "registration_open", "in_progress"].includes(t.status)
-  );
-  const completed = tournaments.filter((t) => t.status === "completed");
 
   const TABS = [
-    { key: "tournaments", label: "大会" },
     { key: "league", label: "リーグ", badge: myLeagueOpenCount || undefined },
-    { key: "my-entries", label: "マイエントリー", badge: pendingInviteCount || undefined },
-    { key: "ranking", label: "ランキング" },
+    { key: "ranking", label: "順位" },
   ];
 
   return (
     <PhoneMockup bottomNav={<BottomNav active={2} />}>
       <div className="bg-background pb-4">
-        <header className="bg-gray-5 py-3 pb-[120px]">
-          <div className="flex items-center justify-center px-[20px]">
+        {/* Dark hero zone: title + TierProgressHero (or non-premium CTA) */}
+        <header className="bg-gray-5 px-[20px] pt-3 pb-5">
+          <div className="flex items-center justify-center mb-4">
             <h1 className="text-lg font-bold text-primary-foreground">ゲーム</h1>
           </div>
-        </header>
-
-        {/* Hero */}
-        <div className="-mt-[100px] relative z-10 px-[20px]">
           {isPremium ? (
-            <button
+            <TierProgressHero
+              rating={me?.rating ?? 1400}
+              season={currentSeason}
+              rank={myCurrentRank >= 0 ? myCurrentRank + 1 : -1}
+              totalRanked={currentRanking.length}
               onClick={() => navigate("/game/my-results")}
-              className="w-full text-left rounded-[12px] overflow-hidden shadow-lg bg-primary text-primary-foreground"
-            >
-              <div className="px-5 py-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] font-medium opacity-80">{formatSeasonLabel(currentSeason)}（今シーズン）</p>
-                  {myTier && (
-                    <span className="text-[10px] bg-white/15 px-2 py-0.5 rounded font-bold">
-                      {myTier.emoji} {myTier.label} ・ {me?.rating}
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
-                    <p className="text-[9px] text-muted-foreground">レーティング変動</p>
-                    <p className={`text-base font-bold ${mySeasonSummary.ratingChange >= 0 ? "text-primary" : "text-destructive"}`}>
-                      {mySeasonSummary.ratingChange >= 0 ? "+" : ""}{mySeasonSummary.ratingChange}
-                    </p>
-                  </div>
-                  <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
-                    <p className="text-[9px] text-muted-foreground">即時順位</p>
-                    <p className="text-base font-bold text-primary">
-                      {myCurrentRank >= 0 ? `${myCurrentRank + 1}位` : "—"}
-                    </p>
-                  </div>
-                  <div className="bg-background rounded-[8px] px-2 py-2 text-center text-foreground">
-                    <p className="text-[9px] text-muted-foreground">PP</p>
-                    <p className="text-base font-bold text-foreground">{myPadelPoints.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-foreground px-5 py-2.5 flex items-center justify-between text-[11px] text-primary-foreground">
-                <span className="flex items-center gap-1">
-                  <Diamond className="w-3 h-3 text-primary" />
-                  プレミアム会員
-                </span>
-                <span>エントリー可能</span>
-              </div>
-            </button>
+            />
           ) : (
-            <div className="rounded-[12px] overflow-hidden shadow-lg bg-primary text-primary-foreground">
-              <div className="px-5 py-4">
-                <p className="text-[11px] font-medium opacity-80">{formatSeasonLabel(currentSeason)}</p>
-                <p className="text-base font-bold mt-2">プレミアム会員になってリーグに参加</p>
-                <p className="text-[11px] opacity-80 mt-1">大会・リーグ参加・成績確認はプレミアム限定</p>
-              </div>
-              <div className="bg-foreground px-5 py-2.5 flex items-center justify-between text-[11px] text-primary-foreground">
-                <span className="flex items-center gap-1">
-                  <Lock className="w-3 h-3" />
-                  一般会員
-                </span>
-                <button onClick={() => navigate("/premium/plan")} className="text-primary font-bold">
-                  プレミアム登録 ›
-                </button>
-              </div>
+            <div className="text-center space-y-2 py-2">
+              <p className="text-[11px] text-primary-foreground/70">{formatSeasonLabel(currentSeason)}</p>
+              <p className="text-sm font-bold text-primary-foreground">
+                プレミアム会員になってリーグに参加
+              </p>
+              <p className="text-[11px] text-primary-foreground/70">
+                大会・リーグ参加・成績確認はプレミアム限定
+              </p>
+              <button
+                onClick={() => navigate("/premium/plan")}
+                className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-xs font-bold px-4 py-2 rounded-[6px] mt-1"
+              >
+                <Diamond className="w-3 h-3" />
+                プレミアム登録
+              </button>
             </div>
           )}
-        </div>
+        </header>
 
-        <div className="mt-5">
-          <AnimatedTabs tabs={TABS} activeKey={tab} onChange={setTab} className="px-[20px]" />
+        <div className="mt-3 px-[20px]">
+          <SegmentedTabs tabs={TABS} activeKey={tab} onChange={setTab} />
         </div>
 
         <div className="px-[20px] mt-4 space-y-5">
-          {tab === "tournaments" && (
-            <>
-              <p className="text-[11px] text-muted-foreground mb-1 px-1">
-                LST が主催する特別大会。場地費はLST負担。
-              </p>
-              <div className="space-y-2">
-                <p className="text-xs font-bold text-muted-foreground">開催予定・受付中</p>
-                {upcomingAndOpen.map((t) => <TournamentCard key={t.id} t={t} />)}
-              </div>
-              {completed.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-muted-foreground">過去の大会</p>
-                  {completed.slice(0, 5).map((t) => <TournamentCard key={t.id} t={t} />)}
-                </div>
-              )}
-            </>
-          )}
-
           {tab === "league" && (
             <>
               {!isPremium ? (
@@ -227,41 +104,8 @@ const GameHome = () => {
                   </button>
                 </div>
               ) : (
-                <>
-                  <p className="text-[11px] text-muted-foreground mb-2 px-1">
-                    自分で仲間を集めて試合を組む場所。場地費は各自負担。
-                  </p>
-                  <LeagueMatchList />
-                </>
+                <LeagueMatchList />
               )}
-            </>
-          )}
-
-          {tab === "my-entries" && (
-            <>
-              {!isPremium && (
-                <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center space-y-2">
-                  <Diamond className="w-8 h-8 text-primary mx-auto" />
-                  <p className="text-xs text-muted-foreground">マイエントリーはプレミアム会員限定です</p>
-                  <button onClick={() => navigate("/premium/plan")} className="inline-flex items-center gap-1 text-xs text-primary font-bold mt-1">
-                    プレミアム登録 ›
-                  </button>
-                </div>
-              )}
-              {isPremium && myEntries.length === 0 && (
-                <div className="bg-muted/30 border border-border rounded-[8px] p-6 text-center">
-                  <p className="text-xs text-muted-foreground">エントリー中の大会はありません</p>
-                </div>
-              )}
-              {isPremium && myEntries.map((t) => {
-                const myEntry = t.entries.find(
-                  (e) =>
-                    (e.status === "confirmed" || e.status === "pending_partner_confirmation") &&
-                    (e.registrantUserId === CURRENT_USER || e.partnerUserId === CURRENT_USER)
-                );
-                if (!myEntry) return null;
-                return <MyEntryCard key={t.id} tournament={t} myEntry={myEntry} />;
-              })}
             </>
           )}
 
@@ -295,27 +139,41 @@ const GameHome = () => {
                     </div>
                   );
                 }
+                const MEDAL_EMOJI = ["🥇", "🥈", "🥉"];
                 return (
                   <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden">
                     {rows.slice(0, 10).map((r, i) => {
                       const isMine = r.userId === CURRENT_USER;
+                      const isPodium = i < 3;
                       const tier = getRankTier(r.rating);
                       return (
                         <button
                           key={r.userId}
                           onClick={() => navigate(`/profile/${r.userId}`)}
-                          className={`w-full p-3 flex items-center gap-3 text-left hover:bg-muted/30 ${isMine ? "bg-primary/5" : ""}`}
+                          className={`w-full p-3 flex items-center gap-3 text-left hover:bg-muted/30 transition-colors ${
+                            isMine ? "bg-primary/10 border-l-[4px] border-l-primary" : ""
+                          }`}
                         >
-                          <div className="w-8 text-center font-bold text-sm text-muted-foreground">{i + 1}</div>
+                          <div className="w-10 flex items-center justify-center">
+                            {isPodium ? (
+                              <span className="text-2xl leading-none">{MEDAL_EMOJI[i]}</span>
+                            ) : (
+                              <span className="text-lg font-bold text-muted-foreground">{i + 1}</span>
+                            )}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-bold truncate flex items-center gap-1 ${isMine ? "text-primary" : "text-foreground"}`}>
                               {r.name}
-                              <span className="text-[10px]">{tier.emoji}</span>
-                              {isMine && <span className="text-[10px] ml-1">（自分）</span>}
+                              <span className="text-[12px]">{tier.emoji}</span>
+                              {isMine && <span className="text-[10px] ml-1 text-primary">（自分）</span>}
                             </p>
-                            <p className="text-[11px] text-muted-foreground">{r.played}試合 {r.won}勝 ・ 変動 {r.ratingChange >= 0 ? "+" : ""}{r.ratingChange}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {r.played}試合 {r.won}勝 ・ 変動 {r.ratingChange >= 0 ? "+" : ""}{r.ratingChange}
+                            </p>
                           </div>
-                          <p className={`text-sm font-bold ${rankingTab === "current" ? "text-primary" : "text-foreground"}`}>{r.rating}</p>
+                          <p className={`text-base font-bold ${rankingTab === "current" ? "text-primary" : "text-foreground"}`}>
+                            {r.rating}
+                          </p>
                         </button>
                       );
                     })}

@@ -16,12 +16,12 @@ export const STARTING_RATING: Record<SkillLevel, number> = {
   advanced: 1800,
 };
 
-export const RANK_TIER_RANGES: { tier: RankTier; min: number; max: number; emoji: string; label: string; cls: string }[] = [
-  { tier: "bronze",   min: 1400, max: 1599, emoji: "🥉", label: "Bronze",   cls: "text-amber-700" },
-  { tier: "silver",   min: 1600, max: 1799, emoji: "🥈", label: "Silver",   cls: "text-gray-500" },
-  { tier: "gold",     min: 1800, max: 1999, emoji: "🥇", label: "Gold",     cls: "text-yellow-600" },
-  { tier: "platinum", min: 2000, max: 2199, emoji: "💎", label: "Platinum", cls: "text-cyan-500" },
-  { tier: "master",   min: 2200, max: 9999, emoji: "👑", label: "Master",   cls: "text-purple-600" },
+export const RANK_TIER_RANGES: { tier: RankTier; min: number; max: number; emoji: string; label: string; cls: string; bgCls: string; leftBorderCls: string }[] = [
+  { tier: "bronze",   min: 1400, max: 1599, emoji: "🥉", label: "Bronze",   cls: "text-amber-700",   bgCls: "bg-amber-700",   leftBorderCls: "border-l-amber-700" },
+  { tier: "silver",   min: 1600, max: 1799, emoji: "🥈", label: "Silver",   cls: "text-gray-500",    bgCls: "bg-gray-500",    leftBorderCls: "border-l-gray-500" },
+  { tier: "gold",     min: 1800, max: 1999, emoji: "🥇", label: "Gold",     cls: "text-yellow-600",  bgCls: "bg-yellow-600",  leftBorderCls: "border-l-yellow-600" },
+  { tier: "platinum", min: 2000, max: 2199, emoji: "💎", label: "Platinum", cls: "text-cyan-500",    bgCls: "bg-cyan-500",    leftBorderCls: "border-l-cyan-500" },
+  { tier: "master",   min: 2200, max: 9999, emoji: "👑", label: "Master",   cls: "text-purple-600",  bgCls: "bg-purple-600",  leftBorderCls: "border-l-purple-600" },
 ];
 
 export function getRankTier(rating: number): typeof RANK_TIER_RANGES[number] {
@@ -139,6 +139,23 @@ export function getPlayer(userId: string): PlayerRef | undefined {
   return PLAYER_DIRECTORY.find((p) => p.userId === userId);
 }
 
+export function setCurrentUserSkillLevel(level: SkillLevel) {
+  const entry = PLAYER_DIRECTORY.find((p) => p.userId === CURRENT_USER);
+  if (!entry) return;
+  entry.skillLevel = level;
+  entry.rating = STARTING_RATING[level];
+}
+
+/**
+ * Apply a rating delta to a player (mutates PLAYER_DIRECTORY).
+ * Used by league match completion; tournament results derive on-read.
+ */
+export function applyRatingDelta(userId: string, delta: number): void {
+  const entry = PLAYER_DIRECTORY.find((p) => p.userId === userId);
+  if (!entry) return;
+  entry.rating += delta;
+}
+
 function computeExpiresAt(invitedAt: string, registrationDeadline: string): string {
   const expireFrom72h = new Date(invitedAt);
   expireFrom72h.setHours(expireFrom72h.getHours() + PARTNER_INVITE_HOURS);
@@ -205,6 +222,13 @@ export function formatSeasonLabel(s: Season): string {
 export function seasonMonthRange(s: Season): { startMonth: number; endMonth: number } {
   const startMonth = (s.quarter - 1) * 3 + 1;
   return { startMonth, endMonth: startMonth + 2 };
+}
+
+export function seasonDaysRemaining(s: Season, now: Date = new Date()): number {
+  const startMonth = (s.quarter - 1) * 3 + 1;
+  // Last day of last month in the quarter, 23:59:59
+  const end = new Date(s.year, startMonth + 2, 0, 23, 59, 59);
+  return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86400000));
 }
 
 interface StoreState {

@@ -29,3 +29,6 @@ export const PREFECTURES = [
 ];
 
 export const HOURS = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
+
+/** League match start times: 06:00 〜 23:00 (no overnight slots). */
+export const LEAGUE_HOURS = HOURS.slice(6, 24);
