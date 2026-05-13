@@ -14,6 +14,7 @@ import LeagueBoardList from "./pages/league/LeagueBoardList.tsx";
 import LeagueBoardNew from "./pages/league/LeagueBoardNew.tsx";
 import LeagueBoardDetail from "./pages/league/LeagueBoardDetail.tsx";
 import LeagueBoardScore from "./pages/league/LeagueBoardScore.tsx";
+import LeagueBoardEdit from "./pages/league/LeagueBoardEdit.tsx";
 import Profile from "./pages/Profile.tsx";
 import Login from "./pages/Login.tsx";
 import Terms from "./pages/Terms.tsx";
@@ -133,6 +134,7 @@ const App = () => (
           <Route path="/game/league/new" element={<LeagueBoardNew />} />
           <Route path="/game/league/:id" element={<LeagueBoardDetail />} />
           <Route path="/game/league/:id/score" element={<LeagueBoardScore />} />
+          <Route path="/game/league/:id/edit" element={<LeagueBoardEdit />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -4,7 +4,7 @@ import InnerPageLayout from "@/components/InnerPageLayout";
 import { useLeagueMatchBoardStore } from "@/lib/leagueMatchBoardStore";
 import { CURRENT_USER, getPlayer, getRankTier, PP_LEAGUE_MATCH_WIN } from "@/lib/tournamentStore";
 import { useToast } from "@/components/ui/use-toast";
-import { Calendar, MapPin, Users, Trophy, MessageCircle, Check, MoreVertical, X } from "lucide-react";
+import { Calendar, MapPin, Users, Trophy, MessageCircle, Check, MoreVertical, X, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -127,7 +127,8 @@ const LeagueBoardDetail = () => {
     }
   };
 
-  // Host can cancel any non-completed, non-cancelled match.
+  // Host can edit / cancel any non-completed, non-cancelled match without a result.
+  const canEdit = isHost && !result && match.status !== "completed" && match.status !== "cancelled";
   const canCancel = isHost && match.status !== "completed" && match.status !== "cancelled";
 
   // Applicant (pending or approved, not yet scored) can withdraw their own participation.
@@ -140,7 +141,7 @@ const LeagueBoardDetail = () => {
     match.status !== "completed" &&
     match.status !== "cancelled";
 
-  const showMenuTrigger = canCancel || canWithdraw;
+  const showMenuTrigger = canEdit || canCancel || canWithdraw;
 
   // CTA priority: approve score → submit score → apply.
   // Cancel now lives in the "..." menu (top-right) so it isn't competing for the bottom slot.
@@ -435,6 +436,25 @@ const LeagueBoardDetail = () => {
         onConfirm={() => setShowMenu(false)}
         confirmLabel="閉じる"
       >
+        {canEdit && (
+          <button
+            onClick={() => {
+              setShowMenu(false);
+              navigate(`/game/league/${match.id}/edit`);
+            }}
+            className="w-full flex items-center gap-3 py-3 text-left hover:bg-muted/30 transition-colors"
+          >
+            <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+              <Pencil className="w-4 h-4" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground">募集情報を編集</p>
+              <p className="text-[11px] text-muted-foreground">
+                日時・場地・説明などを変更できます
+              </p>
+            </div>
+          </button>
+        )}
         {canCancel && (
           <button
             onClick={() => {

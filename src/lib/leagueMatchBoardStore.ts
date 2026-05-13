@@ -11,6 +11,7 @@ import {
 import {
   createGroupThread,
   addParticipantToThread,
+  updateGroupThreadTitle,
 } from "@/lib/messageStore";
 
 export type PostedMatchStatus = "open" | "filled" | "completed" | "cancelled";
@@ -497,6 +498,63 @@ export function useLeagueMatchBoardStore() {
   }, []);
 
   /**
+   * Host edits their own match's metadata (date, venue, level, description).
+   * Disallowed once a score has been submitted or the match is cancelled/completed.
+   * Syncs the linked group chat thread title when date or venue changes.
+   */
+  const editPostedMatch = useCallback((
+    matchId: string,
+    patch: {
+      desiredDate?: string;
+      preferredVenue?: string;
+      description?: string | undefined;
+      desiredSkillLevel?: SkillLevel | undefined;
+    },
+  ): { ok: boolean; error?: string } => {
+    const m = state.postedMatches.find((x) => x.id === matchId);
+    if (!m) return { ok: false, error: "募集が見つかりません" };
+    if (m.hostUserId !== CURRENT_USER) return { ok: false, error: "ホストのみ編集できます" };
+    if (m.result) return { ok: false, error: "比分入力済みのため編集できません" };
+    if (m.status === "completed" || m.status === "cancelled")
+      return { ok: false, error: "この試合は終了しています" };
+
+    state = {
+      ...state,
+      postedMatches: state.postedMatches.map((x) =>
+        x.id === matchId
+          ? {
+              ...x,
+              desiredDate: patch.desiredDate ?? x.desiredDate,
+              preferredVenue: patch.preferredVenue ?? x.preferredVenue,
+              description: "description" in patch ? patch.description : x.description,
+              desiredSkillLevel:
+                "desiredSkillLevel" in patch ? patch.desiredSkillLevel : x.desiredSkillLevel,
+            }
+          : x,
+      ),
+    };
+    emit();
+
+    // Sync thread title when date or venue changed.
+    const updated = state.postedMatches.find((x) => x.id === matchId);
+    if (updated?.threadId && (patch.desiredDate || patch.preferredVenue)) {
+      updateGroupThreadTitle(
+        "league-match",
+        updated.id,
+        formatMatchTitle(updated.desiredDate, updated.preferredVenue),
+      );
+    }
+
+    addNotification({
+      type: "league_match_application_received", // reuse a generic neutral type for demo
+      title: "リーグ試合情報が更新されました",
+      message: `「${updated?.description ?? updated?.preferredVenue ?? matchId}」の情報が更新されました。`,
+      postedMatchId: matchId,
+    });
+    return { ok: true };
+  }, []);
+
+  /**
    * Current user (non-host) withdraws their participation.
    * - pending app → marked "withdrawn"
    * - approved app on a still-cancellable match → marked "withdrawn"; if the match
@@ -693,5 +751,6 @@ export function useLeagueMatchBoardStore() {
     submitMatchScore,
     approveMatchScore,
     withdrawFromMatch,
+    editPostedMatch,
   };
 }

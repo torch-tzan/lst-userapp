@@ -419,6 +419,28 @@ export const createGroupThread = (opts: {
   return thread;
 };
 
+/** Update a group thread's display title (used when host edits match date/venue). */
+export const updateGroupThreadTitle = (
+  entityType: "league-match" | "booking",
+  entityId: string,
+  newTitle: string,
+): { ok: boolean } => {
+  const threads = getThreads();
+  const thread = threads.find(
+    (t) => t.linkedEntityType === entityType && t.linkedEntityId === entityId,
+  );
+  if (!thread) return { ok: false };
+  thread.coachName = newTitle;
+  thread.messages.push({
+    id: `msg-sys-edit-${Date.now()}`,
+    sender: "system",
+    text: `試合情報が更新されました：${newTitle}`,
+    time: now(),
+  });
+  saveThreads(threads);
+  return { ok: true };
+};
+
 /** Add a participant to a group thread, with a system "joined" message. */
 export const addParticipantToThread = (
   threadId: string,
