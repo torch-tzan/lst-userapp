@@ -82,6 +82,16 @@ import MemberList from "./admin/pages/lst/members/MemberList.tsx";
 import MemberDetail from "./admin/pages/lst/members/MemberDetail.tsx";
 import LstCourtList from "./admin/pages/lst/courts/LstCourtList.tsx";
 import LstCourtDetailAdmin from "./admin/pages/lst/courts/LstCourtDetailAdmin.tsx";
+import LstBookingList from "./admin/pages/lst/bookings/LstBookingList.tsx";
+import LstBookingDetailAdmin from "./admin/pages/lst/bookings/LstBookingDetailAdmin.tsx";
+import LstPaymentList from "./admin/pages/lst/payments/LstPaymentList.tsx";
+import LstPaymentDetailAdmin from "./admin/pages/lst/payments/LstPaymentDetailAdmin.tsx";
+import LstAnnouncementList from "./admin/pages/lst/announcements/LstAnnouncementList.tsx";
+import LstAnnouncementDetail from "./admin/pages/lst/announcements/LstAnnouncementDetail.tsx";
+import LstCampaignList from "./admin/pages/lst/campaigns/LstCampaignList.tsx";
+import LstCampaignDetailAdmin from "./admin/pages/lst/campaigns/LstCampaignDetailAdmin.tsx";
+import CoachList from "./admin/pages/lst/coaches/CoachList.tsx";
+import CoachDetailAdmin from "./admin/pages/lst/coaches/CoachDetailAdmin.tsx";
 import StoreDashboard from "./admin/pages/store/StoreDashboard.tsx";
 import CourtList from "./admin/pages/store/courts/CourtList.tsx";
 import CourtDetailAdmin from "./admin/pages/store/courts/CourtDetailAdmin.tsx";
@@ -192,6 +202,21 @@ const App = () => (
           {/* コート管理（LST 全店横断ビュー） */}
           <Route path="/admin/lst/courts" element={<LstCourtList />} />
           <Route path="/admin/lst/courts/:id" element={<LstCourtDetailAdmin />} />
+          {/* 予約管理（LST 全店横断） */}
+          <Route path="/admin/lst/bookings" element={<LstBookingList />} />
+          <Route path="/admin/lst/bookings/:id" element={<LstBookingDetailAdmin />} />
+          {/* 支払い履歴（LST 全店横断） */}
+          <Route path="/admin/lst/payments" element={<LstPaymentList />} />
+          <Route path="/admin/lst/payments/:id" element={<LstPaymentDetailAdmin />} />
+          {/* お知らせ配信（LST HQ） */}
+          <Route path="/admin/lst/announcements" element={<LstAnnouncementList />} />
+          <Route path="/admin/lst/announcements/:id" element={<LstAnnouncementDetail />} />
+          {/* キャンペーン・イベント（LST HQ） */}
+          <Route path="/admin/lst/campaigns" element={<LstCampaignList />} />
+          <Route path="/admin/lst/campaigns/:id" element={<LstCampaignDetailAdmin />} />
+          {/* コーチ管理（LST HQ） */}
+          <Route path="/admin/lst/coaches" element={<CoachList />} />
+          <Route path="/admin/lst/coaches/:id" element={<CoachDetailAdmin />} />
           <Route
             path="/admin/lst/*"
             element={
