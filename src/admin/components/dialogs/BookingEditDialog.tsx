@@ -1,9 +1,19 @@
-import { useEffect, useState } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   adminUpdateBooking,
@@ -11,6 +21,8 @@ import {
   type BookingStatus,
   type StoredBooking,
 } from "@/lib/bookingStore";
+import { getAllPlayers, getRankTier } from "@/lib/tournamentStore";
+import { cn } from "@/lib/utils";
 
 import { BOOKING_STATUS_JP } from "../../lib/bookingLabels";
 import {
@@ -46,12 +58,16 @@ const EDITABLE_STATUSES: BookingStatus[] = [
 ];
 
 const BookingEditDialog = ({ open, onOpenChange, booking }: BookingEditDialogProps) => {
+  const allPlayers = useMemo(() => getAllPlayers(), []);
+
   const [date, setDate] = useState(booking.date);
   const [startTime, setStartTime] = useState(booking.startTime);
   const [endTime, setEndTime] = useState(booking.endTime);
   const [price, setPrice] = useState(String(booking.totalPrice ?? 0));
   const [mode, setMode] = useState<BookingMode>(booking.mode ?? "standard");
   const [status, setStatus] = useState<BookingStatus>(booking.status);
+  const [userId, setUserId] = useState<string | undefined>(booking.userId);
+  const [memberPopoverOpen, setMemberPopoverOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -62,9 +78,16 @@ const BookingEditDialog = ({ open, onOpenChange, booking }: BookingEditDialogPro
       setPrice(String(booking.totalPrice ?? 0));
       setMode(booking.mode ?? "standard");
       setStatus(booking.status);
+      setUserId(booking.userId);
+      setMemberPopoverOpen(false);
       setSubmitting(false);
     }
   }, [open, booking]);
+
+  const selectedMember = useMemo(
+    () => (userId ? allPlayers.find((p) => p.userId === userId) : undefined),
+    [userId, allPlayers],
+  );
 
   const priceNumber = Number.parseInt(price, 10);
   const canSubmit =
@@ -79,6 +102,7 @@ const BookingEditDialog = ({ open, onOpenChange, booking }: BookingEditDialogPro
       endTime,
       totalPrice: priceNumber,
       status,
+      userId,
     };
     if (booking.type === "court") {
       updates.mode = mode;
@@ -155,6 +179,83 @@ const BookingEditDialog = ({ open, onOpenChange, booking }: BookingEditDialogPro
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>会員</Label>
+            <Popover open={memberPopoverOpen} onOpenChange={setMemberPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={memberPopoverOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  {selectedMember ? (
+                    <span className="flex items-center gap-2 truncate">
+                      <span>{getRankTier(selectedMember.rating).emoji}</span>
+                      <span className="truncate">{selectedMember.name}</span>
+                      <span className="font-mono text-xs text-slate-500">
+                        {selectedMember.displayId}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-500">会員を選択（任意）</span>
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="名前 / LST-ID で検索" />
+                  <CommandList>
+                    <CommandEmpty>会員が見つかりません</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="__none__"
+                        onSelect={() => {
+                          setUserId(undefined);
+                          setMemberPopoverOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            !userId ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        <span className="text-slate-500">未指定</span>
+                      </CommandItem>
+                      {allPlayers.map((p) => {
+                        const tier = getRankTier(p.rating);
+                        return (
+                          <CommandItem
+                            key={p.userId}
+                            value={`${p.name} ${p.displayId}`}
+                            onSelect={() => {
+                              setUserId(p.userId);
+                              setMemberPopoverOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                userId === p.userId ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            <span className="mr-2">{tier.emoji}</span>
+                            <span className="flex-1">{p.name}</span>
+                            <span className="ml-2 font-mono text-xs text-slate-500">
+                              {p.displayId}
+                            </span>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-1.5">

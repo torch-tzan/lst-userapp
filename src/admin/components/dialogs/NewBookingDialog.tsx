@@ -1,9 +1,19 @@
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -12,8 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { adminAddBooking, type BookingMode, type BookingType, type StoredBooking } from "@/lib/bookingStore";
+import {
+  adminAddBooking,
+  type BookingMode,
+  type BookingType,
+  type StoredBooking,
+} from "@/lib/bookingStore";
 import { COACHES } from "@/lib/coachData";
+import { getAllPlayers, getRankTier } from "@/lib/tournamentStore";
+import { cn } from "@/lib/utils";
 
 import { useAdminCourts } from "../../lib/adminCourtOverlay";
 import {
@@ -39,6 +56,7 @@ const generateBookingId = (): string => {
 
 const NewBookingDialog = ({ open, onOpenChange, onCreated }: NewBookingDialogProps) => {
   const courts = useAdminCourts();
+  const allPlayers = useMemo(() => getAllPlayers(), []);
 
   const [type, setType] = useState<BookingType>("court");
   const [targetId, setTargetId] = useState<string>("");
@@ -46,7 +64,8 @@ const NewBookingDialog = ({ open, onOpenChange, onCreated }: NewBookingDialogPro
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [price, setPrice] = useState("");
-  const [memberLabel, setMemberLabel] = useState("");
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [memberPopoverOpen, setMemberPopoverOpen] = useState(false);
   const [mode, setMode] = useState<BookingMode>("standard");
   const [submitting, setSubmitting] = useState(false);
 
@@ -58,7 +77,8 @@ const NewBookingDialog = ({ open, onOpenChange, onCreated }: NewBookingDialogPro
       setStartTime("");
       setEndTime("");
       setPrice("");
-      setMemberLabel("");
+      setUserId(undefined);
+      setMemberPopoverOpen(false);
       setMode("standard");
       setSubmitting(false);
     }
@@ -83,6 +103,11 @@ const NewBookingDialog = ({ open, onOpenChange, onCreated }: NewBookingDialogPro
     return COACHES.map((c) => ({ value: c.id, label: `${c.name} (${c.level})` }));
   }, [type, courts]);
 
+  const selectedMember = useMemo(
+    () => (userId ? allPlayers.find((p) => p.userId === userId) : undefined),
+    [userId, allPlayers],
+  );
+
   const priceNumber = Number.parseInt(price, 10);
   const canSubmit =
     !!targetId &&
@@ -101,6 +126,7 @@ const NewBookingDialog = ({ open, onOpenChange, onCreated }: NewBookingDialogPro
     const base: StoredBooking = {
       id,
       type,
+      userId,
       date,
       startTime,
       endTime,
@@ -131,9 +157,6 @@ const NewBookingDialog = ({ open, onOpenChange, onCreated }: NewBookingDialogPro
         base.duration = co.duration;
       }
     }
-
-    // memberLabel は現状ストアに userId field が無いため未保存（hint で告知済み）
-    void memberLabel;
 
     adminAddBooking(base);
     toast.success("予約を作成しました");
@@ -234,14 +257,80 @@ const NewBookingDialog = ({ open, onOpenChange, onCreated }: NewBookingDialogPro
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="booking-member">会員</Label>
-            <Input
-              id="booking-member"
-              value={memberLabel}
-              onChange={(e) => setMemberLabel(e.target.value)}
-              placeholder="会員名 or ID（任意）"
-            />
-            <p className="text-xs text-blue-600">🔵 会員紐付けは将来対応</p>
+            <Label>会員</Label>
+            <Popover open={memberPopoverOpen} onOpenChange={setMemberPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={memberPopoverOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  {selectedMember ? (
+                    <span className="flex items-center gap-2 truncate">
+                      <span>{getRankTier(selectedMember.rating).emoji}</span>
+                      <span className="truncate">{selectedMember.name}</span>
+                      <span className="font-mono text-xs text-slate-500">
+                        {selectedMember.displayId}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-500">会員を選択（任意）</span>
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="名前 / LST-ID で検索" />
+                  <CommandList>
+                    <CommandEmpty>会員が見つかりません</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="__none__"
+                        onSelect={() => {
+                          setUserId(undefined);
+                          setMemberPopoverOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            !userId ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        <span className="text-slate-500">未指定</span>
+                      </CommandItem>
+                      {allPlayers.map((p) => {
+                        const tier = getRankTier(p.rating);
+                        return (
+                          <CommandItem
+                            key={p.userId}
+                            value={`${p.name} ${p.displayId}`}
+                            onSelect={() => {
+                              setUserId(p.userId);
+                              setMemberPopoverOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                userId === p.userId ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            <span className="mr-2">{tier.emoji}</span>
+                            <span className="flex-1">{p.name}</span>
+                            <span className="ml-2 font-mono text-xs text-slate-500">
+                              {p.displayId}
+                            </span>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {type === "court" ? (

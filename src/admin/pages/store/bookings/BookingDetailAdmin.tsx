@@ -11,6 +11,7 @@ import DataTable, { type DataTableColumn } from "../../../components/DataTable";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { BookingEquipmentLine, BookingStatus } from "@/lib/bookingStore";
+import { getPlayer } from "@/lib/tournamentStore";
 
 import {
   BOOKING_STATUS_BADGE_CLS,
@@ -197,6 +198,23 @@ const BookingDetailAdmin = () => {
             </InfoRow>
             <InfoRow label="モード">
               {booking.type === "court" ? (booking.mode === "solo" ? "1人練習" : "標準") : "—"}
+            </InfoRow>
+            <InfoRow label="会員">
+              {booking.userId ? (
+                (() => {
+                  const p = getPlayer(booking.userId);
+                  return p ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span>{p.name}</span>
+                      <span className="font-mono text-xs text-slate-500">{p.displayId}</span>
+                    </span>
+                  ) : (
+                    <span className="font-mono text-xs text-slate-500">{booking.userId}</span>
+                  );
+                })()
+              ) : (
+                <span className="text-slate-400">—</span>
+              )}
             </InfoRow>
             <InfoRow label="ステータス">
               <span

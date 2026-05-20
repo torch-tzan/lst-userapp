@@ -18,6 +18,7 @@ import {
   type BookingType,
   type StoredBooking,
 } from "@/lib/bookingStore";
+import { getPlayer } from "@/lib/tournamentStore";
 
 import {
   BOOKING_STATUS_BADGE_CLS,
@@ -244,7 +245,7 @@ const BookingList = () => {
     {
       key: "target",
       header: "対象",
-      width: "22%",
+      width: "18%",
       render: (b) => (
         <span className="text-sm text-slate-800">
           {b.type === "court"
@@ -254,9 +255,21 @@ const BookingList = () => {
       ),
     },
     {
+      key: "member",
+      header: "会員",
+      width: "10%",
+      render: (b) => {
+        if (!b.userId) return <span className="text-xs text-slate-400">—</span>;
+        const p = getPlayer(b.userId);
+        return (
+          <span className="text-xs text-slate-700">{p?.name ?? b.userId}</span>
+        );
+      },
+    },
+    {
       key: "date",
       header: "日付",
-      width: "10%",
+      width: "9%",
       render: (b) => {
         const d = new Date(b.date);
         return (

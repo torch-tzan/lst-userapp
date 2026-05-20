@@ -18,6 +18,7 @@ import {
   type BookingType,
   type StoredBooking,
 } from "@/lib/bookingStore";
+import { getPlayer } from "@/lib/tournamentStore";
 
 import { useAffiliates } from "../../../lib/adminAffiliatesStore";
 import { getBookingAffiliateId } from "../../../lib/bookingAffiliateLink";
@@ -323,7 +324,7 @@ const LstBookingList = () => {
     {
       key: "target",
       header: "対象",
-      width: "18%",
+      width: "16%",
       render: (b) => (
         <span className="text-sm text-slate-800">
           {b.type === "court"
@@ -333,9 +334,21 @@ const LstBookingList = () => {
       ),
     },
     {
+      key: "member",
+      header: "会員",
+      width: "9%",
+      render: (b) => {
+        if (!b.userId) return <span className="text-xs text-slate-400">—</span>;
+        const p = getPlayer(b.userId);
+        return (
+          <span className="text-xs text-slate-700">{p?.name ?? b.userId}</span>
+        );
+      },
+    },
+    {
       key: "date",
       header: "日付",
-      width: "10%",
+      width: "9%",
       render: (b) => {
         const d = new Date(b.date);
         return (

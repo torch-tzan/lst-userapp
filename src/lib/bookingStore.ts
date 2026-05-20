@@ -29,6 +29,8 @@ export interface ReviewVideoMeta {
 export interface StoredBooking {
   id: string;
   type: BookingType;
+  // Member linkage
+  userId?: string;
   // Court fields
   courtName?: string;
   courtSubName?: string;
