@@ -69,6 +69,10 @@ import AdminLayout from "./admin/components/AdminLayout.tsx";
 import AdminLogin from "./admin/pages/AdminLogin.tsx";
 import AdminPlaceholder from "./admin/pages/AdminPlaceholder.tsx";
 import LstDashboard from "./admin/pages/lst/LstDashboard.tsx";
+import LeagueList from "./admin/pages/lst/leagues/LeagueList.tsx";
+import LeagueDetail from "./admin/pages/lst/leagues/LeagueDetail.tsx";
+import LeagueRankings from "./admin/pages/lst/leagues/LeagueRankings.tsx";
+import LeaguePlayerDetail from "./admin/pages/lst/leagues/LeaguePlayerDetail.tsx";
 import StoreDashboard from "./admin/pages/store/StoreDashboard.tsx";
 
 const queryClient = new QueryClient();
@@ -144,6 +148,11 @@ const App = () => (
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/lst/dashboard" element={<LstDashboard />} />
           <Route path="/admin/store/dashboard" element={<StoreDashboard />} />
+          {/* リーグ管理 — order matters: more-specific paths before /:id */}
+          <Route path="/admin/lst/leagues" element={<LeagueList />} />
+          <Route path="/admin/lst/leagues/rankings" element={<LeagueRankings />} />
+          <Route path="/admin/lst/leagues/players/:userId" element={<LeaguePlayerDetail />} />
+          <Route path="/admin/lst/leagues/:id" element={<LeagueDetail />} />
           <Route
             path="/admin/lst/*"
             element={

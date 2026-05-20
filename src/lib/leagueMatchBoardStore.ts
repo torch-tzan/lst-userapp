@@ -310,6 +310,41 @@ const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
 const getSnapshot = () => state;
 
+/**
+ * Admin: 管理者がリーグ試合を強制キャンセルする。
+ * ホストのキャンセル（cancelPostedMatch）と異なり、誰の所有でも実行可能。
+ * 比分が確定済みでも、open / filled なら取消可能。completed は不可。
+ */
+export function adminCancelMatch(matchId: string, reason: string): boolean {
+  const m = state.postedMatches.find((x) => x.id === matchId);
+  if (!m) return false;
+  if (m.status === "completed" || m.status === "cancelled") return false;
+  state = {
+    ...state,
+    postedMatches: state.postedMatches.map((x) =>
+      x.id === matchId
+        ? {
+            ...x,
+            status: "cancelled" as PostedMatchStatus,
+            cancelledAt: new Date().toISOString(),
+            cancelledReason: reason,
+          }
+        : x,
+    ),
+  };
+  emit();
+  // TODO: persist to audit_log when backend audit infra is ready.
+  // eslint-disable-next-line no-console
+  console.info(`[admin audit] cancel match ${matchId}, reason: ${reason}`);
+  addNotification({
+    type: "league_match_cancelled",
+    title: "リーグ試合がキャンセルされました（管理者操作）",
+    message: `「${m.description ?? m.preferredVenue}」が管理者によりキャンセルされました。${reason ? `理由：${reason}` : ""}`,
+    postedMatchId: m.id,
+  });
+  return true;
+}
+
 /* Hook */
 
 export function useLeagueMatchBoardStore() {

@@ -154,6 +154,24 @@ export function applyRatingDelta(userId: string, delta: number): void {
   const entry = PLAYER_DIRECTORY.find((p) => p.userId === userId);
   if (!entry) return;
   entry.rating += delta;
+  emitDirectoryChange();
+}
+
+/**
+ * Admin: 手動でプレイヤーのレーティングを上書きする。
+ * 1000〜3000 で clamp。監査ログは現状 console のみ（将来 audit_log テーブルへ）。
+ */
+export function adminAdjustRating(userId: string, newRating: number, reason: string): boolean {
+  const entry = PLAYER_DIRECTORY.find((p) => p.userId === userId);
+  if (!entry) return false;
+  const clamped = Math.max(1000, Math.min(3000, Math.round(newRating)));
+  const oldRating = entry.rating;
+  entry.rating = clamped;
+  // TODO: persist to audit_log when backend audit infra is ready.
+  // eslint-disable-next-line no-console
+  console.info(`[admin audit] rating ${userId}: ${oldRating} → ${clamped}, reason: ${reason}`);
+  emitDirectoryChange();
+  return true;
 }
 
 function computeExpiresAt(invitedAt: string, registrationDeadline: string): string {
@@ -654,6 +672,15 @@ const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
 const getSnapshot = () => state;
+
+/**
+ * PLAYER_DIRECTORY 内のフィールド（rating 等）を直接 mutate した後に呼ぶ。
+ * state オブジェクトの参照を更新して useSyncExternalStore に変更を通知する。
+ */
+function emitDirectoryChange(): void {
+  state = { ...state };
+  emit();
+}
 
 // ── Personal seasonal scoring ──
 

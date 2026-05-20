@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 
 import { useAdminAuth } from "../lib/adminAuthStore";
 import { LST_NAV_ITEMS, STORE_NAV_ITEMS } from "../lib/navigation";
@@ -38,6 +39,7 @@ const AdminLayout = ({ role, children }: AdminLayoutProps) => {
         <AdminHeader rolePillLabel={rolePillLabel} />
         <main className="flex-1 overflow-y-auto bg-gray-50 p-6">{children}</main>
       </div>
+      <SonnerToaster position="top-right" richColors />
     </div>
   );
 };
