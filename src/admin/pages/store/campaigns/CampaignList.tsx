@@ -11,7 +11,11 @@ import NewCampaignDialog from "../../../components/dialogs/NewCampaignDialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { useAdminCampaigns, type CampaignRecord } from "../../../lib/adminCampaignsStore";
+import {
+  CAMPAIGN_PLACEHOLDER_IMAGE,
+  useAdminCampaigns,
+  type CampaignRecord,
+} from "../../../lib/adminCampaignsStore";
 import {
   CAMPAIGN_KIND_JP,
   CAMPAIGN_STATUS_BADGE_CLS,
@@ -54,6 +58,20 @@ const CampaignList = () => {
 
   const columns: DataTableColumn<CampaignRecord>[] = [
     {
+      key: "image",
+      header: "",
+      width: "6%",
+      render: (c) => (
+        <div className="h-10 w-10 overflow-hidden rounded border bg-slate-50">
+          <img
+            src={c.imageUrl ?? CAMPAIGN_PLACEHOLDER_IMAGE}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ),
+    },
+    {
       key: "id",
       header: "ID",
       width: "10%",
@@ -62,7 +80,7 @@ const CampaignList = () => {
     {
       key: "title",
       header: "タイトル",
-      width: "26%",
+      width: "22%",
       render: (c) => <span className="text-sm font-medium text-slate-800">{c.title}</span>,
     },
     {

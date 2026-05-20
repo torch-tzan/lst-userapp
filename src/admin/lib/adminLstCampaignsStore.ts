@@ -47,6 +47,13 @@ export interface LstCampaignRecord {
   discountAmount?: number;
   couponCode?: string;
   usageCount: number;
+  // ── Wave 2: 拡張フィールド（user-app に表示する情報） ──
+  imageUrl?: string;
+  subtitle?: string;
+  body?: string;
+  location?: string;
+  ctaLabel?: string;
+  ctaLink?: string;
 }
 
 const ALL_AFFS = [

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { useAffiliates } from "../../../lib/adminAffiliatesStore";
+import { CAMPAIGN_PLACEHOLDER_IMAGE } from "../../../lib/adminCampaignsStore";
 import {
   LST_CAMPAIGN_KIND_JP,
   LST_CAMPAIGN_STATUS_BADGE_CLS,
@@ -66,6 +67,20 @@ const LstCampaignList = () => {
 
   const columns: DataTableColumn<LstCampaignRecord>[] = [
     {
+      key: "image",
+      header: "",
+      width: "6%",
+      render: (c) => (
+        <div className="h-10 w-10 overflow-hidden rounded border bg-slate-50">
+          <img
+            src={c.imageUrl ?? CAMPAIGN_PLACEHOLDER_IMAGE}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ),
+    },
+    {
       key: "id",
       header: "ID",
       width: "10%",
@@ -74,7 +89,7 @@ const LstCampaignList = () => {
     {
       key: "title",
       header: "タイトル",
-      width: "26%",
+      width: "22%",
       render: (c) => <span className="text-sm font-medium text-slate-800">{c.title}</span>,
     },
     {

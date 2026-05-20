@@ -21,7 +21,18 @@ export interface CampaignRecord {
   audience: CampaignAudience;
   usageCount: number;
   conversionRate: number; // 0〜100
+  // ── Wave 2: 拡張フィールド（user-app に表示する情報） ──
+  imageUrl?: string;
+  subtitle?: string;
+  body?: string;
+  location?: string;
+  ctaLabel?: string;
+  ctaLink?: string;
 }
+
+/** Campaign hero image fallback（image 未設定時に共通利用）。 */
+export const CAMPAIGN_PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80";
 
 const SEED: CampaignRecord[] = [
   { id: "CP-001", title: "ゴールデンウィーク特別割引", description: "GW 期間限定でコート料金 15% OFF！", kind: "discount", startDate: "2026-04-29", endDate: "2026-05-06", status: "ended",     discountPercent: 15, audience: "all",     usageCount: 156, conversionRate: 32 },

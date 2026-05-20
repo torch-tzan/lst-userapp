@@ -15,6 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { useAffiliates } from "../../lib/adminAffiliatesStore";
+import { CAMPAIGN_PLACEHOLDER_IMAGE } from "../../lib/adminCampaignsStore";
 import {
   addLstCampaign,
   LST_CAMPAIGN_KIND_JP,
@@ -50,6 +51,12 @@ const NewLstCampaignDialog = ({ open, onOpenChange }: Props) => {
   const [couponCode, setCouponCode] = useState("");
   const [allAffiliates, setAllAffiliates] = useState(true);
   const [selectedAffiliateIds, setSelectedAffiliateIds] = useState<string[]>([]);
+  const [imageUrl, setImageUrl] = useState("");
+  const [subtitle, setSubtitle] = useState("");
+  const [body, setBody] = useState("");
+  const [location, setLocation] = useState("");
+  const [ctaLabel, setCtaLabel] = useState("");
+  const [ctaLink, setCtaLink] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -64,6 +71,12 @@ const NewLstCampaignDialog = ({ open, onOpenChange }: Props) => {
       setCouponCode("");
       setAllAffiliates(true);
       setSelectedAffiliateIds([]);
+      setImageUrl("");
+      setSubtitle("");
+      setBody("");
+      setLocation("");
+      setCtaLabel("");
+      setCtaLink("");
       setSubmitting(false);
     }
   }, [open]);
@@ -89,6 +102,14 @@ const NewLstCampaignDialog = ({ open, onOpenChange }: Props) => {
       startDate > TODAY ? "scheduled" : endDate < TODAY ? "ended" : "active";
 
     const affiliateIds = allAffiliates ? affiliates.map((a) => a.id) : selectedAffiliateIds;
+    const trimmedCode =
+      kind === "coupon" && couponCode.trim().length > 0 ? couponCode.trim() : undefined;
+    const trimmedAmount =
+      kind === "coupon" && discountAmount ? Number.parseInt(discountAmount, 10) : undefined;
+    const trimmedPercent =
+      (kind === "discount" || kind === "premium") && discountPercent
+        ? Number.parseInt(discountPercent, 10)
+        : undefined;
 
     addLstCampaign({
       title: title.trim(),
@@ -98,14 +119,17 @@ const NewLstCampaignDialog = ({ open, onOpenChange }: Props) => {
       endDate,
       status,
       affiliateIds,
-      discountPercent:
-        (kind === "discount" || kind === "premium") && discountPercent
-          ? Number.parseInt(discountPercent, 10)
-          : undefined,
-      discountAmount:
-        kind === "coupon" && discountAmount ? Number.parseInt(discountAmount, 10) : undefined,
-      couponCode: kind === "coupon" && couponCode ? couponCode.trim() : undefined,
+      discountPercent: trimmedPercent,
+      discountAmount: trimmedAmount,
+      couponCode: trimmedCode,
+      imageUrl: imageUrl.trim() || undefined,
+      subtitle: subtitle.trim() || undefined,
+      body: body.trim() || undefined,
+      location: location.trim() || undefined,
+      ctaLabel: ctaLabel.trim() || undefined,
+      ctaLink: ctaLink.trim() || undefined,
     });
+
     toast.success("キャンペーンを作成しました");
     setSubmitting(false);
     onOpenChange(false);
@@ -127,12 +151,53 @@ const NewLstCampaignDialog = ({ open, onOpenChange }: Props) => {
             <Input id="lcp-title" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="lcp-desc">説明</Label>
+            <Label htmlFor="lcp-subtitle">サブタイトル</Label>
+            <Input
+              id="lcp-subtitle"
+              value={subtitle}
+              onChange={(e) => setSubtitle(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lcp-desc">説明（短文）</Label>
             <Textarea
               id="lcp-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lcp-body">本文</Label>
+            <Textarea
+              id="lcp-body"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={6}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lcp-image">画像 URL</Label>
+            <Input
+              id="lcp-image"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <div className="mt-1.5 flex h-[108px] w-[192px] items-center justify-center overflow-hidden rounded border bg-slate-50">
+              <img
+                src={imageUrl.trim() || CAMPAIGN_PLACEHOLDER_IMAGE}
+                alt="プレビュー"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lcp-location">開催場所</Label>
+            <Input
+              id="lcp-location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
             />
           </div>
 
@@ -212,6 +277,27 @@ const NewLstCampaignDialog = ({ open, onOpenChange }: Props) => {
               </div>
             </div>
           ) : null}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="lcp-cta-label">CTA ラベル</Label>
+              <Input
+                id="lcp-cta-label"
+                value={ctaLabel}
+                onChange={(e) => setCtaLabel(e.target.value)}
+                placeholder="予約する"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="lcp-cta-link">CTA リンク</Label>
+              <Input
+                id="lcp-cta-link"
+                value={ctaLink}
+                onChange={(e) => setCtaLink(e.target.value)}
+                placeholder="/search"
+              />
+            </div>
+          </div>
 
           <div className="space-y-1.5">
             <Label>配信加盟店</Label>

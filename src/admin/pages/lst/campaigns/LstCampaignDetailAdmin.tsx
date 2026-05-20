@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { useAffiliates } from "../../../lib/adminAffiliatesStore";
+import { CAMPAIGN_PLACEHOLDER_IMAGE } from "../../../lib/adminCampaignsStore";
 import {
   LST_CAMPAIGN_KIND_JP,
   LST_CAMPAIGN_STATUS_BADGE_CLS,
@@ -103,6 +104,29 @@ const LstCampaignDetailAdmin = () => {
 
       <div className="mx-auto max-w-[1000px] space-y-6">
         <div className={cardCls}>
+          <SectionHeader title="ヒーロー画像" />
+          <div className="aspect-[16/9] w-full max-w-[480px] overflow-hidden rounded-md border bg-slate-50">
+            <img
+              src={c.imageUrl ?? CAMPAIGN_PLACEHOLDER_IMAGE}
+              alt={c.title}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          {c.subtitle ? (
+            <p className="mt-3 text-sm text-slate-600">サブタイトル: {c.subtitle}</p>
+          ) : null}
+          {c.location ? (
+            <p className="mt-1.5 text-sm text-slate-600">開催場所: {c.location}</p>
+          ) : null}
+          {c.ctaLabel || c.ctaLink ? (
+            <p className="mt-1.5 text-xs text-slate-500">
+              CTA: <span className="font-medium text-slate-700">{c.ctaLabel ?? "—"}</span>
+              {c.ctaLink ? <> → <span className="font-mono">{c.ctaLink}</span></> : null}
+            </p>
+          ) : null}
+        </div>
+
+        <div className={cardCls}>
           <SectionHeader title="基本情報" />
           <div className="grid grid-cols-[120px_1fr_120px_1fr] gap-y-3 gap-x-4">
             <InfoRow label="ID">
@@ -140,6 +164,13 @@ const LstCampaignDetailAdmin = () => {
           <SectionHeader title="説明" />
           <p className="whitespace-pre-wrap text-sm text-slate-700">{c.description}</p>
         </div>
+
+        {c.body ? (
+          <div className={cardCls}>
+            <SectionHeader title="本文" />
+            <p className="whitespace-pre-wrap text-sm text-slate-700">{c.body}</p>
+          </div>
+        ) : null}
 
         <div className={cardCls}>
           <SectionHeader title="配信加盟店" />

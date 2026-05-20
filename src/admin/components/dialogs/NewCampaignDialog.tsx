@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-import { addCampaign } from "../../lib/adminCampaignsStore";
+import { addCampaign, CAMPAIGN_PLACEHOLDER_IMAGE } from "../../lib/adminCampaignsStore";
 import {
   CAMPAIGN_AUDIENCE_JP,
   CAMPAIGN_KIND_JP,
@@ -45,6 +45,12 @@ const NewCampaignDialog = ({ open, onOpenChange }: NewCampaignDialogProps) => {
   const [discountAmount, setDiscountAmount] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [audience, setAudience] = useState<CampaignAudience>("all");
+  const [imageUrl, setImageUrl] = useState("");
+  const [subtitle, setSubtitle] = useState("");
+  const [body, setBody] = useState("");
+  const [location, setLocation] = useState("");
+  const [ctaLabel, setCtaLabel] = useState("");
+  const [ctaLink, setCtaLink] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -58,6 +64,12 @@ const NewCampaignDialog = ({ open, onOpenChange }: NewCampaignDialogProps) => {
       setDiscountAmount("");
       setCouponCode("");
       setAudience("all");
+      setImageUrl("");
+      setSubtitle("");
+      setBody("");
+      setLocation("");
+      setCtaLabel("");
+      setCtaLink("");
       setSubmitting(false);
     }
   }, [open]);
@@ -77,6 +89,13 @@ const NewCampaignDialog = ({ open, onOpenChange }: NewCampaignDialogProps) => {
     const status: CampaignStatus =
       startDate > TODAY ? "scheduled" : endDate < TODAY ? "ended" : "active";
 
+    const trimmedCode =
+      kind === "coupon" && couponCode.trim().length > 0 ? couponCode.trim() : undefined;
+    const trimmedAmount =
+      kind === "coupon" && discountAmount ? Number.parseInt(discountAmount, 10) : undefined;
+    const trimmedPercent =
+      kind === "discount" && discountPercent ? Number.parseInt(discountPercent, 10) : undefined;
+
     addCampaign({
       title: title.trim(),
       description: description.trim(),
@@ -84,15 +103,18 @@ const NewCampaignDialog = ({ open, onOpenChange }: NewCampaignDialogProps) => {
       startDate,
       endDate,
       status,
-      discountPercent: kind === "discount" && discountPercent
-        ? Number.parseInt(discountPercent, 10)
-        : undefined,
-      discountAmount: kind === "coupon" && discountAmount
-        ? Number.parseInt(discountAmount, 10)
-        : undefined,
-      couponCode: kind === "coupon" && couponCode ? couponCode.trim() : undefined,
+      discountPercent: trimmedPercent,
+      discountAmount: trimmedAmount,
+      couponCode: trimmedCode,
       audience,
+      imageUrl: imageUrl.trim() || undefined,
+      subtitle: subtitle.trim() || undefined,
+      body: body.trim() || undefined,
+      location: location.trim() || undefined,
+      ctaLabel: ctaLabel.trim() || undefined,
+      ctaLink: ctaLink.trim() || undefined,
     });
+
     toast.success("キャンペーンを作成しました");
     setSubmitting(false);
     onOpenChange(false);
@@ -106,18 +128,62 @@ const NewCampaignDialog = ({ open, onOpenChange }: NewCampaignDialogProps) => {
           <AdminDialogDescription>キャンペーンやイベントを作成します。</AdminDialogDescription>
         </AdminDialogHeader>
 
-        <div className="grid gap-4">
+        <div className="grid max-h-[60vh] gap-4 overflow-y-auto pr-1">
           <div className="space-y-1.5">
             <Label htmlFor="cp-title">タイトル</Label>
             <Input id="cp-title" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cp-desc">説明</Label>
+            <Label htmlFor="cp-subtitle">サブタイトル</Label>
+            <Input
+              id="cp-subtitle"
+              value={subtitle}
+              onChange={(e) => setSubtitle(e.target.value)}
+              placeholder="例: 初回予約で"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cp-desc">説明（短文）</Label>
             <Textarea
               id="cp-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cp-body">本文</Label>
+            <Textarea
+              id="cp-body"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={6}
+              placeholder="キャンペーン詳細（改行可）"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cp-image">画像 URL</Label>
+            <Input
+              id="cp-image"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <div className="mt-1.5 flex h-[108px] w-[192px] items-center justify-center overflow-hidden rounded border bg-slate-50">
+              <img
+                src={imageUrl.trim() || CAMPAIGN_PLACEHOLDER_IMAGE}
+                alt="プレビュー"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cp-location">開催場所</Label>
+            <Input
+              id="cp-location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="例: パデルコート広島 コートA"
             />
           </div>
 
@@ -212,6 +278,27 @@ const NewCampaignDialog = ({ open, onOpenChange }: NewCampaignDialogProps) => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="cp-cta-label">CTA ラベル</Label>
+              <Input
+                id="cp-cta-label"
+                value={ctaLabel}
+                onChange={(e) => setCtaLabel(e.target.value)}
+                placeholder="予約する"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cp-cta-link">CTA リンク</Label>
+              <Input
+                id="cp-cta-link"
+                value={ctaLink}
+                onChange={(e) => setCtaLink(e.target.value)}
+                placeholder="/search or https://..."
+              />
+            </div>
           </div>
         </div>
 
