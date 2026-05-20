@@ -11,6 +11,7 @@ import {
   seedDemoNotifications,
   type PushNotification,
 } from "@/lib/notificationStore";
+import { useUserAnnouncements } from "@/admin/lib/userAppBridge/useUserAnnouncements";
 
 const ICON_MAP: Record<PushNotification["type"], { icon: React.ElementType; color: string }> = {
   booking_confirmed: { icon: CalendarCheck, color: "text-available" },
@@ -50,46 +51,20 @@ interface SystemNotification {
   isSystem: true;
 }
 
-const SYSTEM_NOTIFICATIONS: SystemNotification[] = [
-  {
-    id: "sys-1",
-    title: "春の新規登録キャンペーン！",
-    summary: "今なら新規登録で500ポイントプレゼント。4月30日まで。",
-    date: "2026/04/14",
-    read: false,
-    isSystem: true,
-  },
-  {
-    id: "sys-2",
-    title: "ポイント付与のお知らせ",
-    summary: "予約利用によるポイントが付与されました。+3pt",
-    date: "2026/04/12",
-    read: true,
-    isSystem: true,
-  },
-  {
-    id: "sys-3",
-    title: "システムメンテナンスのお知らせ",
-    summary: "4月20日 2:00〜5:00にメンテナンスを実施します。",
-    date: "2026/04/10",
-    read: true,
-    isSystem: true,
-  },
-];
-
 type Tab = "all" | "booking" | "system";
 
 const Notifications = () => {
   const navigate = useNavigate();
   const [pushNotifs, setPushNotifs] = useState<PushNotification[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("all");
+  const systemNotifications: SystemNotification[] = useUserAnnouncements();
 
   useEffect(() => {
     seedDemoNotifications();
     setPushNotifs(getNotifications());
   }, []);
 
-  const hasUnread = pushNotifs.some((n) => !n.read) || SYSTEM_NOTIFICATIONS.some((n) => !n.read);
+  const hasUnread = pushNotifs.some((n) => !n.read) || systemNotifications.some((n) => !n.read);
 
   const handleMarkAllRead = () => {
     markAllNotificationsRead();
@@ -116,7 +91,7 @@ const Notifications = () => {
   };
 
   const filteredPush = activeTab === "system" ? [] : pushNotifs;
-  const filteredSystem = activeTab === "booking" ? [] : SYSTEM_NOTIFICATIONS;
+  const filteredSystem = activeTab === "booking" ? [] : systemNotifications;
 
   // Merge and sort by date
   type DisplayItem =

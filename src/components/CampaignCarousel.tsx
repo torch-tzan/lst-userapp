@@ -1,36 +1,15 @@
 import { useState, useRef, TouchEvent } from "react";
-import campaignSpring from "@/assets/campaign-spring.webp";
-import campaignSummer from "@/assets/campaign-summer.webp";
-import campaignTournament from "@/assets/campaign-tournament.webp";
 
-const campaigns = [
-  {
-    id: 1,
-    image: campaignSpring,
-    title: "春のキャンペーン開催中",
-    subtitle: "初回予約で",
-    discount: "10%OFF",
-  },
-  {
-    id: 2,
-    image: campaignTournament,
-    title: "パデル大会",
-    subtitle: "チームで戦おう！ランキングに挑戦",
-    discount: "",
-  },
-  {
-    id: 3,
-    image: campaignSummer,
-    title: "夏季トーナメント",
-    subtitle: "参加者募集中",
-    discount: "エントリー受付中",
-  },
-];
+import { useUserCampaigns } from "@/admin/lib/userAppBridge/useUserCampaigns";
 
 const CARD_GAP = 4;
 const PEEK_WIDTH = 20;
 
 const CampaignCarousel = ({ onViewAll }: { onViewAll?: () => void }) => {
+  const merged = useUserCampaigns();
+  // Carousel は最初の 3 件のみ表示（既存挙動を維持）
+  const campaigns = merged.slice(0, 3);
+
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -61,6 +40,8 @@ const CampaignCarousel = ({ onViewAll }: { onViewAll?: () => void }) => {
   // We use calc for responsive sizing
   const cardWidth = `calc(100% - ${PEEK_WIDTH * 2}px)`;
   const translateX = `calc(-${current} * (100% - ${PEEK_WIDTH * 2}px + ${CARD_GAP}px) + ${PEEK_WIDTH}px)`;
+
+  if (campaigns.length === 0) return null;
 
   return (
     <div>

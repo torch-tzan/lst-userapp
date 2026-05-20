@@ -2,12 +2,13 @@ import { useState } from "react";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import { Ticket, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-import { AVAILABLE_COUPONS } from "@/lib/couponStore";
+import { useUserCoupons } from "@/admin/lib/userAppBridge/useUserCoupons";
 
 const formatDate = (d: string) => d.replace(/-/g, "/");
 
 const Coupons = () => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const coupons = useUserCoupons();
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {
@@ -20,11 +21,11 @@ const Coupons = () => {
   return (
     <InnerPageLayout title="クーポン">
       <p className="text-xs text-muted-foreground mb-4">
-        利用可能なクーポン（{AVAILABLE_COUPONS.length}枚）
+        利用可能なクーポン（{coupons.length}枚）
       </p>
 
       <div className="space-y-3">
-        {AVAILABLE_COUPONS.map((coupon) => (
+        {coupons.map((coupon) => (
           <div
             key={coupon.code}
             className="bg-card border border-border rounded-[8px] overflow-hidden"
