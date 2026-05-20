@@ -4,11 +4,13 @@ import {
   CalendarDays,
   Clock,
   DollarSign,
+  LayoutDashboard,
   Mail,
   MapPin,
   Megaphone,
   Receipt,
   Settings,
+  Sliders,
   Sparkles,
   Store,
   Ticket,
@@ -32,31 +34,20 @@ export interface NavGroup {
 // ── LST HQ サイドバー（グループ構造）────────────────────────────────
 export const LST_NAV_GROUPS: NavGroup[] = [
   {
-    groupLabel: "加盟店/会員",
+    groupLabel: "メイン",
     items: [
-      { key: "affiliates", label: "加盟店管理", icon: Store, path: "/admin/lst/affiliates" },
+      { key: "dashboard", label: "ダッシュボード", icon: LayoutDashboard, path: "/admin/lst/dashboard" },
       { key: "members", label: "会員管理", icon: Users, path: "/admin/lst/members" },
-    ],
-  },
-  {
-    groupLabel: "施設/予約",
-    items: [
+      { key: "affiliates", label: "企業管理", icon: Store, path: "/admin/lst/affiliates" },
       { key: "courts", label: "コート管理", icon: MapPin, path: "/admin/lst/courts" },
       { key: "bookings", label: "予約管理", icon: CalendarDays, path: "/admin/lst/bookings" },
-      { key: "leagues", label: "リーグ管理", icon: Trophy, path: "/admin/lst/leagues" },
     ],
   },
   {
     groupLabel: "売上/決済",
     items: [
-      { key: "revenue", label: "手数料・売上", icon: DollarSign, path: "/admin/lst/revenue" },
+      { key: "revenue", label: "支払い管理", icon: DollarSign, path: "/admin/lst/revenue" },
       { key: "payments", label: "支払い履歴", icon: Receipt, path: "/admin/lst/payments" },
-    ],
-  },
-  {
-    groupLabel: "コーチ",
-    items: [
-      { key: "coaches", label: "コーチ管理", icon: Award, path: "/admin/lst/coaches" },
     ],
   },
   {
@@ -68,9 +59,17 @@ export const LST_NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    groupLabel: "設定",
+    groupLabel: "システム",
     items: [
+      { key: "system", label: "システム設定", icon: Sliders, path: "/admin/lst/system" },
       { key: "fees", label: "手数料設定", icon: Settings, path: "/admin/lst/fees" },
+    ],
+  },
+  {
+    groupLabel: "コーチング/ゲーム",
+    items: [
+      { key: "coaches", label: "コーチ管理", icon: Award, path: "/admin/lst/coaches" },
+      { key: "leagues", label: "リーグ管理", icon: Trophy, path: "/admin/lst/leagues" },
     ],
   },
 ];

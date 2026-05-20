@@ -1,8 +1,6 @@
-import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 
 import { useAdminAuth } from "../lib/adminAuthStore";
 
@@ -31,9 +29,6 @@ const AdminHeader = ({ roleLabel, profilePath }: AdminHeaderProps) => {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" aria-label="通知">
-          <Bell className="h-5 w-5 text-slate-600" />
-        </Button>
         <button
           type="button"
           onClick={() => navigate(profilePath)}

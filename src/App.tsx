@@ -94,6 +94,7 @@ import CoachList from "./admin/pages/lst/coaches/CoachList.tsx";
 import CoachDetailAdmin from "./admin/pages/lst/coaches/CoachDetailAdmin.tsx";
 import CouponList from "./admin/pages/lst/coupons/CouponList.tsx";
 import CouponDetail from "./admin/pages/lst/coupons/CouponDetail.tsx";
+import SystemSettings from "./admin/pages/lst/system/SystemSettings.tsx";
 import StoreDashboard from "./admin/pages/store/StoreDashboard.tsx";
 import CourtList from "./admin/pages/store/courts/CourtList.tsx";
 import CourtDetailAdmin from "./admin/pages/store/courts/CourtDetailAdmin.tsx";
@@ -205,6 +206,8 @@ const App = () => (
           <Route path="/admin/lst/revenue" element={<RevenueOverview />} />
           {/* 手数料設定 */}
           <Route path="/admin/lst/fees" element={<FeeSettings />} />
+          {/* システム設定 */}
+          <Route path="/admin/lst/system" element={<SystemSettings />} />
           {/* 会員管理 */}
           <Route path="/admin/lst/members" element={<MemberList />} />
           <Route path="/admin/lst/members/:userId" element={<MemberDetail />} />

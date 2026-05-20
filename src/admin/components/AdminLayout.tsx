@@ -31,10 +31,11 @@ const AdminLayout = ({ role, children }: AdminLayoutProps) => {
   const dashboardPath = isLst ? "/admin/lst/dashboard" : "/admin/store/dashboard";
   const profilePath = isLst ? "/admin/lst/profile" : "/admin/store/profile";
   const roleLabel = isLst ? "LST 管理者" : "企業管理者";
+  const logoText = isLst ? "LST 運営管理" : "ADMIN";
 
   return (
     <div className="flex h-screen min-w-[1440px] overflow-hidden bg-gray-50 text-slate-900">
-      <AdminSidebar groups={groups} dashboardPath={dashboardPath} />
+      <AdminSidebar groups={groups} dashboardPath={dashboardPath} logoText={logoText} />
       <div className="flex h-screen min-w-0 flex-1 flex-col">
         <AdminHeader roleLabel={roleLabel} profilePath={profilePath} />
         <main className="min-h-0 flex-1 overflow-y-auto bg-gray-50 p-6">{children}</main>
