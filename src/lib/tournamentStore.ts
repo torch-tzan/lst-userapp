@@ -139,6 +139,11 @@ export function getPlayer(userId: string): PlayerRef | undefined {
   return PLAYER_DIRECTORY.find((p) => p.userId === userId);
 }
 
+/** Admin: 全プレイヤー一覧（read-only view, copy）。 */
+export function getAllPlayers(): PlayerRef[] {
+  return PLAYER_DIRECTORY.slice();
+}
+
 export function setCurrentUserSkillLevel(level: SkillLevel) {
   const entry = PLAYER_DIRECTORY.find((p) => p.userId === CURRENT_USER);
   if (!entry) return;

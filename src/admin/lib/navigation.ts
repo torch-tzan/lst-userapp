@@ -26,7 +26,7 @@ export interface NavItem {
 
 export const LST_NAV_ITEMS: NavItem[] = [
   { key: "dashboard", label: "ダッシュボード", icon: LayoutDashboard, path: "/admin/lst/dashboard" },
-  { key: "stores", label: "加盟店管理", icon: Store, path: "/admin/lst/stores" },
+  { key: "affiliates", label: "加盟店管理", icon: Store, path: "/admin/lst/affiliates" },
   { key: "members", label: "会員管理", icon: Users, path: "/admin/lst/members" },
   { key: "courts", label: "コート管理", icon: MapPin, path: "/admin/lst/courts" },
   { key: "bookings", label: "予約管理", icon: CalendarDays, path: "/admin/lst/bookings" },
@@ -36,7 +36,7 @@ export const LST_NAV_ITEMS: NavItem[] = [
   { key: "coaches", label: "コーチ管理", icon: Award, path: "/admin/lst/coaches" },
   { key: "leagues", label: "リーグ管理", icon: Trophy, path: "/admin/lst/leagues" },
   { key: "revenue", label: "手数料・売上", icon: DollarSign, path: "/admin/lst/revenue" },
-  { key: "fee-settings", label: "手数料設定", icon: Settings, path: "/admin/lst/fee-settings" },
+  { key: "fees", label: "手数料設定", icon: Settings, path: "/admin/lst/fees" },
 ];
 
 export const STORE_NAV_ITEMS: NavItem[] = [

@@ -111,3 +111,25 @@ export const useAdminCourt = (id: string | undefined): CourtSummary | undefined 
   if (!id) return undefined;
   return getMergedCourt(id);
 };
+
+// ─── LST HQ: 加盟店との紐付け ───────────────────────────
+/**
+ * adminCourtStoreLink: courtId → affiliateId のマップ。
+ * 既存 COURTS (id=1/2/3) と overlay added を、SEED の加盟店に振り分ける。
+ * 新規追加されたコートは AFF-001 に紐付け（簡易ルール）。
+ */
+export const adminCourtStoreLink: Record<string, string> = {
+  "1": "AFF-001", // パデルコート広島
+  "2": "AFF-002", // 北広島パデルクラブ
+  "3": "AFF-003", // 広島中央スポーツ
+};
+
+/** courtId → affiliateId（未登録なら AFF-001 fallback） */
+export const getCourtAffiliateId = (courtId: string): string => {
+  return adminCourtStoreLink[courtId] ?? "AFF-001";
+};
+
+/** LST HQ: コート ↔ 加盟店紐付けを更新（mock — in-memory のみ） */
+export const setCourtAffiliateId = (courtId: string, affiliateId: string): void => {
+  adminCourtStoreLink[courtId] = affiliateId;
+};
