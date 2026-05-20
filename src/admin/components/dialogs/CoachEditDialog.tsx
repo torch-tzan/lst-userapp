@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Plus, X } from "lucide-react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,9 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { CoachSummary } from "@/lib/coachData";
+import { Textarea } from "@/components/ui/textarea";
+import { COACHES_DETAIL, type CoachDetail, type CoachSummary } from "@/lib/coachData";
 
-import { updateCoachOverlay } from "../../lib/adminCoachesOverlay";
+import {
+  getCoachDetailOverlay,
+  updateCoachOverlay,
+  type CoachDetailOverlayFields,
+} from "../../lib/adminCoachesOverlay";
 import {
   AdminDialog,
   AdminDialogContent,
@@ -27,10 +33,22 @@ import {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  coach: CoachSummary;
+  coach: CoachSummary | CoachDetail;
 }
 
 const LEVEL_OPTIONS = ["S級", "A級", "B級", "C級"];
+
+const dedupe = (arr: string[]): string[] => {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of arr) {
+    if (!seen.has(v)) {
+      seen.add(v);
+      out.push(v);
+    }
+  }
+  return out;
+};
 
 const CoachEditDialog = ({ open, onOpenChange, coach }: Props) => {
   const [name, setName] = useState(coach.name);
@@ -40,6 +58,13 @@ const CoachEditDialog = ({ open, onOpenChange, coach }: Props) => {
   const [pricePerHour, setPricePerHour] = useState(String(coach.pricePerHour));
   const [onlineAvailable, setOnlineAvailable] = useState(coach.onlineAvailable);
   const [reviewAvailable, setReviewAvailable] = useState(coach.reviewAvailable);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarError, setAvatarError] = useState(false);
+  const [bio, setBio] = useState("");
+  const [experience, setExperience] = useState("");
+  const [location, setLocation] = useState("");
+  const [certifications, setCertifications] = useState<string[]>([]);
+  const [certInput, setCertInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -51,9 +76,30 @@ const CoachEditDialog = ({ open, onOpenChange, coach }: Props) => {
       setPricePerHour(String(coach.pricePerHour));
       setOnlineAvailable(coach.onlineAvailable);
       setReviewAvailable(coach.reviewAvailable);
+
+      // 既存 detail or overlay から初期値を pre-fill
+      const baseDetail: CoachDetail | undefined = COACHES_DETAIL[coach.id];
+      const overlay = getCoachDetailOverlay(coach.id);
+
+      setAvatarUrl(overlay?.avatarUrl ?? "");
+      setAvatarError(false);
+      setBio(overlay?.bio ?? baseDetail?.bio ?? "");
+      setExperience(overlay?.experience ?? baseDetail?.experience ?? "");
+      setLocation(overlay?.location ?? baseDetail?.location ?? "");
+      setCertifications(
+        dedupe([
+          ...(baseDetail?.certifications ?? []),
+          ...(overlay?.certifications ?? []),
+        ]),
+      );
+      setCertInput("");
       setSubmitting(false);
     }
   }, [open, coach]);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [avatarUrl]);
 
   const priceNum = Number.parseInt(pricePerHour, 10);
   const canSubmit =
@@ -62,10 +108,39 @@ const CoachEditDialog = ({ open, onOpenChange, coach }: Props) => {
     !Number.isNaN(priceNum) &&
     !submitting;
 
+  const addCertification = () => {
+    const v = certInput.trim();
+    if (v.length === 0) return;
+    if (certifications.includes(v)) {
+      setCertInput("");
+      return;
+    }
+    setCertifications([...certifications, v]);
+    setCertInput("");
+  };
+
+  const removeCertification = (v: string) => {
+    setCertifications(certifications.filter((c) => c !== v));
+  };
+
+  const handleCertKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addCertification();
+    }
+  };
+
+  const trimmedAvatarUrl = avatarUrl.trim();
+  const previewSrc =
+    trimmedAvatarUrl.length > 0 && !avatarError ? trimmedAvatarUrl : coach.avatar;
+  const showFallback = trimmedAvatarUrl.length > 0 && avatarError;
+  const nameInitial = name.trim().slice(0, 1) || "—";
+
   const handleSubmit = () => {
     if (!canSubmit) return;
     setSubmitting(true);
-    updateCoachOverlay(coach.id, {
+
+    const summaryPatch: Partial<CoachSummary> = {
       name: name.trim(),
       level,
       specialty: specialty
@@ -76,7 +151,21 @@ const CoachEditDialog = ({ open, onOpenChange, coach }: Props) => {
       pricePerHour: priceNum,
       onlineAvailable,
       reviewAvailable,
-    });
+    };
+    // avatar も summary に反映（list で URL がそのまま使われるように）
+    if (trimmedAvatarUrl.length > 0) {
+      summaryPatch.avatar = trimmedAvatarUrl;
+    }
+
+    const detailPatch: CoachDetailOverlayFields = {
+      avatarUrl: trimmedAvatarUrl.length > 0 ? trimmedAvatarUrl : undefined,
+      bio: bio.trim().length > 0 ? bio.trim() : undefined,
+      experience: experience.trim().length > 0 ? experience.trim() : undefined,
+      location: location.trim().length > 0 ? location.trim() : undefined,
+      certifications: certifications.length > 0 ? certifications : undefined,
+    };
+
+    updateCoachOverlay(coach.id, summaryPatch, detailPatch);
     toast.success("コーチを更新しました");
     setSubmitting(false);
     onOpenChange(false);
@@ -94,6 +183,34 @@ const CoachEditDialog = ({ open, onOpenChange, coach }: Props) => {
           <div className="space-y-1.5">
             <Label htmlFor="ce-name">名前</Label>
             <Input id="ce-name" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ce-avatar">アバターURL</Label>
+            <div className="flex items-center gap-3">
+              {showFallback ? (
+                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-lg font-medium text-slate-500">
+                  {nameInitial}
+                </div>
+              ) : (
+                <img
+                  src={previewSrc}
+                  alt="avatar preview"
+                  className="h-16 w-16 rounded-full border border-slate-200 object-cover"
+                  onError={() => setAvatarError(true)}
+                />
+              )}
+              <Input
+                id="ce-avatar"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder="https://..."
+                className="flex-1"
+              />
+            </div>
+            {avatarError && trimmedAvatarUrl.length > 0 ? (
+              <p className="text-xs text-rose-600">画像を読み込めませんでした</p>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -136,6 +253,82 @@ const CoachEditDialog = ({ open, onOpenChange, coach }: Props) => {
               value={pricePerHour}
               onChange={(e) => setPricePerHour(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ce-location">拠点</Label>
+            <Input
+              id="ce-location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="広島県広島市中区"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ce-bio">経歴</Label>
+            <Textarea
+              id="ce-bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={4}
+              placeholder="パデル歴10年。初心者から中級者まで..."
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ce-experience">経験</Label>
+            <Textarea
+              id="ce-experience"
+              value={experience}
+              onChange={(e) => setExperience(e.target.value)}
+              rows={3}
+              placeholder="指導歴8年・JPA公認コーチ"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ce-cert">資格・認定</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="ce-cert"
+                value={certInput}
+                onChange={(e) => setCertInput(e.target.value)}
+                onKeyDown={handleCertKey}
+                placeholder="例: JPA公認A級"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addCertification}
+                disabled={certInput.trim().length === 0}
+              >
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                追加
+              </Button>
+            </div>
+            {certifications.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {certifications.map((c) => (
+                  <span
+                    key={c}
+                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700"
+                  >
+                    {c}
+                    <button
+                      type="button"
+                      onClick={() => removeCertification(c)}
+                      className="rounded-full text-slate-500 hover:text-slate-800"
+                      aria-label={`${c} を削除`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <div className="flex items-center justify-between rounded-md border p-3">
