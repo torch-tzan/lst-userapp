@@ -112,9 +112,8 @@ import AdminProfile from "./admin/pages/store/profile/AdminProfile.tsx";
 import StoreMemberList from "./admin/pages/store/members/StoreMemberList.tsx";
 import StoreMemberDetail from "./admin/pages/store/members/StoreMemberDetail.tsx";
 import InvitationList from "./admin/pages/store/invitations/InvitationList.tsx";
-import StoreTournamentList from "./admin/pages/store/tournaments/StoreTournamentList.tsx";
-import StoreTournamentNew from "./admin/pages/store/tournaments/StoreTournamentNew.tsx";
-import StoreTournamentDetail from "./admin/pages/store/tournaments/StoreTournamentDetail.tsx";
+import StoreLeagueList from "./admin/pages/store/leagues/StoreLeagueList.tsx";
+import StoreLeagueDetail from "./admin/pages/store/leagues/StoreLeagueDetail.tsx";
 import LstAdminProfile from "./admin/pages/lst/profile/LstAdminProfile.tsx";
 
 const queryClient = new QueryClient();
@@ -240,9 +239,8 @@ const App = () => (
           {/* 店舗 — アカウント招待 */}
           <Route path="/admin/store/invitations" element={<InvitationList />} />
           {/* 店舗 — 大会管理（/new は /:id より前） */}
-          <Route path="/admin/store/tournaments" element={<StoreTournamentList />} />
-          <Route path="/admin/store/tournaments/new" element={<StoreTournamentNew />} />
-          <Route path="/admin/store/tournaments/:id" element={<StoreTournamentDetail />} />
+          <Route path="/admin/store/leagues" element={<StoreLeagueList />} />
+          <Route path="/admin/store/leagues/:id" element={<StoreLeagueDetail />} />
           {/* 店舗 — コート管理 + 予約管理（より具体的なパスを wildcard より前に） */}
           <Route path="/admin/store/courts" element={<CourtList />} />
           <Route path="/admin/store/courts/:id" element={<CourtDetailAdmin />} />
