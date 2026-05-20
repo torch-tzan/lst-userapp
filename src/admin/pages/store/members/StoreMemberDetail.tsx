@@ -1,4 +1,4 @@
-import { ArrowRight, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -9,22 +9,15 @@ import MemberDeleteDialog from "../../../components/dialogs/MemberDeleteDialog";
 import MemberEditDialog from "../../../components/dialogs/MemberEditDialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useLeagueMatchBoardStore } from "@/lib/leagueMatchBoardStore";
-import {
-  formatSeasonLabel,
-  getRankTier,
-  getSeasonOf,
-  seasonKey,
-  useTournamentStore,
-} from "@/lib/tournamentStore";
+import { getRankTier } from "@/lib/tournamentStore";
 
 import { useAdminMember } from "../../../lib/adminMembersOverlay";
 import { SKILL_LEVEL_JP } from "../../../lib/leagueLabels";
-import { getAffiliateNameById } from "../../../lib/memberAffiliateLink";
 import {
   MEMBER_PREMIUM_STATUS_BADGE_CLS,
   MEMBER_PREMIUM_STATUS_JP,
 } from "../../../lib/lstLabels";
+import { getAffiliateNameById } from "../../../lib/memberAffiliateLink";
 
 const cardCls = "rounded-lg border bg-white p-6 shadow-sm";
 
@@ -50,60 +43,32 @@ interface PointLog {
   note: string;
 }
 
-const MemberDetail = () => {
+const StoreMemberDetail = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const member = useAdminMember(userId);
-  const { computeSeasonalRanking } = useTournamentStore();
-  const { postedMatches } = useLeagueMatchBoardStore();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const leagueStats = useMemo(() => {
-    if (!member) return { played: 0, won: 0 };
-    let played = 0;
-    let won = 0;
-    for (const m of postedMatches) {
-      if (m.status !== "completed" || !m.result) continue;
-      const onSide1 = m.result.side1UserIds.includes(member.userId);
-      const onSide2 = m.result.side2UserIds.includes(member.userId);
-      if (!onSide1 && !onSide2) continue;
-      played += 1;
-      const isWin = (onSide1 && m.result.winnerSide === 1) || (onSide2 && m.result.winnerSide === 2);
-      if (isWin) won += 1;
-    }
-    return { played, won };
-  }, [postedMatches, member]);
-
-  const seasonRank = useMemo(() => {
-    if (!member) return undefined;
-    const key = seasonKey(getSeasonOf(new Date()));
-    const ranking = computeSeasonalRanking(key);
-    const idx = ranking.findIndex((r) => r.userId === member.userId);
-    return idx >= 0 ? { rank: idx + 1, season: formatSeasonLabel(getSeasonOf(new Date())) } : undefined;
-  }, [member, computeSeasonalRanking]);
-
-  // ポイント履歴 mock — 5 件
   const pointHistory: PointLog[] = useMemo(() => {
     if (!member) return [];
-    const h = member.userId.length * 31;
     return [
       { id: "p-1", date: "2026-05-18", type: "earn", amount: 30, note: "リーグ戦勝利" },
       { id: "p-2", date: "2026-05-10", type: "spend", amount: 200, note: "コートクーポン引換" },
       { id: "p-3", date: "2026-04-28", type: "earn", amount: 20, note: "大会参加ボーナス" },
       { id: "p-4", date: "2026-04-15", type: "earn", amount: 100, note: "Premium 継続" },
-      { id: "p-5", date: "2026-04-01", type: "earn", amount: 50 + (h % 30), note: "初回登録ボーナス" },
+      { id: "p-5", date: "2026-04-01", type: "earn", amount: 50, note: "初回登録ボーナス" },
     ];
   }, [member]);
 
   if (!member) {
     return (
-      <AdminLayout role="lst">
+      <AdminLayout role="store">
         <AdminPageHeader
           title="会員が見つかりません"
           breadcrumbs={[
-            { label: "LST HQ" },
-            { label: "会員管理", to: "/admin/lst/members" },
+            { label: "店舗" },
+            { label: "会員管理", to: "/admin/store/members" },
             { label: userId ?? "—" },
           ]}
         />
@@ -111,7 +76,7 @@ const MemberDetail = () => {
           <p className="text-sm text-slate-600">
             指定された会員 ID（<span className="font-mono">{userId}</span>）が見つかりませんでした。
           </p>
-          <Button className="mt-4" variant="outline" onClick={() => navigate("/admin/lst/members")}>
+          <Button className="mt-4" variant="outline" onClick={() => navigate("/admin/store/members")}>
             会員一覧へ戻る
           </Button>
         </div>
@@ -137,12 +102,12 @@ const MemberDetail = () => {
   ];
 
   return (
-    <AdminLayout role="lst">
+    <AdminLayout role="store">
       <AdminPageHeader
         title={member.name}
         breadcrumbs={[
-          { label: "LST HQ" },
-          { label: "会員管理", to: "/admin/lst/members" },
+          { label: "店舗" },
+          { label: "会員管理", to: "/admin/store/members" },
           { label: member.name },
         ]}
         actions={
@@ -180,9 +145,7 @@ const MemberDetail = () => {
               <InfoRow label="電話">{member.phone}</InfoRow>
               <InfoRow label="登録日">{member.extra.registeredAt}</InfoRow>
               <InfoRow label="最終ログイン">{member.extra.lastLoginAt}</InfoRow>
-              <InfoRow label="登録店">
-                {getAffiliateNameById(member.extra.registeredAffiliateId)}
-              </InfoRow>
+              <InfoRow label="登録店">{getAffiliateNameById(member.extra.registeredAffiliateId)}</InfoRow>
             </div>
           </div>
         </div>
@@ -190,7 +153,7 @@ const MemberDetail = () => {
         {/* スキル & レーティング */}
         <div className={cardCls}>
           <SectionHeader title="スキル & レーティング" />
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="rounded-md border bg-slate-50 p-4">
               <div className="text-xs font-medium text-slate-500">スキルレベル</div>
               <div className="mt-1 text-lg font-semibold text-slate-900">
@@ -209,13 +172,6 @@ const MemberDetail = () => {
                 <span>{tier.emoji}</span>
                 <span>{tier.label}</span>
               </div>
-            </div>
-            <div className="rounded-md border bg-slate-50 p-4">
-              <div className="text-xs font-medium text-slate-500">シーズン順位</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">
-                {seasonRank ? `${seasonRank.rank} 位` : "—"}
-              </div>
-              {seasonRank ? <div className="text-xs text-slate-500">{seasonRank.season}</div> : null}
             </div>
           </div>
         </div>
@@ -244,42 +200,6 @@ const MemberDetail = () => {
           </div>
         </div>
 
-        {/* リーグ戦績 */}
-        <div className={cardCls}>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-slate-900">リーグ戦績</h2>
-              <p className="mt-0.5 text-xs text-slate-500">完了したリーグ試合</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/admin/lst/leagues/players/${member.userId}`)}
-            >
-              詳細を見る
-              <ArrowRight className="ml-1.5 h-3 w-3" />
-            </Button>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-md border bg-slate-50 p-4">
-              <div className="text-xs font-medium text-slate-500">試合数</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">{leagueStats.played}</div>
-            </div>
-            <div className="rounded-md border bg-slate-50 p-4">
-              <div className="text-xs font-medium text-slate-500">勝利</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">{leagueStats.won}</div>
-            </div>
-            <div className="rounded-md border bg-slate-50 p-4">
-              <div className="text-xs font-medium text-slate-500">勝率</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">
-                {leagueStats.played === 0
-                  ? "—"
-                  : `${Math.round((leagueStats.won / leagueStats.played) * 100)}%`}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* ポイント */}
         <div className={cardCls}>
           <SectionHeader
@@ -300,10 +220,10 @@ const MemberDetail = () => {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         member={member}
-        onDeleted={() => navigate("/admin/lst/members")}
+        onDeleted={() => navigate("/admin/store/members")}
       />
     </AdminLayout>
   );
 };
 
-export default MemberDetail;
+export default StoreMemberDetail;

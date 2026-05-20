@@ -12,7 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { updateMember, type MemberRecord } from "../../lib/adminMembersOverlay";
+import { useAffiliates } from "../../lib/adminAffiliatesStore";
+import {
+  updateMember,
+  updateMemberExtra,
+  type MemberRecord,
+} from "../../lib/adminMembersOverlay";
 import { SKILL_LEVEL_JP } from "../../lib/leagueLabels";
 import {
   AdminDialog,
@@ -34,11 +39,15 @@ interface Props {
 const SKILL_OPTIONS: SkillLevel[] = ["beginner", "intermediate", "advanced"];
 
 const MemberEditDialog = ({ open, onOpenChange, member }: Props) => {
+  const affiliates = useAffiliates();
   const [name, setName] = useState(member.name);
   const [email, setEmail] = useState(member.email);
   const [phone, setPhone] = useState(member.phone);
   const [skillLevel, setSkillLevel] = useState<SkillLevel>(member.skillLevel);
   const [rating, setRating] = useState<string>(String(member.rating));
+  const [registeredAffiliateId, setRegisteredAffiliateId] = useState<string>(
+    member.extra.registeredAffiliateId ?? "",
+  );
 
   useEffect(() => {
     if (open) {
@@ -47,6 +56,7 @@ const MemberEditDialog = ({ open, onOpenChange, member }: Props) => {
       setPhone(member.phone);
       setSkillLevel(member.skillLevel);
       setRating(String(member.rating));
+      setRegisteredAffiliateId(member.extra.registeredAffiliateId ?? "");
     }
   }, [open, member]);
 
@@ -57,7 +67,8 @@ const MemberEditDialog = ({ open, onOpenChange, member }: Props) => {
     phone.trim() !== "" &&
     !Number.isNaN(ratingNum) &&
     ratingNum >= 1000 &&
-    ratingNum <= 3000;
+    ratingNum <= 3000 &&
+    registeredAffiliateId !== "";
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -68,6 +79,7 @@ const MemberEditDialog = ({ open, onOpenChange, member }: Props) => {
       skillLevel,
       rating: ratingNum,
     });
+    updateMemberExtra(member.userId, { registeredAffiliateId });
     toast.success("会員情報を更新しました");
     onOpenChange(false);
   };
@@ -92,6 +104,21 @@ const MemberEditDialog = ({ open, onOpenChange, member }: Props) => {
           <div className="space-y-1.5">
             <Label htmlFor="edit-member-phone">電話</Label>
             <Input id="edit-member-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-member-affiliate">登録店</Label>
+            <Select value={registeredAffiliateId} onValueChange={setRegisteredAffiliateId}>
+              <SelectTrigger id="edit-member-affiliate">
+                <SelectValue placeholder="登録店を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {affiliates.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.storeName} ({a.prefecture})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

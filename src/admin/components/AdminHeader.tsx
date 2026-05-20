@@ -1,4 +1,4 @@
-import { Bell, LogOut } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "../lib/adminAuthStore";
 
 interface AdminHeaderProps {
-  rolePillLabel: string;
+  roleLabel: string;
+  profilePath: string;
 }
 
-const AdminHeader = ({ rolePillLabel }: AdminHeaderProps) => {
+const AdminHeader = ({ roleLabel, profilePath }: AdminHeaderProps) => {
   const auth = useAdminAuth();
   const navigate = useNavigate();
 
@@ -24,29 +25,33 @@ const AdminHeader = ({ rolePillLabel }: AdminHeaderProps) => {
   return (
     <header className="flex h-16 flex-shrink-0 items-center justify-between border-b bg-white px-6">
       <div className="flex items-center gap-3">
-        <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-          {rolePillLabel}
-        </span>
         {auth.storeName ? (
-          <span className="text-sm text-slate-600">{auth.storeName}</span>
+          <span className="text-sm font-medium text-slate-700">{auth.storeName}</span>
         ) : null}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" aria-label="通知">
           <Bell className="h-5 w-5 text-slate-600" />
         </Button>
-        <div className="flex items-center gap-2 pl-2">
-          <Avatar className="h-8 w-8">
+        <button
+          type="button"
+          onClick={() => navigate(profilePath)}
+          aria-label="プロフィール"
+          className="transition-transform hover:scale-105"
+        >
+          <Avatar className="h-9 w-9">
             <AvatarFallback className="bg-slate-200 text-sm text-slate-700">{initials}</AvatarFallback>
           </Avatar>
-          <div className="text-sm">
-            <div className="font-medium text-slate-800">{auth.email ?? "admin"}</div>
-          </div>
-        </div>
-        <Button variant="ghost" size="icon" aria-label="ログアウト" onClick={handleSignOut}>
-          <LogOut className="h-5 w-5 text-slate-600" />
-        </Button>
+        </button>
+        <span className="text-sm text-slate-600">{roleLabel}</span>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="text-sm font-medium text-red-500 transition-colors hover:text-red-600"
+        >
+          ログアウト
+        </button>
       </div>
     </header>
   );

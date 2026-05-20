@@ -3,7 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 
 import { useAdminAuth } from "../lib/adminAuthStore";
-import { LST_NAV_ITEMS, STORE_NAV_ITEMS } from "../lib/navigation";
+import { LST_NAV_GROUPS, STORE_NAV_GROUPS } from "../lib/navigation";
 import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 
@@ -27,16 +27,16 @@ const AdminLayout = ({ role, children }: AdminLayoutProps) => {
   }
 
   const isLst = role === "lst";
-  const items = isLst ? LST_NAV_ITEMS : STORE_NAV_ITEMS;
-  const title = isLst ? "LST 本部" : "店舗管理";
-  const subtitle = isLst ? "Headquarters" : auth.storeName ?? "Store Admin";
-  const rolePillLabel = isLst ? "LST HQ" : "店舗";
+  const groups = isLst ? LST_NAV_GROUPS : STORE_NAV_GROUPS;
+  const dashboardPath = isLst ? "/admin/lst/dashboard" : "/admin/store/dashboard";
+  const profilePath = isLst ? "/admin/lst/profile" : "/admin/store/profile";
+  const roleLabel = isLst ? "LST 管理者" : "企業管理者";
 
   return (
     <div className="flex min-h-screen min-w-[1440px] bg-gray-50 text-slate-900">
-      <AdminSidebar items={items} title={title} subtitle={subtitle} />
+      <AdminSidebar groups={groups} dashboardPath={dashboardPath} />
       <div className="flex min-h-screen flex-1 flex-col">
-        <AdminHeader rolePillLabel={rolePillLabel} />
+        <AdminHeader roleLabel={roleLabel} profilePath={profilePath} />
         <main className="flex-1 overflow-y-auto bg-gray-50 p-6">{children}</main>
       </div>
       <SonnerToaster position="top-right" richColors />

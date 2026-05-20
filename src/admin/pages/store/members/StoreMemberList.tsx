@@ -13,12 +13,12 @@ import { cn } from "@/lib/utils";
 
 import { useAdminMembers, type MemberRecord } from "../../../lib/adminMembersOverlay";
 import { SKILL_LEVEL_JP } from "../../../lib/leagueLabels";
-import { getAffiliateNameById } from "../../../lib/memberAffiliateLink";
 import {
   MEMBER_PREMIUM_STATUS_BADGE_CLS,
   MEMBER_PREMIUM_STATUS_JP,
   type MemberPremiumStatus,
 } from "../../../lib/lstLabels";
+import { getAffiliateNameById } from "../../../lib/memberAffiliateLink";
 import { getRankTier, type SkillLevel } from "@/lib/tournamentStore";
 
 const SKILL_OPTIONS = (Object.keys(SKILL_LEVEL_JP) as SkillLevel[]).map((s) => ({
@@ -31,30 +31,19 @@ const PREMIUM_OPTIONS = (Object.keys(MEMBER_PREMIUM_STATUS_JP) as MemberPremiumS
   label: MEMBER_PREMIUM_STATUS_JP[s],
 }));
 
-const TIER_OPTIONS = [
-  { value: "bronze", label: "Bronze" },
-  { value: "silver", label: "Silver" },
-  { value: "gold", label: "Gold" },
-  { value: "platinum", label: "Platinum" },
-  { value: "master", label: "Master" },
-];
-
-const MemberList = () => {
+const StoreMemberList = () => {
   const navigate = useNavigate();
   const members = useAdminMembers();
 
   const [search, setSearch] = useState("");
   const [skillFilter, setSkillFilter] = useState<string | undefined>(undefined);
   const [premiumFilter, setPremiumFilter] = useState<string | undefined>(undefined);
-  const [tierFilter, setTierFilter] = useState<string | undefined>(undefined);
   const [newOpen, setNewOpen] = useState(false);
 
   const stats = useMemo(() => {
     const total = members.length;
     const premium = members.filter((m) => m.extra.premiumStatus === "active").length;
-    // 「今月新規」は registeredAt が 2026-05 のもの。
     const thisMonthNew = members.filter((m) => m.extra.registeredAt.startsWith("2026-05")).length;
-    // 「退会者」mock — premiumStatus = expired を簡易代用
     const churned = members.filter((m) => m.extra.premiumStatus === "expired").length;
     return { total, premium, thisMonthNew, churned };
   }, [members]);
@@ -64,10 +53,6 @@ const MemberList = () => {
     return members.filter((m) => {
       if (skillFilter && m.skillLevel !== skillFilter) return false;
       if (premiumFilter && m.extra.premiumStatus !== premiumFilter) return false;
-      if (tierFilter) {
-        const tier = getRankTier(m.rating).tier;
-        if (tier !== tierFilter) return false;
-      }
       if (!q) return true;
       return (
         m.name.toLowerCase().includes(q) ||
@@ -76,7 +61,7 @@ const MemberList = () => {
         m.displayId.toLowerCase().includes(q)
       );
     });
-  }, [members, search, skillFilter, premiumFilter, tierFilter]);
+  }, [members, search, skillFilter, premiumFilter]);
 
   const columns: DataTableColumn<MemberRecord>[] = [
     {
@@ -94,7 +79,7 @@ const MemberList = () => {
     {
       key: "affiliate",
       header: "登録店",
-      width: "14%",
+      width: "16%",
       render: (m) => (
         <span className="text-sm text-slate-700">
           {getAffiliateNameById(m.extra.registeredAffiliateId)}
@@ -104,7 +89,7 @@ const MemberList = () => {
     {
       key: "email",
       header: "メール",
-      width: "16%",
+      width: "18%",
       render: (m) => <span className="text-sm text-slate-700">{m.email}</span>,
     },
     {
@@ -121,15 +106,14 @@ const MemberList = () => {
     },
     {
       key: "rating",
-      header: "レーティング / ティア",
-      width: "14%",
+      header: "レーティング",
+      width: "12%",
       render: (m) => {
         const tier = getRankTier(m.rating);
         return (
           <span className="inline-flex items-center gap-1.5 text-sm text-slate-700">
             <span className="font-medium tabular-nums text-slate-800">{m.rating}</span>
             <span className="text-base leading-none">{tier.emoji}</span>
-            <span className="text-xs text-slate-500">{tier.label}</span>
           </span>
         );
       },
@@ -149,23 +133,14 @@ const MemberList = () => {
         </span>
       ),
     },
-    {
-      key: "points",
-      header: "ポイント",
-      width: "12%",
-      className: "text-right",
-      render: (m) => (
-        <span className="text-sm text-slate-700">{m.extra.points.toLocaleString("ja-JP")} pt</span>
-      ),
-    },
   ];
 
   return (
-    <AdminLayout role="lst">
+    <AdminLayout role="store">
       <AdminPageHeader
         title="会員管理"
-        description="LST 全会員の一覧"
-        breadcrumbs={[{ label: "LST HQ" }, { label: "会員管理" }]}
+        description="店舗会員の一覧"
+        breadcrumbs={[{ label: "店舗" }, { label: "会員管理" }]}
         actions={
           <Button onClick={() => setNewOpen(true)}>
             <Plus className="mr-1.5 h-4 w-4" />
@@ -203,15 +178,9 @@ const MemberList = () => {
                 options={PREMIUM_OPTIONS}
                 onChange={setPremiumFilter}
               />
-              <FilterChip
-                label="ティア"
-                value={tierFilter}
-                options={TIER_OPTIONS}
-                onChange={setTierFilter}
-              />
             </>
           }
-          onRowClick={(m) => navigate(`/admin/lst/members/${m.userId}`)}
+          onRowClick={(m) => navigate(`/admin/store/members/${m.userId}`)}
           emptyTitle="該当する会員はいません"
           emptyDescription="フィルタ条件を変更するか、新規追加してください。"
           pageSize={15}
@@ -223,4 +192,4 @@ const MemberList = () => {
   );
 };
 
-export default MemberList;
+export default StoreMemberList;

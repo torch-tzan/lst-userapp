@@ -109,6 +109,13 @@ import AnnouncementDetail from "./admin/pages/store/announcements/AnnouncementDe
 import CampaignList from "./admin/pages/store/campaigns/CampaignList.tsx";
 import CampaignDetailAdmin from "./admin/pages/store/campaigns/CampaignDetailAdmin.tsx";
 import AdminProfile from "./admin/pages/store/profile/AdminProfile.tsx";
+import StoreMemberList from "./admin/pages/store/members/StoreMemberList.tsx";
+import StoreMemberDetail from "./admin/pages/store/members/StoreMemberDetail.tsx";
+import InvitationList from "./admin/pages/store/invitations/InvitationList.tsx";
+import StoreTournamentList from "./admin/pages/store/tournaments/StoreTournamentList.tsx";
+import StoreTournamentNew from "./admin/pages/store/tournaments/StoreTournamentNew.tsx";
+import StoreTournamentDetail from "./admin/pages/store/tournaments/StoreTournamentDetail.tsx";
+import LstAdminProfile from "./admin/pages/lst/profile/LstAdminProfile.tsx";
 
 const queryClient = new QueryClient();
 
@@ -217,6 +224,8 @@ const App = () => (
           {/* コーチ管理（LST HQ） */}
           <Route path="/admin/lst/coaches" element={<CoachList />} />
           <Route path="/admin/lst/coaches/:id" element={<CoachDetailAdmin />} />
+          {/* LST 管理者プロフィール */}
+          <Route path="/admin/lst/profile" element={<LstAdminProfile />} />
           <Route
             path="/admin/lst/*"
             element={
@@ -225,6 +234,15 @@ const App = () => (
               </AdminLayout>
             }
           />
+          {/* 店舗 — 会員管理 */}
+          <Route path="/admin/store/members" element={<StoreMemberList />} />
+          <Route path="/admin/store/members/:userId" element={<StoreMemberDetail />} />
+          {/* 店舗 — アカウント招待 */}
+          <Route path="/admin/store/invitations" element={<InvitationList />} />
+          {/* 店舗 — 大会管理（/new は /:id より前） */}
+          <Route path="/admin/store/tournaments" element={<StoreTournamentList />} />
+          <Route path="/admin/store/tournaments/new" element={<StoreTournamentNew />} />
+          <Route path="/admin/store/tournaments/:id" element={<StoreTournamentDetail />} />
           {/* 店舗 — コート管理 + 予約管理（より具体的なパスを wildcard より前に） */}
           <Route path="/admin/store/courts" element={<CourtList />} />
           <Route path="/admin/store/courts/:id" element={<CourtDetailAdmin />} />

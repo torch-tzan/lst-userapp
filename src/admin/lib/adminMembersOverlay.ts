@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 
 import { getAllPlayers, type PlayerRef, type SkillLevel } from "@/lib/tournamentStore";
 
+import { getMemberAffiliateId } from "./memberAffiliateLink";
 import type { MemberPremiumStatus } from "./lstLabels";
 
 /**
@@ -21,6 +22,7 @@ export interface MemberExtra {
   premiumStartedAt?: string;
   premiumNextRenewAt?: string;
   premiumTotalPaid?: number;
+  registeredAffiliateId?: string; // 登録店（加盟店 ID）
 }
 
 export interface MemberRecord extends PlayerRef {
@@ -108,6 +110,7 @@ function defaultExtraFor(p: PlayerRef): MemberExtra {
     premiumStartedAt,
     premiumNextRenewAt,
     premiumTotalPaid,
+    registeredAffiliateId: getMemberAffiliateId(p.userId),
   };
 }
 
@@ -163,6 +166,7 @@ export const addMember = (input: {
   phone: string;
   skillLevel: SkillLevel;
   rating: number;
+  registeredAffiliateId: string;
 }): MemberRecord => {
   const userId = genUserId();
   const player: PlayerRef = {
@@ -174,9 +178,30 @@ export const addMember = (input: {
     skillLevel: input.skillLevel,
     rating: input.rating,
   };
-  state = { ...state, added: [...state.added, player] };
+  state = {
+    ...state,
+    added: [...state.added, player],
+    extraOverrides: {
+      ...state.extraOverrides,
+      [userId]: {
+        ...state.extraOverrides[userId],
+        registeredAffiliateId: input.registeredAffiliateId,
+      },
+    },
+  };
   notify();
   return applyExtra(player);
+};
+
+export const updateMemberExtra = (userId: string, patch: Partial<MemberExtra>): void => {
+  state = {
+    ...state,
+    extraOverrides: {
+      ...state.extraOverrides,
+      [userId]: { ...state.extraOverrides[userId], ...patch },
+    },
+  };
+  notify();
 };
 
 export const updateMember = (userId: string, patch: Partial<PlayerRef>): void => {

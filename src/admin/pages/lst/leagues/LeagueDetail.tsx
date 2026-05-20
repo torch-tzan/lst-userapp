@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -316,25 +315,6 @@ const LeagueDetail = () => {
                   </div>
                 </>
               ) : null}
-            </div>
-          </div>
-        ) : null}
-
-        {/* Section 4: チャットスレッド */}
-        {match.threadId ? (
-          <div className={cardCls}>
-            <SectionHeader title="チャットスレッド" />
-            <div className="flex items-start gap-3 rounded-md border bg-slate-50 p-3">
-              <MessageCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-500" />
-              <div>
-                <div className="text-sm font-medium text-slate-700">
-                  💬 グループチャット
-                  <span className="ml-2 font-mono text-xs text-slate-500">id={match.threadId}</span>
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  プレイヤー間のチャット — 確認は別画面で対応予定です。
-                </div>
-              </div>
             </div>
           </div>
         ) : null}

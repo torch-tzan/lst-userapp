@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { useAffiliates } from "../../lib/adminAffiliatesStore";
 import { addMember } from "../../lib/adminMembersOverlay";
 import { SKILL_LEVEL_JP } from "../../lib/leagueLabels";
 import {
@@ -33,11 +34,13 @@ interface Props {
 const SKILL_OPTIONS: SkillLevel[] = ["beginner", "intermediate", "advanced"];
 
 const NewMemberDialog = ({ open, onOpenChange }: Props) => {
+  const affiliates = useAffiliates();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [skillLevel, setSkillLevel] = useState<SkillLevel>("intermediate");
   const [rating, setRating] = useState<string>("1600");
+  const [registeredAffiliateId, setRegisteredAffiliateId] = useState<string>("");
 
   useEffect(() => {
     if (open) {
@@ -46,6 +49,7 @@ const NewMemberDialog = ({ open, onOpenChange }: Props) => {
       setPhone("");
       setSkillLevel("intermediate");
       setRating("1600");
+      setRegisteredAffiliateId("");
     }
   }, [open]);
 
@@ -56,7 +60,8 @@ const NewMemberDialog = ({ open, onOpenChange }: Props) => {
     phone.trim() !== "" &&
     !Number.isNaN(ratingNum) &&
     ratingNum >= 1000 &&
-    ratingNum <= 3000;
+    ratingNum <= 3000 &&
+    registeredAffiliateId !== "";
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -66,6 +71,7 @@ const NewMemberDialog = ({ open, onOpenChange }: Props) => {
       phone: phone.trim(),
       skillLevel,
       rating: ratingNum,
+      registeredAffiliateId,
     });
     toast.success("会員を追加しました");
     onOpenChange(false);
@@ -91,6 +97,21 @@ const NewMemberDialog = ({ open, onOpenChange }: Props) => {
           <div className="space-y-1.5">
             <Label htmlFor="member-phone">電話</Label>
             <Input id="member-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="090-0000-0000" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="member-affiliate">登録店</Label>
+            <Select value={registeredAffiliateId} onValueChange={setRegisteredAffiliateId}>
+              <SelectTrigger id="member-affiliate">
+                <SelectValue placeholder="登録店を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {affiliates.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.storeName} ({a.prefecture})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
