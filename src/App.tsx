@@ -65,6 +65,11 @@ import PremiumPaymentMethod from "./pages/PremiumPaymentMethod.tsx";
 import PremiumBillingHistory from "./pages/PremiumBillingHistory.tsx";
 import PremiumCancel from "./pages/PremiumCancel.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AdminLayout from "./admin/components/AdminLayout.tsx";
+import AdminLogin from "./admin/pages/AdminLogin.tsx";
+import AdminPlaceholder from "./admin/pages/AdminPlaceholder.tsx";
+import LstDashboard from "./admin/pages/lst/LstDashboard.tsx";
+import StoreDashboard from "./admin/pages/store/StoreDashboard.tsx";
 
 const queryClient = new QueryClient();
 
@@ -135,6 +140,26 @@ const App = () => (
           <Route path="/game/league/:id" element={<LeagueBoardDetail />} />
           <Route path="/game/league/:id/score" element={<LeagueBoardScore />} />
           <Route path="/game/league/:id/edit" element={<LeagueBoardEdit />} />
+          {/* Admin backstage */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/lst/dashboard" element={<LstDashboard />} />
+          <Route path="/admin/store/dashboard" element={<StoreDashboard />} />
+          <Route
+            path="/admin/lst/*"
+            element={
+              <AdminLayout role="lst">
+                <AdminPlaceholder />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path="/admin/store/*"
+            element={
+              <AdminLayout role="store">
+                <AdminPlaceholder />
+              </AdminLayout>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
