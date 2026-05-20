@@ -74,6 +74,10 @@ import LeagueDetail from "./admin/pages/lst/leagues/LeagueDetail.tsx";
 import LeagueRankings from "./admin/pages/lst/leagues/LeagueRankings.tsx";
 import LeaguePlayerDetail from "./admin/pages/lst/leagues/LeaguePlayerDetail.tsx";
 import StoreDashboard from "./admin/pages/store/StoreDashboard.tsx";
+import CourtList from "./admin/pages/store/courts/CourtList.tsx";
+import CourtDetailAdmin from "./admin/pages/store/courts/CourtDetailAdmin.tsx";
+import BookingList from "./admin/pages/store/bookings/BookingList.tsx";
+import BookingDetailAdmin from "./admin/pages/store/bookings/BookingDetailAdmin.tsx";
 
 const queryClient = new QueryClient();
 
@@ -161,6 +165,11 @@ const App = () => (
               </AdminLayout>
             }
           />
+          {/* 店舗 — コート管理 + 予約管理（より具体的なパスを wildcard より前に） */}
+          <Route path="/admin/store/courts" element={<CourtList />} />
+          <Route path="/admin/store/courts/:id" element={<CourtDetailAdmin />} />
+          <Route path="/admin/store/bookings" element={<BookingList />} />
+          <Route path="/admin/store/bookings/:id" element={<BookingDetailAdmin />} />
           <Route
             path="/admin/store/*"
             element={

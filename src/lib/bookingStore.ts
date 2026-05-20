@@ -72,6 +72,10 @@ export interface StoredBooking {
   teamId?: string;
   // Review lesson videos
   reviewVideos?: ReviewVideoMeta[];
+  // Admin operations
+  cancelReason?: string;
+  cancelledAt?: string;
+  createdAt?: string;
 }
 
 const STORAGE_KEY = "padel_bookings";
@@ -115,4 +119,68 @@ export const getPendingBooking = (): Record<string, unknown> | null => {
 
 export const clearPendingBooking = () => {
   localStorage.removeItem("padel_pending_booking");
+};
+
+// ─── Admin operations + subscription helpers ─────────────────────────────
+
+/** 削除 — id 指定。返り値は削除した booking、見つからなければ undefined。 */
+export const removeBooking = (id: string): StoredBooking | undefined => {
+  const bookings = getBookings();
+  const idx = bookings.findIndex((b) => b.id === id);
+  if (idx === -1) return undefined;
+  const removed = bookings[idx];
+  bookings.splice(idx, 1);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+  notifyBookingChange();
+  return removed;
+};
+
+/** Admin: 予約をキャンセル — status=cancelled + reason + cancelledAt をセット */
+export const adminCancelBooking = (id: string, reason?: string): boolean => {
+  const bookings = getBookings();
+  const idx = bookings.findIndex((b) => b.id === id);
+  if (idx === -1) return false;
+  bookings[idx] = {
+    ...bookings[idx],
+    status: "cancelled",
+    cancelReason: reason,
+    cancelledAt: new Date().toISOString(),
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+  notifyBookingChange();
+  return true;
+};
+
+/** Admin: 予約を上書き更新（reactive notify 付き） */
+export const adminUpdateBooking = (id: string, updates: Partial<StoredBooking>): boolean => {
+  const bookings = getBookings();
+  const idx = bookings.findIndex((b) => b.id === id);
+  if (idx === -1) return false;
+  bookings[idx] = { ...bookings[idx], ...updates };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+  notifyBookingChange();
+  return true;
+};
+
+/** Admin: 予約を追加（reactive notify 付き） */
+export const adminAddBooking = (booking: StoredBooking): void => {
+  const bookings = getBookings();
+  bookings.push(booking);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+  notifyBookingChange();
+};
+
+// ─── Subscription（admin 用 reactive 更新） ──────────────────────────────
+
+const bookingListeners = new Set<() => void>();
+
+export const subscribeBookings = (l: () => void): (() => void) => {
+  bookingListeners.add(l);
+  return () => {
+    bookingListeners.delete(l);
+  };
+};
+
+const notifyBookingChange = (): void => {
+  bookingListeners.forEach((l) => l());
 };
