@@ -1,8 +1,8 @@
 # Progress — LST padel user app
 
 **最後更新**：2026-05-21
-**本次 session 範圍**：LST 後台 prototype（從 RFP 到實作完成）
-**Commit 數**：本 session 7 個（`6d02aa2` RFP → `61899b3` LST HQ 最後 5 模組）
+**本次 session 範圍**：LST 後台 prototype 從 RFP 到實作 + 視覺 polish + 欄位 audit + alignment 修正
+**Commit 數**：本 session 15 個（`6d02aa2` RFP → `fe14be6` data-sync bridge）
 
 ---
 
