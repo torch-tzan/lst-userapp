@@ -78,6 +78,18 @@ import CourtList from "./admin/pages/store/courts/CourtList.tsx";
 import CourtDetailAdmin from "./admin/pages/store/courts/CourtDetailAdmin.tsx";
 import BookingList from "./admin/pages/store/bookings/BookingList.tsx";
 import BookingDetailAdmin from "./admin/pages/store/bookings/BookingDetailAdmin.tsx";
+import SalesList from "./admin/pages/store/sales/SalesList.tsx";
+import SalesDetail from "./admin/pages/store/sales/SalesDetail.tsx";
+import PaymentList from "./admin/pages/store/payments/PaymentList.tsx";
+import PaymentDetail from "./admin/pages/store/payments/PaymentDetail.tsx";
+import StaffList from "./admin/pages/store/staff/StaffList.tsx";
+import StaffDetail from "./admin/pages/store/staff/StaffDetail.tsx";
+import ShiftList from "./admin/pages/store/shifts/ShiftList.tsx";
+import AnnouncementList from "./admin/pages/store/announcements/AnnouncementList.tsx";
+import AnnouncementDetail from "./admin/pages/store/announcements/AnnouncementDetail.tsx";
+import CampaignList from "./admin/pages/store/campaigns/CampaignList.tsx";
+import CampaignDetailAdmin from "./admin/pages/store/campaigns/CampaignDetailAdmin.tsx";
+import AdminProfile from "./admin/pages/store/profile/AdminProfile.tsx";
 
 const queryClient = new QueryClient();
 
@@ -170,6 +182,25 @@ const App = () => (
           <Route path="/admin/store/courts/:id" element={<CourtDetailAdmin />} />
           <Route path="/admin/store/bookings" element={<BookingList />} />
           <Route path="/admin/store/bookings/:id" element={<BookingDetailAdmin />} />
+          {/* 売上 */}
+          <Route path="/admin/store/sales" element={<SalesList />} />
+          <Route path="/admin/store/sales/:id" element={<SalesDetail />} />
+          {/* 支払い */}
+          <Route path="/admin/store/payments" element={<PaymentList />} />
+          <Route path="/admin/store/payments/:id" element={<PaymentDetail />} />
+          {/* スタッフ */}
+          <Route path="/admin/store/staff" element={<StaffList />} />
+          <Route path="/admin/store/staff/:id" element={<StaffDetail />} />
+          {/* シフト */}
+          <Route path="/admin/store/shifts" element={<ShiftList />} />
+          {/* お知らせ */}
+          <Route path="/admin/store/announcements" element={<AnnouncementList />} />
+          <Route path="/admin/store/announcements/:id" element={<AnnouncementDetail />} />
+          {/* キャンペーン */}
+          <Route path="/admin/store/campaigns" element={<CampaignList />} />
+          <Route path="/admin/store/campaigns/:id" element={<CampaignDetailAdmin />} />
+          {/* プロフィール */}
+          <Route path="/admin/store/profile" element={<AdminProfile />} />
           <Route
             path="/admin/store/*"
             element={
