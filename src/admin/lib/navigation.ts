@@ -41,6 +41,8 @@ export const LST_NAV_GROUPS: NavGroup[] = [
       { key: "affiliates", label: "企業管理", icon: Store, path: "/admin/lst/affiliates" },
       { key: "courts", label: "コート管理", icon: MapPin, path: "/admin/lst/courts" },
       { key: "bookings", label: "予約管理", icon: CalendarDays, path: "/admin/lst/bookings" },
+      { key: "coaches", label: "コーチ管理", icon: Award, path: "/admin/lst/coaches" },
+      { key: "leagues", label: "リーグ管理", icon: Trophy, path: "/admin/lst/leagues" },
     ],
   },
   {
@@ -63,13 +65,6 @@ export const LST_NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "system", label: "システム設定", icon: Sliders, path: "/admin/lst/system" },
       { key: "fees", label: "手数料設定", icon: Settings, path: "/admin/lst/fees" },
-    ],
-  },
-  {
-    groupLabel: "コーチング/ゲーム",
-    items: [
-      { key: "coaches", label: "コーチ管理", icon: Award, path: "/admin/lst/coaches" },
-      { key: "leagues", label: "リーグ管理", icon: Trophy, path: "/admin/lst/leagues" },
     ],
   },
 ];
