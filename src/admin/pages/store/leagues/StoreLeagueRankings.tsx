@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import AdminLayout from "../../../components/AdminLayout";
 import AdminPageHeader from "../../../components/AdminPageHeader";
@@ -17,7 +16,7 @@ import {
   type SeasonalRankingRow,
 } from "@/lib/tournamentStore";
 
-import { LEAGUE_ADMIN_TABS } from "./leagueTabs";
+import { STORE_LEAGUE_ADMIN_TABS } from "./storeLeagueTabs";
 
 type SeasonMode = "current" | "previous";
 
@@ -28,8 +27,7 @@ interface RankingRow extends SeasonalRankingRow {
   displayId: string;
 }
 
-const LeagueRankings = () => {
-  const navigate = useNavigate();
+const StoreLeagueRankings = () => {
   const { computeSeasonalRanking } = useTournamentStore();
   const [mode, setMode] = useState<SeasonMode>("current");
   const [search, setSearch] = useState("");
@@ -146,18 +144,18 @@ const LeagueRankings = () => {
   ];
 
   return (
-    <AdminLayout role="lst">
+    <AdminLayout role="store">
       <AdminPageHeader
         title="シーズン順位"
-        description="プレイヤーレーティング順位"
+        description="プレイヤーレーティング順位（参照のみ）"
         breadcrumbs={[
-          { label: "LST HQ" },
-          { label: "リーグ管理", to: "/admin/lst/leagues" },
+          { label: "店舗" },
+          { label: "リーグ管理", to: "/admin/store/leagues" },
           { label: "シーズン順位" },
         ]}
       />
 
-      <SegmentedTabs tabs={LEAGUE_ADMIN_TABS} />
+      <SegmentedTabs tabs={STORE_LEAGUE_ADMIN_TABS} />
 
       <div className="mb-4 flex items-center gap-3">
         <div className="inline-flex rounded-full border bg-white p-1 shadow-sm">
@@ -201,7 +199,6 @@ const LeagueRankings = () => {
         searchPlaceholder="プレイヤー名 / LST-ID で検索"
         onSearch={setSearch}
         searchValue={search}
-        onRowClick={(r) => navigate(`/admin/lst/leagues/players/${r.userId}`)}
         emptyTitle="このシーズンの記録はまだありません"
         emptyDescription="完了した試合が記録されると順位が表示されます。"
         pageSize={15}
@@ -210,4 +207,4 @@ const LeagueRankings = () => {
   );
 };
 
-export default LeagueRankings;
+export default StoreLeagueRankings;

@@ -7,6 +7,7 @@ import AdminLayout from "../../../components/AdminLayout";
 import AdminPageHeader from "../../../components/AdminPageHeader";
 import DataTable, { type DataTableColumn } from "../../../components/DataTable";
 import FilterChip from "../../../components/FilterChip";
+import SegmentedTabs from "../../../components/SegmentedTabs";
 import StatCard from "../../../components/StatCard";
 import { cn } from "@/lib/utils";
 import { useLeagueMatchBoardStore, type PostedMatch, type PostedMatchStatus } from "@/lib/leagueMatchBoardStore";
@@ -17,9 +18,11 @@ import {
   POSTED_MATCH_STATUS_JP,
   skillLevelLabel,
 } from "../../../lib/leagueLabels";
+import { STORE_LEAGUE_ADMIN_TABS } from "./storeLeagueTabs";
 
 type StatusFilter = PostedMatchStatus | undefined;
 type PeriodFilter = "this-month" | "last-month" | undefined;
+type VenueFilter = string | undefined;
 
 const STATUS_OPTIONS: { value: PostedMatchStatus; label: string }[] = [
   { value: "open", label: POSTED_MATCH_STATUS_JP.open },
@@ -51,6 +54,15 @@ const StoreLeagueList = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(undefined);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>(undefined);
+  const [venueFilter, setVenueFilter] = useState<VenueFilter>(undefined);
+
+  // ── Derive venue options from posted matches ──
+  const venueOptions = useMemo(() => {
+    const unique = Array.from(
+      new Set(postedMatches.map((m) => m.preferredVenue).filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b, "ja"));
+    return unique.map((v) => ({ value: v, label: v }));
+  }, [postedMatches]);
 
   const stats = useMemo(() => {
     return postedMatches.reduce(
@@ -67,6 +79,7 @@ const StoreLeagueList = () => {
     return postedMatches
       .filter((m) => (statusFilter ? m.status === statusFilter : true))
       .filter((m) => isInPeriod(m.desiredDate, periodFilter))
+      .filter((m) => (venueFilter ? m.preferredVenue === venueFilter : true))
       .filter((m) => {
         if (!q) return true;
         const host = getPlayer(m.hostUserId);
@@ -77,7 +90,7 @@ const StoreLeagueList = () => {
         );
       })
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [postedMatches, search, statusFilter, periodFilter]);
+  }, [postedMatches, search, statusFilter, periodFilter, venueFilter]);
 
   const columns: DataTableColumn<PostedMatch>[] = [
     {
@@ -168,6 +181,8 @@ const StoreLeagueList = () => {
         breadcrumbs={[{ label: "店舗" }, { label: "リーグ管理" }]}
       />
 
+      <SegmentedTabs tabs={STORE_LEAGUE_ADMIN_TABS} />
+
       <div className="grid grid-cols-4 gap-4">
         <StatCard
           label="募集中"
@@ -212,6 +227,12 @@ const StoreLeagueList = () => {
                 value={periodFilter}
                 options={PERIOD_OPTIONS}
                 onChange={(v) => setPeriodFilter(v as PeriodFilter)}
+              />
+              <FilterChip
+                label="会場"
+                value={venueFilter}
+                options={venueOptions}
+                onChange={(v) => setVenueFilter(v as VenueFilter)}
               />
             </>
           }
