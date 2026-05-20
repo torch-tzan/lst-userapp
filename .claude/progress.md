@@ -56,6 +56,75 @@ LST HQ 新增的核心模組 — 對齊前端 League 功能：
 - コーチ管理 (LST HQ) — overlay on COACHES
 - 12 pages + 10 dialogs
 
+### Phase 5：視覺 polish v1（commit `d299195`）
+依 Tina 用 Figma 截圖比對給的 5 點 feedback：
+- Sidebar 改成分類 group（5 LST groups / 5 店舗 groups），fixed 不 scroll，移除 ダッシュボード / プロフィール 從 sidebar（改點 ADMIN logo / avatar）
+- Dashboard 重做：第一列 4 plain stat cards + 第二列 4 彩色 emoji stat cards + 下方 直近の予約 + 直近の売上 兩張 card
+- リーグ管理 detail 拿掉 chat thread section
+- AdminLogin 改 2-column Figma style（左暗藍 logo / 右白底卡）
+- NewMemberDialog / MemberEditDialog 加 登録店 (要選 12 個加盟店之一)
+- 補做 3 個之前漏的店舗 module：会員管理 / アカウント招待 / 大会管理（後來改為リーグ管理）
+
+### Phase 6：店舗 大会管理 → リーグ管理（commit `2ffcf90`）
+Tina 指出店舗側不需要大会管理（前端沒對應 UI），應該是 リーグ管理。
+- 刪除：StoreTournament* 3 pages + adminStoreTournamentsStore.ts
+- 新增：StoreLeagueList + StoreLeagueDetail（clone LST 版 但 role=store，PlayerChip 不導向）
+
+### Phase 7：リーグ管理 improve（commit `5d5b9a3`）
+- 兩邊 LeagueList 加 会場 filter chip（從 preferredVenue 動態抽出）
+- LST LeagueRankings 對齊 user-app GameHome 順位 tab columns：移除 ティア / Padel Points，加 試合数 / 勝数 / 変動（±rating change）；TOP 3 改用 🥇🥈🥉
+- 店舗側新建 StoreLeagueRankings + storeLeagueTabs.ts（SegmentedTabs: 募集一覧 / シーズン順位）
+
+### Phase 8：欄位 audit + alignment 修正（commit `5891167` → `fe14be6`）
+
+**Audit**（`docs/superpowers/specs/2026-05-21-admin-app-field-audit.md`）：
+- 10 entity 全掃，12 件 🔴 高優先 gap
+- 共通 pattern：admin 全 dialog 沒 image upload UI，rich content field（amenities/equipment/bio/lessonMenus 等）admin 不能編
+- 🚨 data-source 分離：Campaign / Announcement / Coupon admin store ↔ app hard-code 完全分離
+- 🚨 dead UI：Court dialog `void address;` + Booking `void memberLabel;`
+
+**Wave 1A：Court fields（commit `5891167`）**
+- adminCourtOverlay 加 imageUrl / description / amenities / address 欄位
+- NewCourtDialog + CourtEditDialog：image URL + 16:9 thumbnail preview / amenities multi-select pills / description textarea
+- 修 `void address;` dead UI → 真的存
+- CourtList + LstCourtList 加 leading image thumbnail column
+- Court detail 兩邊都 prefer overlay-first display
+- AMENITY_OPTIONS 10 選項（駐車場/シャワー/ロッカー...）
+
+**Wave 1B：Coach fields（commit `35465ac`）**
+- adminCoachesOverlay 加 detailOverrides map：avatarUrl / bio / experience / location / certifications[]
+- AddCoachDialog + CoachEditDialog：avatar URL + preview / bio textarea / experience / location / certifications chip editor (Enter or +追加 加 tag、× 移除)
+- CoachDetailAdmin 用 overlay-first display
+- 跳過：lessonMenus / venues 子表 CRUD（複雜，prototype 後做）
+
+**Wave 2.1：Campaign image/body/cta（commit `4cbb69f`）**
+- adminCampaignsStore + adminLstCampaignsStore 都加 imageUrl / body / subtitle / location / ctaLabel / ctaLink
+- 4 個 Campaign dialog（NewCampaign / CampaignEdit / NewLstCampaign / LstCampaignEdit）加新欄位
+- CampaignList + LstCampaignList 加 leading 40×40 thumbnail
+- CampaignDetailAdmin + LstCampaignDetailAdmin 顯示 hero image + subtitle + body + location + CTA
+
+**Wave 2.2：クーポン管理新模組（commit `44f6b13`）**
+- 新 adminCouponsStore.ts：AdminCoupon = Coupon + id/validFrom/usageLimit/currentUsage/isActive/createdAt/source/linkedCampaignId
+- 10 個 seed coupon（含 app 端 2 個原本的 AVAILABLE_COUPONS）
+- CouponList + CouponDetail 兩頁 + 4 個 dialog（New/Edit/Toggle/Delete）
+- LST sidebar 新增「クーポン管理」(Ticket icon，在 お知らせ/イベント group 第 3 個)
+- Campaign kind=coupon 自動 upsert 一筆 linked coupon 到 adminCouponsStore（source=campaign）
+
+**Wave 2.3：Booking member picker（commit `96179cd`）**
+- NewBookingDialog + BookingEditDialog：text input 改成 shadcn Combobox member picker（12 player 含 tier emoji + LST-XXXX displayId）
+- bookingStore.StoredBooking 加 optional `userId` 欄位
+- adminAddBooking + adminUpdateBooking 接受 userId
+- BookingList + LstBookingList + 兩邊 detail 加 会員 column / row（lookup `getPlayer(userId)?.name`）
+- 修 `void memberLabel;` dead UI
+
+**Wave 2.4：user-app data-sync bridge（commit `fe14be6`）**
+- 新 `src/admin/lib/userAppBridge/` 目錄
+- useUserCampaigns：HARDCODED_USER_CAMPAIGNS（複製原 CAMPAIGN_DETAILS + carousel seed）→ map-merge 店舗+LST admin published campaigns
+- useUserCoupons：merge AVAILABLE_COUPONS + admin active coupons（isActive && now <= expiresAt）
+- useUserAnnouncements：merge SYSTEM_NOTIFICATIONS + 店舗/LST published
+- 重構 4 個 user-app 頁面用 bridge hook：CampaignDetail / CampaignCarousel / Coupons / Notifications（**視覺 1:1 保留**，只換 data source）
+- 已知 gotcha：admin 創的 announcement 點進去 NotificationDetail 會 not-found（MOCK_DETAILS 未整合，scope 過大暫不動）
+
 ---
 
 ## 當前狀態
