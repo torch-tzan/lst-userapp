@@ -92,6 +92,8 @@ import LstCampaignList from "./admin/pages/lst/campaigns/LstCampaignList.tsx";
 import LstCampaignDetailAdmin from "./admin/pages/lst/campaigns/LstCampaignDetailAdmin.tsx";
 import CoachList from "./admin/pages/lst/coaches/CoachList.tsx";
 import CoachDetailAdmin from "./admin/pages/lst/coaches/CoachDetailAdmin.tsx";
+import CouponList from "./admin/pages/lst/coupons/CouponList.tsx";
+import CouponDetail from "./admin/pages/lst/coupons/CouponDetail.tsx";
 import StoreDashboard from "./admin/pages/store/StoreDashboard.tsx";
 import CourtList from "./admin/pages/store/courts/CourtList.tsx";
 import CourtDetailAdmin from "./admin/pages/store/courts/CourtDetailAdmin.tsx";
@@ -221,6 +223,9 @@ const App = () => (
           {/* キャンペーン・イベント（LST HQ） */}
           <Route path="/admin/lst/campaigns" element={<LstCampaignList />} />
           <Route path="/admin/lst/campaigns/:id" element={<LstCampaignDetailAdmin />} />
+          {/* クーポン管理（LST HQ） */}
+          <Route path="/admin/lst/coupons" element={<CouponList />} />
+          <Route path="/admin/lst/coupons/:code" element={<CouponDetail />} />
           {/* コーチ管理（LST HQ） */}
           <Route path="/admin/lst/coaches" element={<CoachList />} />
           <Route path="/admin/lst/coaches/:id" element={<CoachDetailAdmin />} />

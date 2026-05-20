@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { addCampaign, CAMPAIGN_PLACEHOLDER_IMAGE } from "../../lib/adminCampaignsStore";
+import { upsertCouponFromCampaign } from "../../lib/adminCouponsStore";
 import {
   CAMPAIGN_AUDIENCE_JP,
   CAMPAIGN_KIND_JP,
@@ -96,7 +97,7 @@ const NewCampaignDialog = ({ open, onOpenChange }: NewCampaignDialogProps) => {
     const trimmedPercent =
       kind === "discount" && discountPercent ? Number.parseInt(discountPercent, 10) : undefined;
 
-    addCampaign({
+    const id = addCampaign({
       title: title.trim(),
       description: description.trim(),
       kind,
@@ -114,6 +115,21 @@ const NewCampaignDialog = ({ open, onOpenChange }: NewCampaignDialogProps) => {
       ctaLabel: ctaLabel.trim() || undefined,
       ctaLink: ctaLink.trim() || undefined,
     });
+
+    // Campaign → Coupon linkage（kind=coupon かつ couponCode 入力ありの場合）
+    if (kind === "coupon" && trimmedCode) {
+      upsertCouponFromCampaign({
+        campaignId: id,
+        code: trimmedCode,
+        label: title.trim(),
+        description: description.trim(),
+        type: "fixed",
+        discount: trimmedAmount ?? 0,
+        validFrom: startDate,
+        expiresAt: endDate,
+        isActive: status === "active" || status === "scheduled",
+      });
+    }
 
     toast.success("キャンペーンを作成しました");
     setSubmitting(false);

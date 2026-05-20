@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { useAffiliates } from "../../lib/adminAffiliatesStore";
 import { CAMPAIGN_PLACEHOLDER_IMAGE } from "../../lib/adminCampaignsStore";
+import { upsertCouponFromCampaign } from "../../lib/adminCouponsStore";
 import {
   addLstCampaign,
   LST_CAMPAIGN_KIND_JP,
@@ -111,7 +112,7 @@ const NewLstCampaignDialog = ({ open, onOpenChange }: Props) => {
         ? Number.parseInt(discountPercent, 10)
         : undefined;
 
-    addLstCampaign({
+    const id = addLstCampaign({
       title: title.trim(),
       description: description.trim(),
       kind,
@@ -129,6 +130,21 @@ const NewLstCampaignDialog = ({ open, onOpenChange }: Props) => {
       ctaLabel: ctaLabel.trim() || undefined,
       ctaLink: ctaLink.trim() || undefined,
     });
+
+    // Campaign → Coupon linkage
+    if (kind === "coupon" && trimmedCode) {
+      upsertCouponFromCampaign({
+        campaignId: id,
+        code: trimmedCode,
+        label: title.trim(),
+        description: description.trim(),
+        type: "fixed",
+        discount: trimmedAmount ?? 0,
+        validFrom: startDate,
+        expiresAt: endDate,
+        isActive: status === "active" || status === "scheduled",
+      });
+    }
 
     toast.success("キャンペーンを作成しました");
     setSubmitting(false);

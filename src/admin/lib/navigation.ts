@@ -11,6 +11,7 @@ import {
   Settings,
   Sparkles,
   Store,
+  Ticket,
   TrendingUp,
   Trophy,
   Users,
@@ -63,6 +64,7 @@ export const LST_NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "announcements", label: "お知らせ配信", icon: Megaphone, path: "/admin/lst/announcements" },
       { key: "campaigns", label: "キャンペーン・イベント管理", icon: Sparkles, path: "/admin/lst/campaigns" },
+      { key: "coupons", label: "クーポン管理", icon: Ticket, path: "/admin/lst/coupons" },
     ],
   },
   {

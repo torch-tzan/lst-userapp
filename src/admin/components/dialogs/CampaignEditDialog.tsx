@@ -18,6 +18,7 @@ import {
   updateCampaign,
   type CampaignRecord,
 } from "../../lib/adminCampaignsStore";
+import { upsertCouponFromCampaign } from "../../lib/adminCouponsStore";
 import {
   CAMPAIGN_AUDIENCE_JP,
   CAMPAIGN_KIND_JP,
@@ -120,6 +121,21 @@ const CampaignEditDialog = ({ open, onOpenChange, campaign }: CampaignEditDialog
       discountAmount: trimmedAmount,
       couponCode: trimmedCode,
     });
+
+    // Campaign → Coupon linkage（kind=coupon かつ couponCode 入力ありの場合 upsert）
+    if (kind === "coupon" && trimmedCode) {
+      upsertCouponFromCampaign({
+        campaignId: campaign.id,
+        code: trimmedCode,
+        label: title.trim(),
+        description: description.trim(),
+        type: "fixed",
+        discount: trimmedAmount ?? 0,
+        validFrom: startDate,
+        expiresAt: endDate,
+        isActive: status === "active" || status === "scheduled",
+      });
+    }
 
     toast.success("キャンペーンを更新しました");
     setSubmitting(false);

@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { CAMPAIGN_PLACEHOLDER_IMAGE } from "../../lib/adminCampaignsStore";
+import { upsertCouponFromCampaign } from "../../lib/adminCouponsStore";
 import {
   LST_CAMPAIGN_KIND_JP,
   LST_CAMPAIGN_STATUS_JP,
@@ -115,6 +116,20 @@ const LstCampaignEditDialog = ({ open, onOpenChange, campaign }: Props) => {
       discountAmount: trimmedAmount,
       couponCode: trimmedCode,
     });
+
+    if (kind === "coupon" && trimmedCode) {
+      upsertCouponFromCampaign({
+        campaignId: campaign.id,
+        code: trimmedCode,
+        label: title.trim(),
+        description: description.trim(),
+        type: "fixed",
+        discount: trimmedAmount ?? 0,
+        validFrom: startDate,
+        expiresAt: endDate,
+        isActive: status === "active" || status === "scheduled",
+      });
+    }
 
     toast.success("キャンペーンを更新しました");
     setSubmitting(false);
