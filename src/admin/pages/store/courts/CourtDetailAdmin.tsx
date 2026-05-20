@@ -9,9 +9,16 @@ import CourtEditDialog from "../../../components/dialogs/CourtEditDialog";
 import DataTable, { type DataTableColumn } from "../../../components/DataTable";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import courtPlaceholder from "@/assets/court-outdoor.webp";
 import { COURTS_DETAIL, type EquipmentItem, type ExternalLink } from "@/lib/courtData";
 
-import { useAdminCourt } from "../../../lib/adminCourtOverlay";
+import {
+  resolveCourtAddress,
+  resolveCourtAmenities,
+  resolveCourtDescription,
+  resolveCourtImage,
+  useAdminCourt,
+} from "../../../lib/adminCourtOverlay";
 
 const cardCls = "rounded-lg border bg-white p-6 shadow-sm";
 
@@ -71,8 +78,9 @@ const CourtDetailAdmin = () => {
     );
   }
 
-  // CourtDetail（amenities / equipment / externalLinks / address / rating）は既存 COURTS_DETAIL から取る。
-  // overlay で追加されたコートには detail が無いため、fallback の banner を出す。
+  // CourtDetail（equipment / externalLinks / rating）は既存 COURTS_DETAIL から取る。
+  // amenities / description / address / image は overlay 優先 → COURTS_DETAIL → fallback でマージ。
+  // overlay で追加されたコートには detail が無いため、装備品・外部リンクは表示されない（banner で告知）。
   const detail = COURTS_DETAIL[court.id];
   const hasDetail = Boolean(detail);
 
@@ -82,10 +90,12 @@ const CourtDetailAdmin = () => {
   const displayType = court.courtType;
   const displayPrice = court.price;
   const displayAvailable = court.available;
-  const displayAddress = detail?.address;
+  const displayAddress = resolveCourtAddress(court);
+  const displayDescription = resolveCourtDescription(court);
+  const displayImage = resolveCourtImage(court);
   const displayRating = detail?.rating;
   const displayReviews = detail?.reviews;
-  const amenities = detail?.amenities ?? [];
+  const amenities = resolveCourtAmenities(court);
   const equipment: EquipmentItem[] = detail?.equipment ?? [];
   const externalLinks: ExternalLink[] = detail?.externalLinks ?? [];
 
@@ -195,6 +205,16 @@ const CourtDetailAdmin = () => {
           </div>
         </div>
 
+        {/* Section: 説明 */}
+        <div className={cardCls}>
+          <SectionHeader title="説明" />
+          {displayDescription ? (
+            <p className="whitespace-pre-wrap text-sm text-slate-700">{displayDescription}</p>
+          ) : (
+            <p className="text-sm text-slate-400">—</p>
+          )}
+        </div>
+
         {/* Section 2: 設備 */}
         <div className={cardCls}>
           <SectionHeader title="設備" />
@@ -262,8 +282,12 @@ const CourtDetailAdmin = () => {
           <SectionHeader title="画像" />
           <div className="overflow-hidden rounded-md border">
             <img
-              src={court.image}
+              src={displayImage}
               alt={displayName}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== courtPlaceholder) target.src = courtPlaceholder;
+              }}
               className="aspect-video w-full object-cover"
             />
           </div>

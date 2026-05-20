@@ -13,9 +13,15 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import type { CourtSummary } from "@/lib/courtData";
+import { cn } from "@/lib/utils";
+import courtPlaceholder from "@/assets/court-outdoor.webp";
+import { COURTS_DETAIL } from "@/lib/courtData";
 
-import { upsertCourtOverride } from "../../lib/adminCourtOverlay";
+import {
+  AMENITY_OPTIONS,
+  upsertCourtOverride,
+  type AdminCourtRecord,
+} from "../../lib/adminCourtOverlay";
 import {
   AdminDialog,
   AdminDialogContent,
@@ -28,8 +34,12 @@ import {
 interface CourtEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  court: CourtSummary;
-  /** detail から渡される住所（CourtDetail のみ持つ）。なくても OK。 */
+  court: AdminCourtRecord;
+  /**
+   * 詳細ページ側で解決済みの「現在の表示住所」。
+   * overlay.address があればそれ、無ければ CourtDetail.address。
+   * 編集ダイアログの初期値として使う。
+   */
   currentAddress?: string;
 }
 
@@ -42,6 +52,14 @@ const CourtEditDialog = ({ open, onOpenChange, court, currentAddress }: CourtEdi
   const [price, setPrice] = useState<string>(String(court.price));
   const [available, setAvailable] = useState(court.available);
   const [address, setAddress] = useState(currentAddress ?? "");
+  const [imageUrl, setImageUrl] = useState(court.imageUrl ?? "");
+  const [imagePreviewError, setImagePreviewError] = useState(false);
+  const [description, setDescription] = useState(
+    court.description ?? COURTS_DETAIL[court.id]?.description ?? "",
+  );
+  const [amenities, setAmenities] = useState<string[]>(
+    court.amenities ?? COURTS_DETAIL[court.id]?.amenities ?? [],
+  );
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -52,9 +70,17 @@ const CourtEditDialog = ({ open, onOpenChange, court, currentAddress }: CourtEdi
       setPrice(String(court.price));
       setAvailable(court.available);
       setAddress(currentAddress ?? "");
+      setImageUrl(court.imageUrl ?? "");
+      setImagePreviewError(false);
+      setDescription(court.description ?? COURTS_DETAIL[court.id]?.description ?? "");
+      setAmenities(court.amenities ?? COURTS_DETAIL[court.id]?.amenities ?? []);
       setSubmitting(false);
     }
   }, [open, court, currentAddress]);
+
+  useEffect(() => {
+    setImagePreviewError(false);
+  }, [imageUrl]);
 
   const priceNumber = Number.parseInt(price, 10);
   const canSubmit =
@@ -64,22 +90,40 @@ const CourtEditDialog = ({ open, onOpenChange, court, currentAddress }: CourtEdi
     priceNumber >= 0 &&
     !submitting;
 
+  const toggleAmenity = (a: string) => {
+    setAmenities((prev) =>
+      prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a],
+    );
+  };
+
   const handleSubmit = () => {
     if (!canSubmit) return;
     setSubmitting(true);
+    const trimmedImageUrl = imageUrl.trim();
+    const trimmedAddress = address.trim();
+    const trimmedDescription = description.trim();
     upsertCourtOverride(court.id, {
       name: name.trim(),
       courtName: courtName.trim(),
       courtType,
       price: priceNumber,
       available,
+      // overlay extras — 空文字は undefined にして「クリア」を表現
+      imageUrl: trimmedImageUrl.length > 0 ? trimmedImageUrl : undefined,
+      address: trimmedAddress.length > 0 ? trimmedAddress : undefined,
+      description: trimmedDescription.length > 0 ? trimmedDescription : undefined,
+      amenities: amenities.length > 0 ? amenities : undefined,
     });
-    // address は detail 専用 field のため overlay の現スキーマ外（無視）
-    void address;
     toast.success("コートを更新しました");
     setSubmitting(false);
     onOpenChange(false);
   };
+
+  const previewSrc =
+    !imagePreviewError && imageUrl.trim().length > 0
+      ? imageUrl.trim()
+      : // overlay imageUrl 未入力時は base image（COURTS の imported asset）を表示
+        (court.image ?? courtPlaceholder);
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
@@ -158,6 +202,33 @@ const CourtEditDialog = ({ open, onOpenChange, court, currentAddress }: CourtEdi
             />
           </div>
 
+          {/* 画像 URL */}
+          <div className="space-y-1.5">
+            <Label htmlFor="court-edit-image">画像URL（任意）</Label>
+            <Input
+              id="court-edit-image"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://... or /assets/court-x.webp"
+            />
+            <div className="flex items-center gap-2 pt-1">
+              <img
+                src={previewSrc}
+                alt="プレビュー"
+                onError={() => setImagePreviewError(true)}
+                className="h-16 w-16 rounded-md border object-cover"
+              />
+              <span className="text-xs text-slate-500">
+                {imageUrl.trim().length === 0
+                  ? "未入力時は既存画像を使用"
+                  : imagePreviewError
+                    ? "画像を読み込めません — 既存画像を使用します"
+                    : "プレビュー"}
+              </span>
+            </div>
+          </div>
+
+          {/* 住所 */}
           <div className="space-y-1.5">
             <Label htmlFor="court-edit-address">住所（任意）</Label>
             <Textarea
@@ -166,6 +237,43 @@ const CourtEditDialog = ({ open, onOpenChange, court, currentAddress }: CourtEdi
               onChange={(e) => setAddress(e.target.value)}
               rows={2}
             />
+          </div>
+
+          {/* 説明 */}
+          <div className="space-y-1.5">
+            <Label htmlFor="court-edit-description">説明（任意）</Label>
+            <Textarea
+              id="court-edit-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="施設の特徴・利用案内など"
+            />
+          </div>
+
+          {/* 設備 */}
+          <div className="space-y-2">
+            <Label>設備（任意）</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {AMENITY_OPTIONS.map((a) => {
+                const selected = amenities.includes(a);
+                return (
+                  <button
+                    type="button"
+                    key={a}
+                    onClick={() => toggleAmenity(a)}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-xs transition-colors",
+                      selected
+                        ? "border-blue-300 bg-blue-100 text-blue-700"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100",
+                    )}
+                  >
+                    {a}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

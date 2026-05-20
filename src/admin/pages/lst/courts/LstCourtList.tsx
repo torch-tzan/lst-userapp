@@ -10,15 +10,35 @@ import NewCourtDialog from "../../../components/dialogs/NewCourtDialog";
 import StatCard from "../../../components/StatCard";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { type CourtSummary } from "@/lib/courtData";
+import courtPlaceholder from "@/assets/court-outdoor.webp";
 
 import { useAffiliates } from "../../../lib/adminAffiliatesStore";
-import { getCourtAffiliateId, useAdminCourts } from "../../../lib/adminCourtOverlay";
+import {
+  getCourtAffiliateId,
+  resolveCourtImage,
+  useAdminCourts,
+  type AdminCourtRecord,
+} from "../../../lib/adminCourtOverlay";
 
-interface CourtWithAffiliate extends CourtSummary {
+interface CourtWithAffiliate extends AdminCourtRecord {
   affiliateId: string;
   affiliateName: string;
 }
+
+const CourtThumb = ({ court }: { court: AdminCourtRecord }) => {
+  const src = resolveCourtImage(court);
+  return (
+    <img
+      src={src}
+      alt={court.name}
+      onError={(e) => {
+        const target = e.currentTarget;
+        if (target.src !== courtPlaceholder) target.src = courtPlaceholder;
+      }}
+      className="h-10 w-10 rounded-md border object-cover"
+    />
+  );
+};
 
 type StatusFilter = "available" | "hidden" | undefined;
 
@@ -93,15 +113,21 @@ const LstCourtList = () => {
 
   const columns: DataTableColumn<CourtWithAffiliate>[] = [
     {
+      key: "thumb",
+      header: "",
+      width: "5%",
+      render: (c) => <CourtThumb court={c} />,
+    },
+    {
       key: "id",
       header: "ID",
-      width: "6%",
+      width: "5%",
       render: (c) => <span className="font-mono text-xs text-slate-600">{c.id}</span>,
     },
     {
       key: "name",
       header: "名前",
-      width: "20%",
+      width: "18%",
       render: (c) => <span className="text-sm font-medium text-slate-800">{c.name}</span>,
     },
     {
@@ -130,7 +156,7 @@ const LstCourtList = () => {
     {
       key: "affiliate",
       header: "所属加盟店",
-      width: "22%",
+      width: "20%",
       render: (c) => (
         <div>
           <div className="text-sm text-slate-800">{c.affiliateName}</div>

@@ -13,9 +13,14 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import courtPlaceholder from "@/assets/court-outdoor.webp";
 
-import { addCourtToOverlay, generateNextCourtId } from "../../lib/adminCourtOverlay";
+import {
+  AMENITY_OPTIONS,
+  addCourtToOverlay,
+  generateNextCourtId,
+} from "../../lib/adminCourtOverlay";
 import {
   AdminDialog,
   AdminDialogContent,
@@ -40,6 +45,10 @@ const NewCourtDialog = ({ open, onOpenChange, onCreated }: NewCourtDialogProps) 
   const [price, setPrice] = useState<string>("");
   const [available, setAvailable] = useState(true);
   const [address, setAddress] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imagePreviewError, setImagePreviewError] = useState(false);
+  const [description, setDescription] = useState("");
+  const [amenities, setAmenities] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   // Reset on open transitions
@@ -51,9 +60,18 @@ const NewCourtDialog = ({ open, onOpenChange, onCreated }: NewCourtDialogProps) 
       setPrice("");
       setAvailable(true);
       setAddress("");
+      setImageUrl("");
+      setImagePreviewError(false);
+      setDescription("");
+      setAmenities([]);
       setSubmitting(false);
     }
   }, [open]);
+
+  // image URL が変わったら error state をリセット（onError で再評価）
+  useEffect(() => {
+    setImagePreviewError(false);
+  }, [imageUrl]);
 
   const priceNumber = Number.parseInt(price, 10);
   const canSubmit =
@@ -63,26 +81,42 @@ const NewCourtDialog = ({ open, onOpenChange, onCreated }: NewCourtDialogProps) 
     priceNumber >= 0 &&
     !submitting;
 
+  const toggleAmenity = (a: string) => {
+    setAmenities((prev) =>
+      prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a],
+    );
+  };
+
   const handleSubmit = () => {
     if (!canSubmit) return;
     setSubmitting(true);
     const newId = generateNextCourtId();
+    const trimmedImageUrl = imageUrl.trim();
+    const trimmedAddress = address.trim();
+    const trimmedDescription = description.trim();
     addCourtToOverlay({
       id: newId,
       name: name.trim(),
       courtName: courtName.trim(),
       courtType,
       price: priceNumber,
-      image: courtPlaceholder,
+      // base image：URL があれば URL、無ければ placeholder asset。
+      // image field は src で必須なのでここで決定する。
+      image: trimmedImageUrl.length > 0 ? trimmedImageUrl : courtPlaceholder,
       available,
+      imageUrl: trimmedImageUrl.length > 0 ? trimmedImageUrl : undefined,
+      address: trimmedAddress.length > 0 ? trimmedAddress : undefined,
+      description: trimmedDescription.length > 0 ? trimmedDescription : undefined,
+      amenities: amenities.length > 0 ? amenities : undefined,
     });
-    // address は CourtSummary には無いが、将来 detail 化するため握っておく（現状無視）
-    void address;
     toast.success("コートを作成しました");
     setSubmitting(false);
     onOpenChange(false);
     onCreated?.(newId);
   };
+
+  const previewSrc =
+    !imagePreviewError && imageUrl.trim().length > 0 ? imageUrl.trim() : courtPlaceholder;
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
@@ -154,6 +188,33 @@ const NewCourtDialog = ({ open, onOpenChange, onCreated }: NewCourtDialogProps) 
             <Switch id="court-available" checked={available} onCheckedChange={setAvailable} />
           </div>
 
+          {/* 画像 URL */}
+          <div className="space-y-1.5">
+            <Label htmlFor="court-image">画像URL（任意）</Label>
+            <Input
+              id="court-image"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://... or /assets/court-x.webp"
+            />
+            <div className="flex items-center gap-2 pt-1">
+              <img
+                src={previewSrc}
+                alt="プレビュー"
+                onError={() => setImagePreviewError(true)}
+                className="h-16 w-16 rounded-md border object-cover"
+              />
+              <span className="text-xs text-slate-500">
+                {imageUrl.trim().length === 0
+                  ? "未入力時は標準画像を使用"
+                  : imagePreviewError
+                    ? "画像を読み込めません — 標準画像を使用します"
+                    : "プレビュー"}
+              </span>
+            </div>
+          </div>
+
+          {/* 住所 */}
           <div className="space-y-1.5">
             <Label htmlFor="court-address">住所（任意）</Label>
             <Textarea
@@ -163,6 +224,43 @@ const NewCourtDialog = ({ open, onOpenChange, onCreated }: NewCourtDialogProps) 
               rows={2}
               placeholder="広島県広島市中区..."
             />
+          </div>
+
+          {/* 説明 */}
+          <div className="space-y-1.5">
+            <Label htmlFor="court-description">説明（任意）</Label>
+            <Textarea
+              id="court-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="施設の特徴・利用案内など"
+            />
+          </div>
+
+          {/* 設備 */}
+          <div className="space-y-2">
+            <Label>設備（任意）</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {AMENITY_OPTIONS.map((a) => {
+                const selected = amenities.includes(a);
+                return (
+                  <button
+                    type="button"
+                    key={a}
+                    onClick={() => toggleAmenity(a)}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-xs transition-colors",
+                      selected
+                        ? "border-blue-300 bg-blue-100 text-blue-700"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100",
+                    )}
+                  >
+                    {a}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

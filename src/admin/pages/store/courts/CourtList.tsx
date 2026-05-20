@@ -10,9 +10,31 @@ import StatCard from "../../../components/StatCard";
 import NewCourtDialog from "../../../components/dialogs/NewCourtDialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { COURTS_DETAIL, type CourtSummary } from "@/lib/courtData";
+import { COURTS_DETAIL } from "@/lib/courtData";
+import courtPlaceholder from "@/assets/court-outdoor.webp";
 
-import { useAdminCourts } from "../../../lib/adminCourtOverlay";
+import {
+  resolveCourtImage,
+  useAdminCourts,
+  type AdminCourtRecord,
+} from "../../../lib/adminCourtOverlay";
+
+// list 行 image セルは fallback chain (imageUrl → image → placeholder) を持つ
+const CourtThumb = ({ court }: { court: AdminCourtRecord }) => {
+  const src = resolveCourtImage(court);
+  return (
+    <img
+      src={src}
+      alt={court.name}
+      onError={(e) => {
+        // 壊れた URL 時は placeholder にフォールバック
+        const target = e.currentTarget;
+        if (target.src !== courtPlaceholder) target.src = courtPlaceholder;
+      }}
+      className="h-10 w-10 rounded-md border object-cover"
+    />
+  );
+};
 
 type TypeFilter = string | undefined;
 type StatusFilter = "available" | "hidden" | undefined;
@@ -61,17 +83,23 @@ const CourtList = () => {
     });
   }, [courts, search, typeFilter, statusFilter]);
 
-  const columns: DataTableColumn<CourtSummary>[] = [
+  const columns: DataTableColumn<AdminCourtRecord>[] = [
+    {
+      key: "thumb",
+      header: "",
+      width: "6%",
+      render: (c) => <CourtThumb court={c} />,
+    },
     {
       key: "id",
       header: "ID",
-      width: "8%",
+      width: "6%",
       render: (c) => <span className="font-mono text-xs text-slate-600">{c.id}</span>,
     },
     {
       key: "name",
       header: "名前",
-      width: "26%",
+      width: "24%",
       render: (c) => <span className="text-sm font-medium text-slate-800">{c.name}</span>,
     },
     {
@@ -89,7 +117,7 @@ const CourtList = () => {
     {
       key: "price",
       header: "料金/h",
-      width: "12%",
+      width: "10%",
       className: "text-right",
       render: (c) => (
         <span className="text-sm font-medium text-slate-800">
@@ -100,7 +128,7 @@ const CourtList = () => {
     {
       key: "status",
       header: "状態",
-      width: "12%",
+      width: "10%",
       render: (c) => (
         <span
           className={cn(
@@ -120,11 +148,13 @@ const CourtList = () => {
       width: "10%",
       className: "text-right",
       render: (c) => {
-        const detail = COURTS_DETAIL[c.id];
-        const count = detail?.amenities?.length;
+        // overlay amenities ∪ COURTS_DETAIL amenities
+        const fromDetail = COURTS_DETAIL[c.id]?.amenities ?? [];
+        const fromOverlay = c.amenities ?? [];
+        const merged = new Set([...fromDetail, ...fromOverlay]);
         return (
           <span className="text-xs text-slate-500">
-            {count !== undefined ? `${count}件` : "—"}
+            {merged.size > 0 ? `${merged.size}件` : "—"}
           </span>
         );
       },
@@ -164,7 +194,7 @@ const CourtList = () => {
       </div>
 
       <div className="mt-6">
-        <DataTable<CourtSummary>
+        <DataTable<AdminCourtRecord>
           columns={columns}
           data={rows}
           rowKey={(c) => c.id}

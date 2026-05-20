@@ -9,10 +9,18 @@ import CourtEditDialog from "../../../components/dialogs/CourtEditDialog";
 import DataTable, { type DataTableColumn } from "../../../components/DataTable";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import courtPlaceholder from "@/assets/court-outdoor.webp";
 import { COURTS_DETAIL, type EquipmentItem, type ExternalLink } from "@/lib/courtData";
 
 import { useAffiliates } from "../../../lib/adminAffiliatesStore";
-import { getCourtAffiliateId, useAdminCourt } from "../../../lib/adminCourtOverlay";
+import {
+  getCourtAffiliateId,
+  resolveCourtAddress,
+  resolveCourtAmenities,
+  resolveCourtDescription,
+  resolveCourtImage,
+  useAdminCourt,
+} from "../../../lib/adminCourtOverlay";
 
 const cardCls = "rounded-lg border bg-white p-6 shadow-sm";
 
@@ -78,7 +86,10 @@ const LstCourtDetailAdmin = () => {
   const affId = getCourtAffiliateId(court.id);
   const affiliate = affiliates.find((a) => a.id === affId);
 
-  const amenities = detail?.amenities ?? [];
+  const displayAddress = resolveCourtAddress(court);
+  const displayDescription = resolveCourtDescription(court);
+  const displayImage = resolveCourtImage(court);
+  const amenities = resolveCourtAmenities(court);
   const equipment: EquipmentItem[] = detail?.equipment ?? [];
   const externalLinks: ExternalLink[] = detail?.externalLinks ?? [];
 
@@ -157,7 +168,7 @@ const LstCourtDetailAdmin = () => {
             <InfoRow label="種別">{court.courtType}</InfoRow>
             <InfoRow label="料金 / 時間">¥{court.price.toLocaleString("ja-JP")}</InfoRow>
             <InfoRow label="住所">
-              {detail?.address ?? <span className="text-slate-400">—</span>}
+              {displayAddress ?? <span className="text-slate-400">—</span>}
             </InfoRow>
             <InfoRow label="評価">
               {detail?.rating !== undefined && detail?.reviews !== undefined ? (
@@ -179,6 +190,16 @@ const LstCourtDetailAdmin = () => {
               </span>
             </InfoRow>
           </div>
+        </div>
+
+        {/* 説明 */}
+        <div className={cardCls}>
+          <SectionHeader title="説明" />
+          {displayDescription ? (
+            <p className="whitespace-pre-wrap text-sm text-slate-700">{displayDescription}</p>
+          ) : (
+            <p className="text-sm text-slate-400">—</p>
+          )}
         </div>
 
         {/* 設備 */}
@@ -247,7 +268,15 @@ const LstCourtDetailAdmin = () => {
         <div className={cardCls}>
           <SectionHeader title="画像" />
           <div className="overflow-hidden rounded-md border">
-            <img src={court.image} alt={court.name} className="aspect-video w-full object-cover" />
+            <img
+              src={displayImage}
+              alt={court.name}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== courtPlaceholder) target.src = courtPlaceholder;
+              }}
+              className="aspect-video w-full object-cover"
+            />
           </div>
         </div>
       </div>
@@ -256,7 +285,7 @@ const LstCourtDetailAdmin = () => {
         open={editOpen}
         onOpenChange={setEditOpen}
         court={court}
-        currentAddress={detail?.address}
+        currentAddress={displayAddress}
       />
       <CourtDeleteDialog
         open={deleteOpen}
