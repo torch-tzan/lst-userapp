@@ -99,7 +99,7 @@ const NewCouponDialog = ({ open, onOpenChange }: NewCouponDialogProps) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規クーポン</AdminDialogTitle>
           <AdminDialogDescription>クーポンを作成します。</AdminDialogDescription>

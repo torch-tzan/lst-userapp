@@ -64,7 +64,7 @@ const SalesAdjustDialog = ({ open, onOpenChange }: SalesAdjustDialogProps) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>手動調整</AdminDialogTitle>
           <AdminDialogDescription>

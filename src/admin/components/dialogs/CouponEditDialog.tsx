@@ -99,7 +99,7 @@ const CouponEditDialog = ({ open, onOpenChange, coupon }: CouponEditDialogProps)
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>クーポンを編集</AdminDialogTitle>
           <AdminDialogDescription>

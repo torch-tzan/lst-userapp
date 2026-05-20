@@ -52,7 +52,7 @@ const InviteStaffDialog = ({ open, onOpenChange }: InviteStaffDialogProps) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>スタッフを招待</AdminDialogTitle>
           <AdminDialogDescription>

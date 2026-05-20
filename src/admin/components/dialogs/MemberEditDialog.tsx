@@ -86,7 +86,7 @@ const MemberEditDialog = ({ open, onOpenChange, member }: Props) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>会員情報を編集</AdminDialogTitle>
           <AdminDialogDescription>{member.displayId}</AdminDialogDescription>

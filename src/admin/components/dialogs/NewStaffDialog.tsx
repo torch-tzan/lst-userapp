@@ -81,7 +81,7 @@ const NewStaffDialog = ({ open, onOpenChange }: NewStaffDialogProps) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規スタッフ</AdminDialogTitle>
           <AdminDialogDescription>店舗のスタッフを追加します。</AdminDialogDescription>

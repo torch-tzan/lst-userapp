@@ -39,7 +39,7 @@ const CampaignDeleteDialog = ({
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>キャンペーンを削除しますか？</AdminDialogTitle>
           <AdminDialogDescription>

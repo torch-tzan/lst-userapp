@@ -29,7 +29,7 @@ const MemberDeleteDialog = ({ open, onOpenChange, member, onDeleted }: Props) =>
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>会員を削除</AdminDialogTitle>
           <AdminDialogDescription>

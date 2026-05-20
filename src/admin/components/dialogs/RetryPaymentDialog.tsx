@@ -32,7 +32,7 @@ const RetryPaymentDialog = ({ open, onOpenChange, paymentId, onConfirm }: RetryP
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>支払いを再試行</AdminDialogTitle>
           <AdminDialogDescription>

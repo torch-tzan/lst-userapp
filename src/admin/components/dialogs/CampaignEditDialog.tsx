@@ -144,7 +144,7 @@ const CampaignEditDialog = ({ open, onOpenChange, campaign }: CampaignEditDialog
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>キャンペーンを編集</AdminDialogTitle>
           <AdminDialogDescription>{campaign.id} を更新します。</AdminDialogDescription>

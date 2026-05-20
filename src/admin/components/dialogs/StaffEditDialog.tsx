@@ -78,7 +78,7 @@ const StaffEditDialog = ({ open, onOpenChange, staff }: StaffEditDialogProps) =>
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>スタッフを編集</AdminDialogTitle>
           <AdminDialogDescription>{staff.name} の情報を更新します。</AdminDialogDescription>

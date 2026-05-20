@@ -48,7 +48,7 @@ const RefundDialog = ({ open, onOpenChange, targetId, amount, onConfirm }: Refun
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>返金処理</AdminDialogTitle>
           <AdminDialogDescription>

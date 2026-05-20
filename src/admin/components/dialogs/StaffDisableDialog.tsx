@@ -32,7 +32,7 @@ const StaffDisableDialog = ({ open, onOpenChange, staff }: StaffDisableDialogPro
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>スタッフを無効化しますか？</AdminDialogTitle>
           <AdminDialogDescription>

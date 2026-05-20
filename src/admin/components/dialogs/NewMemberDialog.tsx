@@ -79,7 +79,7 @@ const NewMemberDialog = ({ open, onOpenChange }: Props) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規会員追加</AdminDialogTitle>
           <AdminDialogDescription>LST 会員として登録します。</AdminDialogDescription>

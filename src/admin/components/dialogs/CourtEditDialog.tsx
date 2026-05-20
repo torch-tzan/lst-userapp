@@ -127,7 +127,7 @@ const CourtEditDialog = ({ open, onOpenChange, court, currentAddress }: CourtEdi
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>コートを編集</AdminDialogTitle>
           <AdminDialogDescription>{court.name} を更新します。</AdminDialogDescription>

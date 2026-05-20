@@ -43,7 +43,7 @@ const CoachSuspendDialog = ({ open, onOpenChange, coach }: Props) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>
             {isSuspended ? "コーチを再有効化しますか？" : "コーチを無効化しますか？"}

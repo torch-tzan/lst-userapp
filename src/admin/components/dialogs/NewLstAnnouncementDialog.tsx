@@ -123,7 +123,7 @@ const NewLstAnnouncementDialog = ({ open, onOpenChange }: NewLstAnnouncementDial
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-lg">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規お知らせ（LST HQ）</AdminDialogTitle>
           <AdminDialogDescription>

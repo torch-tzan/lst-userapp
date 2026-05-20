@@ -64,7 +64,7 @@ const CommissionEditDialog = ({ open, onOpenChange }: CommissionEditDialogProps)
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>成果報酬編集</AdminDialogTitle>
           <AdminDialogDescription>月次の成果報酬額を編集します。</AdminDialogDescription>

@@ -31,7 +31,7 @@ const SettleBulkConfirmDialog = ({ open, onOpenChange, pendingCount }: Props) =>
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>一括精算の確認</AdminDialogTitle>
           <AdminDialogDescription>

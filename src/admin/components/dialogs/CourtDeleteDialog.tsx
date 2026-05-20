@@ -44,7 +44,7 @@ const CourtDeleteDialog = ({ open, onOpenChange, court, onDeleted }: CourtDelete
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>コートを削除しますか？</AdminDialogTitle>
           <AdminDialogDescription>

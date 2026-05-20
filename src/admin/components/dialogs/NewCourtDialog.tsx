@@ -120,7 +120,7 @@ const NewCourtDialog = ({ open, onOpenChange, onCreated }: NewCourtDialogProps) 
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規コート</AdminDialogTitle>
           <AdminDialogDescription>店舗で管理するコートを追加します。</AdminDialogDescription>

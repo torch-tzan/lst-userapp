@@ -138,7 +138,7 @@ const NewCampaignDialog = ({ open, onOpenChange }: NewCampaignDialogProps) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規キャンペーン</AdminDialogTitle>
           <AdminDialogDescription>キャンペーンやイベントを作成します。</AdminDialogDescription>

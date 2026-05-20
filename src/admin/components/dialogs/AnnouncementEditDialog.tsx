@@ -78,7 +78,7 @@ const AnnouncementEditDialog = ({ open, onOpenChange, announcement }: Announceme
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>お知らせを編集</AdminDialogTitle>
           <AdminDialogDescription>

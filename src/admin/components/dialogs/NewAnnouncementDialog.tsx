@@ -84,7 +84,7 @@ const NewAnnouncementDialog = ({ open, onOpenChange }: NewAnnouncementDialogProp
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規お知らせ</AdminDialogTitle>
           <AdminDialogDescription>会員へのお知らせを作成します。</AdminDialogDescription>

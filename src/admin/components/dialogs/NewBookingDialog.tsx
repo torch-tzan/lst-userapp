@@ -167,7 +167,7 @@ const NewBookingDialog = ({ open, onOpenChange, onCreated }: NewBookingDialogPro
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規予約</AdminDialogTitle>
           <AdminDialogDescription>

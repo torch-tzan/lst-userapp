@@ -62,7 +62,7 @@ const FeeOverrideDialog = ({ open, onOpenChange }: Props) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>加盟店別の手数料率を設定</AdminDialogTitle>
           <AdminDialogDescription>

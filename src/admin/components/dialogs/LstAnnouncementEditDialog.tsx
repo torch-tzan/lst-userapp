@@ -79,7 +79,7 @@ const LstAnnouncementEditDialog = ({ open, onOpenChange, announcement }: Props) 
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>お知らせを編集</AdminDialogTitle>
           <AdminDialogDescription>{announcement.id} を更新します。</AdminDialogDescription>

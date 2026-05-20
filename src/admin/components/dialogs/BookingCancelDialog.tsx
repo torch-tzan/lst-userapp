@@ -57,7 +57,7 @@ const BookingCancelDialog = ({
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>この予約をキャンセルしますか？</AdminDialogTitle>
           <AdminDialogDescription>

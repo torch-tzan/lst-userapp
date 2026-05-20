@@ -120,7 +120,7 @@ const BookingEditDialog = ({ open, onOpenChange, booking }: BookingEditDialogPro
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>予約を編集</AdminDialogTitle>
           <AdminDialogDescription>

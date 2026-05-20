@@ -35,7 +35,7 @@ const CoachDeleteDialog = ({ open, onOpenChange, coach, onDeleted }: Props) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>コーチを削除しますか？</AdminDialogTitle>
           <AdminDialogDescription>

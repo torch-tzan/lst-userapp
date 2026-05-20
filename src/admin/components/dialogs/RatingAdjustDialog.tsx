@@ -69,7 +69,7 @@ const RatingAdjustDialog = ({ open, onOpenChange, userId }: RatingAdjustDialogPr
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>レーティング調整 - {player?.name ?? userId}</AdminDialogTitle>
           <AdminDialogDescription>

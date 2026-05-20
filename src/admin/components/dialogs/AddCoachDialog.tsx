@@ -140,7 +140,7 @@ const AddCoachDialog = ({ open, onOpenChange, onCreated }: Props) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>コーチ追加</AdminDialogTitle>
           <AdminDialogDescription>新しいコーチを登録します。</AdminDialogDescription>

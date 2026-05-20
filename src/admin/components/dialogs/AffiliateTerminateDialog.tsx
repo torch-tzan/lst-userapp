@@ -50,7 +50,7 @@ const AffiliateTerminateDialog = ({ open, onOpenChange, affiliate }: Props) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>契約解約</AdminDialogTitle>
           <AdminDialogDescription>

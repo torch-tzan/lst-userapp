@@ -64,7 +64,7 @@ const ShiftDetailDialog = ({ open, onOpenChange, shift }: ShiftDetailDialogProps
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>シフト編集</AdminDialogTitle>
           <AdminDialogDescription>

@@ -32,7 +32,7 @@ const FeeRateChangeDialog = ({ open, onOpenChange, newRate, oldRate }: Props) =>
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>手数料率の変更を確認</AdminDialogTitle>
           <AdminDialogDescription>

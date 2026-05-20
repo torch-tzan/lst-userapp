@@ -153,7 +153,7 @@ const NewLstCampaignDialog = ({ open, onOpenChange }: Props) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-lg">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規キャンペーン（LST HQ）</AdminDialogTitle>
           <AdminDialogDescription>

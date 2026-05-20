@@ -42,7 +42,7 @@ const AnnouncementDeleteDialog = ({
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>お知らせを削除しますか？</AdminDialogTitle>
           <AdminDialogDescription>

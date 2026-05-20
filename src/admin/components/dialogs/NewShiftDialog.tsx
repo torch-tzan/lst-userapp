@@ -70,7 +70,7 @@ const NewShiftDialog = ({ open, onOpenChange }: NewShiftDialogProps) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>新規シフト</AdminDialogTitle>
           <AdminDialogDescription>スタッフのシフトを追加します。</AdminDialogDescription>

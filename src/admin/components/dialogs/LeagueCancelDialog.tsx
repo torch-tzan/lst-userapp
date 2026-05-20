@@ -61,7 +61,7 @@ const LeagueCancelDialog = ({ open, onOpenChange, match }: LeagueCancelDialogPro
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>この試合をキャンセルしますか？</AdminDialogTitle>
           <AdminDialogDescription>

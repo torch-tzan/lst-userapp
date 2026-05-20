@@ -47,7 +47,7 @@ const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialogProps)
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>パスワード変更</AdminDialogTitle>
           <AdminDialogDescription>新しいパスワードを設定します。</AdminDialogDescription>

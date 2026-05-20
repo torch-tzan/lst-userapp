@@ -56,7 +56,7 @@ const CsvExportDialog = ({ open, onOpenChange }: CsvExportDialogProps) => {
 
   return (
     <AdminDialog open={open} onOpenChange={onOpenChange}>
-      <AdminDialogContent className="max-w-md">
+      <AdminDialogContent>
         <AdminDialogHeader>
           <AdminDialogTitle>CSVエクスポート</AdminDialogTitle>
           <AdminDialogDescription>
