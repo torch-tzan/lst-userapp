@@ -83,7 +83,6 @@ export const STORE_NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "courts", label: "コート管理", icon: MapPin, path: "/admin/store/courts" },
       { key: "bookings", label: "予約管理", icon: CalendarDays, path: "/admin/store/bookings" },
-      { key: "leagues", label: "リーグ管理", icon: Trophy, path: "/admin/store/leagues" },
     ],
   },
   {
