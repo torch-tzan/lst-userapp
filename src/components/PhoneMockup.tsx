@@ -1,27 +1,50 @@
 import { useState, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-const PhoneMockup = ({ children, bottomNav, hideStatusBar }: { children: React.ReactNode; bottomNav?: React.ReactNode; hideStatusBar?: boolean }) => {
+
+const PhoneMockup = ({
+  children,
+  bottomNav,
+  hideStatusBar,
+  exportMode: exportModeProp,
+}: {
+  children: React.ReactNode;
+  bottomNav?: React.ReactNode;
+  hideStatusBar?: boolean;
+  /** Figma export: drop outer gray padding; keep 390×844 phone frame. */
+  exportMode?: boolean;
+}) => {
+  const [searchParams] = useSearchParams();
+  const exportMode = exportModeProp ?? searchParams.get("figmaExport") === "1";
   const [isDark, setIsDark] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    // Switch to light when scrolled past the dark header area (~120px)
     setIsDark(el.scrollTop < 80);
   }, []);
 
   const statusColor = isDark ? "text-primary-foreground" : "text-foreground";
   const statusBg = isDark ? "bg-gray-5" : "bg-background";
 
-  return (
-    <div className="min-h-screen bg-muted flex items-center justify-center p-4">
-      <div id="phone-container" className="relative w-[390px] h-[844px] rounded-[50px] border-[12px] border-foreground/90 bg-background shadow-2xl overflow-hidden flex flex-col">
-        {/* Notch */}
+  const phone = (
+    <div
+      id="phone-container"
+      className={
+        exportMode
+          ? // bare 匯出：拆 bezel/圓角/陰影，寬固定 390、隨內容往下加高（min 844）
+            "relative w-[390px] min-h-[844px] bg-background flex flex-col"
+          : "relative w-[390px] h-[844px] rounded-[50px] border-[12px] border-foreground/90 bg-background shadow-2xl overflow-hidden flex flex-col"
+      }
+    >
+      {!exportMode && (
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[30px] bg-foreground/90 rounded-b-2xl z-50" />
-        {/* Status bar */}
-        {!hideStatusBar && (
-        <div className={`h-[50px] flex-shrink-0 flex items-center justify-between px-8 pt-1 z-40 transition-colors duration-300 ${statusBg}`}>
+      )}
+      {!hideStatusBar && (
+        <div
+          className={`h-[50px] flex-shrink-0 flex items-center justify-between px-8 pt-1 z-40 transition-colors duration-300 ${statusBg}`}
+        >
           <span className={`text-xs font-semibold ${statusColor}`}>9:41</span>
           <div className={`flex items-center gap-1 ${statusColor}`}>
             <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
@@ -42,23 +65,30 @@ const PhoneMockup = ({ children, bottomNav, hideStatusBar }: { children: React.R
             </svg>
           </div>
         </div>
-        )}
-        {/* Toast container scoped to phone (bottom area, above bottomNav) */}
-        <Toaster />
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto" ref={scrollRef} onScroll={handleScroll}>
-          {children}
-        </div>
-        {/* Fixed bottom nav */}
-        {bottomNav && (
-          <div className="flex-shrink-0 bg-gray-5 border-t border-border">
-            {bottomNav}
-            <div className="flex justify-center pb-1 pt-0.5">
-              <div className="w-[134px] h-[5px] bg-foreground/30 rounded-full" />
-            </div>
-          </div>
-        )}
+      )}
+      <Toaster />
+      <div className={exportMode ? "flex-1" : "flex-1 min-h-0 overflow-y-auto"} ref={scrollRef} onScroll={handleScroll}>
+        {children}
       </div>
+      {bottomNav && (
+        <div className="flex-shrink-0 bg-gray-5 border-t border-border">
+          {bottomNav}
+          <div className="flex justify-center pb-1 pt-0.5">
+            <div className="w-[134px] h-[5px] bg-foreground/30 rounded-full" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  if (exportMode) {
+    // bare 匯出模式：直接把 390 寬 frame 當文件根節點輸出，viewport=390 匯入即為乾淨整框
+    return phone;
+  }
+
+  return (
+    <div className="min-h-screen bg-muted flex items-center justify-center p-4">
+      {phone}
     </div>
   );
 };

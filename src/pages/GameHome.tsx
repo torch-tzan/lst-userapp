@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import PhoneMockup from "@/components/PhoneMockup";
 import BottomNav from "@/components/BottomNav";
 import SegmentedTabs from "@/components/SegmentedTabs";
@@ -25,8 +25,11 @@ const GameHome = () => {
   const sub = useSubscription();
   const isPremium = sub.isPremium();
 
-  const [tab, setTab] = useState("league");
-  const [rankingTab, setRankingTab] = useState<"current" | "last">("current");
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(() => searchParams.get("tab") ?? "league");
+  const [rankingTab, setRankingTab] = useState<"current" | "last">(
+    () => (searchParams.get("rankingTab") === "last" ? "last" : "current"),
+  );
 
   const now = new Date();
   const currentSeason = getSeasonOf(now);

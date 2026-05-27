@@ -95,6 +95,7 @@ import CoachDetailAdmin from "./admin/pages/lst/coaches/CoachDetailAdmin.tsx";
 import CouponList from "./admin/pages/lst/coupons/CouponList.tsx";
 import CouponDetail from "./admin/pages/lst/coupons/CouponDetail.tsx";
 import SystemSettings from "./admin/pages/lst/system/SystemSettings.tsx";
+import LstAdminProfile from "./admin/pages/lst/profile/LstAdminProfile.tsx";
 import StoreDashboard from "./admin/pages/store/StoreDashboard.tsx";
 import CourtList from "./admin/pages/store/courts/CourtList.tsx";
 import CourtDetailAdmin from "./admin/pages/store/courts/CourtDetailAdmin.tsx";
@@ -115,7 +116,9 @@ import AdminProfile from "./admin/pages/store/profile/AdminProfile.tsx";
 import StoreMemberList from "./admin/pages/store/members/StoreMemberList.tsx";
 import StoreMemberDetail from "./admin/pages/store/members/StoreMemberDetail.tsx";
 import InvitationList from "./admin/pages/store/invitations/InvitationList.tsx";
-import LstAdminProfile from "./admin/pages/lst/profile/LstAdminProfile.tsx";
+import FigmaExportGame from "./pages/figma/FigmaExportGame.tsx";
+import FigmaExportCards from "./pages/figma/FigmaExportCards.tsx";
+import FigmaExportNonPremiumGame from "./pages/figma/FigmaExportNonPremiumGame.tsx";
 
 const queryClient = new QueryClient();
 
@@ -186,6 +189,9 @@ const App = () => (
           <Route path="/game/league/:id" element={<LeagueBoardDetail />} />
           <Route path="/game/league/:id/score" element={<LeagueBoardScore />} />
           <Route path="/game/league/:id/edit" element={<LeagueBoardEdit />} />
+          <Route path="/figma-export/game" element={<FigmaExportGame />} />
+          <Route path="/figma-export/cards" element={<FigmaExportCards />} />
+          <Route path="/figma-export/non-premium-game" element={<FigmaExportNonPremiumGame />} />
           {/* Admin backstage */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/lst/dashboard" element={<LstDashboard />} />
