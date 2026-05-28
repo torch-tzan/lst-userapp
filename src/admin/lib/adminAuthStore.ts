@@ -12,6 +12,17 @@ const STORAGE_KEY = "lst-admin-auth";
 
 function loadInitialState(): AdminAuthState {
   if (typeof window === "undefined") return { role: null };
+  // Figma export 旁路（dev-only）：URL 帶 ?figmaExport=1 時依路徑自動授權
+  // /admin/store/* → store role，/admin/lst/* → lst role；只設記憶體 state，不寫 localStorage
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("figmaExport") === "1") {
+      const isStore = window.location.pathname.includes("/admin/store");
+      return { role: isStore ? "store" : "lst", email: "figma-export@local" };
+    }
+  } catch {
+    // ignore
+  }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return { role: null };
