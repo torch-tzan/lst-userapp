@@ -69,7 +69,7 @@ const GameHome = () => {
               season={currentSeason}
               rank={myCurrentRank >= 0 ? myCurrentRank + 1 : -1}
               totalRanked={currentRanking.length}
-              onClick={() => navigate("/game/my-results")}
+              onClick={undefined}
             />
           ) : (
             <div className="text-center space-y-2 py-2">
@@ -78,7 +78,7 @@ const GameHome = () => {
                 プレミアム会員になってリーグに参加
               </p>
               <p className="text-[11px] text-primary-foreground/70">
-                大会・リーグ参加・成績確認はプレミアム限定
+                リーグ参加・成績確認はプレミアム限定
               </p>
               <button
                 onClick={() => navigate("/premium/plan")}

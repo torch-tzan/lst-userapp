@@ -1,10 +1,11 @@
 import PhoneMockup from "@/components/PhoneMockup";
 import BottomNav from "@/components/BottomNav";
 import { Separator } from "@/components/ui/separator";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { getThreads, seedDemoThreads } from "@/lib/messageStore";
 import { getCoachAvatar } from "@/lib/coachData";
 import { useState, useEffect } from "react";
+import { MessageCircle } from "lucide-react";
 
 interface DisplayThread {
   id: string;
@@ -20,10 +21,16 @@ interface DisplayThread {
 
 const Messages = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const forceEmpty = searchParams.get("empty") === "1";
   const bottomNav = <BottomNav active={3} />;
   const [threads, setThreads] = useState<DisplayThread[]>([]);
 
   useEffect(() => {
+    if (forceEmpty) {
+      setThreads([]);
+      return;
+    }
     seedDemoThreads();
     const stored = getThreads();
     const display: DisplayThread[] = stored.map((t) => {
@@ -42,7 +49,7 @@ const Messages = () => {
       };
     });
     setThreads(display);
-  }, []);
+  }, [forceEmpty]);
 
   return (
     <PhoneMockup bottomNav={bottomNav}>
@@ -58,11 +65,16 @@ const Messages = () => {
         {/* Thread list */}
         <div className="flex-1 overflow-y-auto">
           {threads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center pt-24 gap-3 px-[20px]">
-              <p className="text-sm font-bold text-foreground">メッセージはありません</p>
-              <p className="text-xs text-muted-foreground text-center">
-                コーチのレッスンを予約すると、<br />ここでやり取りができます。
-              </p>
+            <div className="flex flex-col items-center justify-center pt-24 gap-4 px-[20px]">
+              <div className="w-16 h-16 rounded-full bg-muted/60 flex items-center justify-center">
+                <MessageCircle className="w-7 h-7 text-muted-foreground" strokeWidth={1.5} />
+              </div>
+              <div className="flex flex-col items-center gap-1.5">
+                <p className="text-sm font-bold text-foreground">メッセージはありません</p>
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  コーチのレッスンを予約すると、<br />ここでやり取りができます。
+                </p>
+              </div>
             </div>
           ) : (
             threads.map((thread, i) => (

@@ -213,16 +213,6 @@ const MyPage = () => {
             <span className="flex-1 text-sm font-medium text-foreground">評価履歴</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
           </button>
-          {isPremium && (
-            <button
-              onClick={() => navigate("/game/my-results")}
-              className="w-full flex items-center gap-3 px-[20px] py-3.5 hover:bg-muted/50 text-left"
-            >
-              <Trophy className="w-5 h-5 text-muted-foreground" />
-              <span className="flex-1 text-sm font-medium text-foreground">大会成績</span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
-            </button>
-          )}
 
           {/* Plan management section (訂閱者) */}
           {isPremium && (

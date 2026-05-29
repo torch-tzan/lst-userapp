@@ -249,6 +249,70 @@ function buildInitialState(): StoreState {
         cancelledReason: "急用で出席できなくなりました",
         threadId: "thread-league-match-lm-6",
       },
+
+      // ── L7: open-mine — CURRENT_USER hosts an open recruit with pending applicants. ──
+      {
+        id: "lm-7",
+        hostUserId: CURRENT_USER,
+        desiredDate: dayAt(5, 19), // 5 日後 19:00
+        preferredVenue: "札幌ドームコート1",
+        description: "中級レベルでの練習試合を募集中。お気軽にご参加ください！",
+        desiredSkillLevel: "intermediate",
+        applications: [
+          { id: "app-7-1", applicantUserId: "user-007", appliedAt: hoursAgo(2), status: "pending" },
+          { id: "app-7-2", applicantUserId: "user-002", appliedAt: hoursAgo(6), status: "pending" },
+        ],
+        status: "open",
+        createdAt: hoursAgo(20),
+      },
+
+      // ── L8: filled_observer — match is filled, CURRENT_USER NOT a participant. ──
+      {
+        id: "lm-8",
+        hostUserId: "user-006",
+        desiredDate: dayAt(2, 14), // 2 日後 14:00
+        preferredVenue: "中央区テニスコート",
+        description: "上級プレイヤー集合！本格的な試合をしたい方向け",
+        desiredSkillLevel: "advanced",
+        applications: [
+          { id: "app-8-1", applicantUserId: "user-003", appliedAt: hoursAgo(40), status: "approved" },
+          { id: "app-8-2", applicantUserId: "user-010", appliedAt: hoursAgo(38), status: "approved" },
+          { id: "app-8-3", applicantUserId: "user-005", appliedAt: hoursAgo(36), status: "approved" },
+        ],
+        status: "filled",
+        createdAt: hoursAgo(50),
+        threadId: "thread-league-match-lm-8",
+      },
+
+      // ── L9: score_approved_waiting — score posted, CURRENT_USER approved, others pending. ──
+      {
+        id: "lm-9",
+        hostUserId: "user-002",
+        desiredDate: dayAt(-1, 18), // 昨日 18:00
+        preferredVenue: "北広島パデルクラブ コートA",
+        description: "結果待ちのリーグマッチ",
+        desiredSkillLevel: "intermediate",
+        applications: [
+          { id: "app-9-1", applicantUserId: CURRENT_USER, appliedAt: hoursAgo(70), status: "approved" },
+          { id: "app-9-2", applicantUserId: "user-007", appliedAt: hoursAgo(68), status: "approved" },
+          { id: "app-9-3", applicantUserId: "user-005", appliedAt: hoursAgo(66), status: "approved" },
+        ],
+        status: "filled",
+        createdAt: hoursAgo(90),
+        threadId: "thread-league-match-lm-9",
+        result: {
+          side1UserIds: [CURRENT_USER, "user-005"],
+          side2UserIds: ["user-002", "user-007"],
+          winnerSide: 1,
+          score: "6-4",
+          hostSubmittedAt: hoursAgo(8),
+          // Host (user-002) auto-approved, CURRENT_USER approved. user-005 / user-007 pending.
+          approvals: [
+            { userId: "user-002", approvedAt: hoursAgo(8) },
+            { userId: CURRENT_USER, approvedAt: hoursAgo(5) },
+          ],
+        },
+      },
     ],
   };
 }

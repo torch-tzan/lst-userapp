@@ -31,7 +31,7 @@ const LEVELS: {
   {
     value: "advanced",
     label: "上級",
-    description: "競技志向 / 大会で上位を狙えるレベル",
+    description: "競技志向 / 上位を狙える実力レベル",
     icon: Trophy,
     color: "text-yellow-600",
     rating: 1800,

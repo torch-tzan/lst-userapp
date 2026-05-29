@@ -23,15 +23,6 @@ const ICON_MAP: Record<PushNotification["type"], { icon: React.ElementType; colo
   booking_cancelled: { icon: CalendarX, color: "text-muted-foreground" },
   online_link: { icon: Video, color: "text-primary" },
   review_request: { icon: Star, color: "text-accent-yellow" },
-  tournament_registration_confirmed: { icon: Trophy, color: "text-primary" },
-  tournament_partner_invited: { icon: Mail, color: "text-accent-yellow" },
-  tournament_partner_accepted: { icon: Check, color: "text-primary" },
-  tournament_partner_declined: { icon: X, color: "text-destructive" },
-  tournament_partner_expired: { icon: Clock, color: "text-muted-foreground" },
-  tournament_partner_cancelled: { icon: X, color: "text-muted-foreground" },
-  tournament_participant_cancelled: { icon: AlertCircle, color: "text-accent-yellow" },
-  tournament_starting_soon: { icon: Bell, color: "text-accent-yellow" },
-  tournament_results_published: { icon: Trophy, color: "text-accent-yellow" },
   monthly_ranking_finalized: { icon: Trophy, color: "text-primary" },
   league_match_application_received: { icon: Mail, color: "text-accent-yellow" },
   league_match_application_approved: { icon: Check, color: "text-primary" },
@@ -74,10 +65,6 @@ const Notifications = () => {
   const handlePushClick = (n: PushNotification) => {
     markNotificationRead(n.id);
     setPushNotifs(getNotifications());
-    if (n.type === "tournament_partner_invited" && n.entryId) {
-      navigate(`/game/invite/${n.entryId}`);
-      return;
-    }
     if (n.type === "review_request" && n.coachName) {
       navigate(`/review/submit?coach=${encodeURIComponent(n.coachName)}&bookingId=${n.bookingId || ""}`);
     } else if (n.bookingId) {

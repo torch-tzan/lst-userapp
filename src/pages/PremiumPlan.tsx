@@ -12,10 +12,6 @@ const BENEFITS = [
     title: "コーチ動画レビュー無料",
     desc: "月1回、専用クーポンを自動配布",
   },
-  {
-    title: "ゲーム参加でボーナスポイント",
-    desc: "月例大会の参加・勝利で追加ポイント",
-  },
 ];
 
 const PremiumPlan = () => {

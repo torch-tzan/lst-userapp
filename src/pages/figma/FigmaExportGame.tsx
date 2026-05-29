@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getSeasonOf, seasonKey, formatSeasonLabel } from "@/lib/tournamentStore";
 
 type ScreenDef = {
   label: string;
@@ -8,16 +7,12 @@ type ScreenDef = {
   path: string;
 };
 
-const currentSeasonKey = seasonKey(getSeasonOf(new Date()));
-
 const SCREENS: ScreenDef[] = [
   { label: "ゲームホーム — リーグタブ", path: "/game?tab=league" },
   { label: "ゲームホーム — 順位（今シーズン）", path: "/game?tab=ranking&rankingTab=current" },
   { label: "ゲームホーム — 順位（前シーズン）", path: "/game?tab=ranking&rankingTab=last" },
   { label: "ゲームホーム — 非プレミアム", path: "/figma-export/non-premium-game" },
   { label: "プレミアム登録", path: "/premium/plan" },
-  { label: "大会成績", path: "/game/my-results" },
-  { label: `シーズン成績（${formatSeasonLabel(getSeasonOf(new Date()))}）`, path: `/game/my-results/${currentSeasonKey}` },
   { label: "新規募集", path: "/game/league/new" },
   { label: "募集詳細 — 募集中（応募可）", path: "/game/league/lm-0" },
   { label: "募集詳細 — 応募済（承認待ち）", path: "/game/league/lm-1" },
@@ -29,13 +24,6 @@ const SCREENS: ScreenDef[] = [
   { label: "比分入力", path: "/game/league/lm-3/score" },
   { label: "メッセージ（グループ）", path: "/messages/thread-league-match-lm-2" },
   { label: "プロフィール", path: "/profile/user-002" },
-  { label: "大会詳細 — エントリー受付中", path: "/game/tournament/t-extra-doubles" },
-  { label: "大会詳細 — 招待（被招待者）", path: "/game/tournament/t-pending-invite" },
-  { label: "大会詳細 — パートナー確認待ち（代表者）", path: "/game/tournament/t-self-sent-pending" },
-  { label: "大会詳細 — エントリー済", path: "/game/tournament/t-self-confirmed-doubles" },
-  { label: "大会詳細 — 終了（結果）", path: "/game/tournament/t-completed" },
-  { label: "エントリー", path: "/game/tournament/t-extra-doubles/entry" },
-  { label: "招待確認", path: "/game/invite/e-pi1" },
   { label: "リーグカード — 全状態", path: "/figma-export/cards" },
 ];
 

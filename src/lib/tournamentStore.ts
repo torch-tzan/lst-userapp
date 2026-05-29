@@ -653,22 +653,11 @@ function buildInitialState(): StoreState {
     },
   };
 
+  // 2026-05-29 大会（トーナメント）機能を APP から削除。種子データを空に
+  // し、derived（成績/ランキング/Padel Points）はすべて空・0 を返す。
+  // 構造体・型・helper はリーグ等の他箇所で参照されているため保持。
   return {
-    tournaments: [
-      inProgressTournament,
-      openTournament,
-      pendingInviteTournament,
-      selfSentPendingTournament,
-      selfConfirmedNightDoublesTournament,
-      selfConfirmedDoublesTournament,
-      extraDoublesTournament,
-      upcomingTournament,
-      completedTournament,    // 4月 2026
-      completedMar2026,       // 3月
-      completedFeb2026,       // 2月
-      completedJan2026,       // 1月
-      completedDec2025,       // 12月 2025
-    ],
+    tournaments: [],
   };
 }
 
@@ -818,38 +807,187 @@ export interface SeasonalRankingRow {
   ratingChange: number;
 }
 
+/**
+ * Seeded seasonal rankings — used for demo / mockup. Tournament 機能を APP から削除した
+ * ため、tournaments[] からは計算できない。代わりにシーズン毎の固定 12 人ランキングを返す。
+ * Q1（前）と Q2（今）で同じ 12 プレイヤーだが、played/won/ratingChange を変えてストーリー
+ * （誰が今シーズン伸びた・落ちたか）が分かる構成にしている。
+ */
+type SeededRow = { userId: string; played: number; won: number; ratingChange: number };
+const SEEDED_RANKINGS: Record<string, SeededRow[]> = {
+  // 2026 Q2（今シーズン）— レーティング順（上→下）に近い並び
+  "2026-Q2": [
+    { userId: "user-010", played: 12, won: 10, ratingChange:  80 },
+    { userId: "user-006", played: 11, won:  8, ratingChange:  50 },
+    { userId: "user-003", played: 14, won:  9, ratingChange:  30 },
+    { userId: "user-002", played: 10, won:  6, ratingChange:  40 },
+    { userId: "user-007", played: 13, won:  7, ratingChange:  20 },
+    { userId: CURRENT_USER, played: 12, won: 6, ratingChange: 25 },
+    { userId: "user-005", played: 11, won:  5, ratingChange: -10 },
+    { userId: "user-012", played:  9, won:  4, ratingChange:   5 },
+    { userId: "user-009", played: 10, won:  4, ratingChange: -15 },
+    { userId: "user-008", played:  8, won:  3, ratingChange:  10 },
+    { userId: "user-004", played:  7, won:  2, ratingChange:  -5 },
+    { userId: "user-011", played:  6, won:  2, ratingChange: -20 },
+  ],
+  // 2026 Q1（前シーズン）— 違うストーリー：user-006 が前期トップ、CURRENT_USER は中位
+  "2026-Q1": [
+    { userId: "user-006", played: 15, won: 12, ratingChange: 120 },
+    { userId: "user-010", played: 13, won: 10, ratingChange:  60 },
+    { userId: "user-002", played: 16, won: 11, ratingChange:  90 },
+    { userId: "user-003", played: 12, won:  8, ratingChange:  40 },
+    { userId: "user-007", played: 14, won:  9, ratingChange:  50 },
+    { userId: "user-005", played: 13, won:  7, ratingChange:  30 },
+    { userId: CURRENT_USER, played: 11, won: 5, ratingChange:  15 },
+    { userId: "user-009", played: 12, won:  5, ratingChange:  20 },
+    { userId: "user-012", played:  9, won:  4, ratingChange:   0 },
+    { userId: "user-004", played: 10, won:  4, ratingChange: -10 },
+    { userId: "user-008", played:  8, won:  3, ratingChange:  -5 },
+    { userId: "user-011", played:  7, won:  2, ratingChange: -25 },
+  ],
+};
+
 export function computeSeasonalRanking(
   season: string,
-  tournaments: Tournament[]
+  _tournaments: Tournament[]
 ): SeasonalRankingRow[] {
-  // Collect all userIds who participated in this season's tournaments
-  const allUserIds = new Set<string>();
-  tournaments.forEach((t) => {
-    if (t.status !== "completed") return;
-    if (seasonKey(getSeasonOf(t.scheduledAt)) !== season) return;
-    t.entries.forEach((e) => {
-      if (e.status !== "confirmed") return;
-      allUserIds.add(e.registrantUserId);
-      if (e.partnerUserId) allUserIds.add(e.partnerUserId);
-    });
-  });
+  const seed = SEEDED_RANKINGS[season];
+  if (!seed) return [];
+  return seed
+    .map((row) => {
+      const player = getPlayer(row.userId);
+      const rating = player?.rating ?? 1400;
+      return {
+        userId: row.userId,
+        name: player?.name ?? row.userId,
+        rating,
+        tier: getRankTier(rating).tier,
+        played: row.played,
+        won: row.won,
+        ratingChange: row.ratingChange,
+      };
+    })
+    .sort((a, b) => b.rating - a.rating);
+}
 
-  const rows: SeasonalRankingRow[] = [];
-  for (const uid of allUserIds) {
-    const summary = computePersonalSeasonalSummary(uid, season, tournaments);
-    const player = getPlayer(uid);
-    const finalRating = player?.rating ?? 1400; // current/cumulative rating
-    rows.push({
-      userId: uid,
-      name: player?.name ?? uid,
-      rating: finalRating,
-      tier: getRankTier(finalRating).tier,
-      played: summary.played,
-      won: summary.won,
-      ratingChange: summary.ratingChange,
+/**
+ * SEEDED_RANKINGS から特定 user・シーズンの戦績 1 行を引く。
+ * Profile グリッドが順位ページと同じ数字を表示するために使う。
+ */
+export function getPlayerSeasonalStats(
+  userId: string,
+  season: string
+): { played: number; won: number; ratingChange: number } | undefined {
+  const seed = SEEDED_RANKINGS[season];
+  if (!seed) return undefined;
+  const row = seed.find((r) => r.userId === userId);
+  if (!row) return undefined;
+  return { played: row.played, won: row.won, ratingChange: row.ratingChange };
+}
+
+/* ── Synthetic league match history — Profile「リーグ参加経験」用 ── */
+
+export interface RecentLeagueMatch {
+  id: string;
+  date: string;        // ISO
+  venue: string;
+  partnerName: string;
+  opponentNames: [string, string];
+  score: string;
+  won: boolean;
+  isHost: boolean;
+}
+
+const HISTORY_VENUES = [
+  "札幌ドームコート1",
+  "中央区テニスコート",
+  "北広島パデルクラブ コートA",
+  "広島中央スポーツ コートB",
+  "パデルコート広島 コートC",
+  "LST 西支店コート2",
+];
+const HISTORY_SCORES_WIN = ["6-3", "6-4", "7-5", "6-2", "6-1"];
+const HISTORY_SCORES_LOSS = ["3-6", "4-6", "5-7", "2-6", "1-6"];
+
+/**
+ * SEEDED_RANKINGS の played/won に対応する数のリーグ試合履歴を合成する。
+ * userId と index から決定論的に組み立てる（HMR 跨ぎでも同じ並びになる）。
+ * 試合の id は `hist-...` プレフィックスでフェイク、クリック遷移は無効。
+ */
+function generatePlayerHistory(
+  userId: string,
+  played: number,
+  won: number,
+  seasonAnchorDate: Date
+): RecentLeagueMatch[] {
+  const others = PLAYER_DIRECTORY.filter((p) => p.userId !== userId);
+  if (others.length < 3 || played <= 0) return [];
+
+  const hash = userId.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
+
+  // 勝ち試合のインデックスを均等に散らす
+  const winFlags = new Array(played).fill(false) as boolean[];
+  if (won > 0) {
+    for (let i = 0; i < won; i++) {
+      const idx = Math.floor((i * played) / won);
+      winFlags[idx] = true;
+    }
+  }
+
+  const matches: RecentLeagueMatch[] = [];
+  for (let i = 0; i < played; i++) {
+    const isWin = winFlags[i];
+    // 今シーズン内に試合を散らす（最新試合は seasonAnchorDate 直前）
+    const daysAgo = (i + 1) * 5; // 5,10,15...
+    const date = new Date(seasonAnchorDate.getTime() - daysAgo * 86400000).toISOString();
+
+    let partnerIdx = (hash + i * 3) % others.length;
+    let op1Idx = (hash + i * 5 + 1) % others.length;
+    let op2Idx = (hash + i * 7 + 2) % others.length;
+    if (op1Idx === partnerIdx) op1Idx = (op1Idx + 1) % others.length;
+    while (op2Idx === partnerIdx || op2Idx === op1Idx) op2Idx = (op2Idx + 1) % others.length;
+
+    const partner = others[partnerIdx];
+    const op1 = others[op1Idx];
+    const op2 = others[op2Idx];
+    const scoreList = isWin ? HISTORY_SCORES_WIN : HISTORY_SCORES_LOSS;
+
+    matches.push({
+      id: `hist-${userId}-${i}`,
+      date,
+      venue: HISTORY_VENUES[(hash + i) % HISTORY_VENUES.length],
+      partnerName: partner.name,
+      opponentNames: [op1.name, op2.name],
+      score: scoreList[(hash + i) % scoreList.length],
+      won: isWin,
+      // 3 つに 1 つくらいをホストに
+      isHost: i % 3 === 0,
     });
   }
-  return rows.sort((a, b) => b.rating - a.rating);
+  // 新しい順
+  return matches.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+const HISTORY_CACHE = new Map<string, RecentLeagueMatch[]>();
+
+/**
+ * 指定 user・シーズンの「リーグ参加経験」リストを返す。
+ * 結果はキャッシュ。サンプル demo データ・クリック遷移なし。
+ */
+export function getPlayerRecentMatches(userId: string, season: string): RecentLeagueMatch[] {
+  const key = `${userId}::${season}`;
+  if (HISTORY_CACHE.has(key)) return HISTORY_CACHE.get(key)!;
+  const stats = getPlayerSeasonalStats(userId, season);
+  if (!stats) {
+    HISTORY_CACHE.set(key, []);
+    return [];
+  }
+  // シーズン中盤の日付をアンカーに（同じ user は同じ並び）
+  const s = parseSeasonKey(season);
+  const anchor = new Date(s.year, (s.quarter - 1) * 3 + 1, 28); // 各 Q の真ん中あたり
+  const list = generatePlayerHistory(userId, stats.played, stats.won, anchor);
+  HISTORY_CACHE.set(key, list);
+  return list;
 }
 
 /** Total Padel Points accumulated across ALL completed tournaments for a user */

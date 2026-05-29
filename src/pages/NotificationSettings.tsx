@@ -11,14 +11,12 @@ interface SettingItem {
 
 const pushSettings: SettingItem[] = [
   { key: "push_booking", label: "予約通知", description: "予約の確認・リマインダー" },
-  { key: "push_event", label: "大会通知", description: "大会の更新・結果通知" },
   { key: "push_campaign", label: "キャンペーン通知", description: "お得な情報・キャンペーン" },
   { key: "push_message", label: "メッセージ通知", description: "教練からのメッセージ" },
 ];
 
 const emailSettings: SettingItem[] = [
   { key: "email_booking", label: "予約確認メール", description: "予約完了時のメール通知" },
-  { key: "email_event", label: "大会案内メール", description: "大会に関するメール" },
   { key: "email_campaign", label: "キャンペーンメール", description: "お得な情報のメール配信" },
 ];
 
@@ -26,11 +24,9 @@ const NotificationSettings = () => {
   const navigate = useNavigate();
   const [settings, setSettings] = useState<Record<string, boolean>>({
     push_booking: true,
-    push_event: true,
     push_campaign: true,
     push_message: true,
     email_booking: true,
-    email_event: false,
     email_campaign: false,
   });
 

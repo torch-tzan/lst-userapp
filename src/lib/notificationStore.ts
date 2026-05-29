@@ -10,15 +10,6 @@ export interface PushNotification {
     | "booking_cancelled"
     | "online_link"
     | "review_request"
-    | "tournament_registration_confirmed"
-    | "tournament_partner_invited"
-    | "tournament_partner_accepted"
-    | "tournament_partner_declined"
-    | "tournament_partner_expired"
-    | "tournament_partner_cancelled"
-    | "tournament_participant_cancelled"
-    | "tournament_starting_soon"
-    | "tournament_results_published"
     | "monthly_ranking_finalized"
     | "league_match_application_received"
     | "league_match_application_approved"
@@ -99,62 +90,6 @@ export const seedDemoNotifications = (): void => {
       message: "4/20（日）10:00〜 パデルコート広島 コートA の予約が確定しました。",
       bookingId: "demo-bk1",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
-      read: false,
-    },
-    {
-      type: "tournament_registration_confirmed",
-      title: "エントリーを送信しました（ダブルス）",
-      message: "5月度 オープンダブルスへの招待を渡辺 健太さんに送信しました。承諾をお待ちください。",
-      createdAt: new Date(Date.now() - 1000 * 60 * 50).toISOString(),
-      read: false,
-    },
-    {
-      type: "tournament_partner_invited",
-      title: "大会の招待が届きました",
-      message: "佐藤 花子さんから「5月度 ダブルストーナメント」への招待が届きました。72時間以内に回答してください。",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-      read: false,
-    },
-    {
-      type: "tournament_partner_accepted",
-      title: "パートナーが招待を承諾しました",
-      message: "渡辺 健太さんが「4月度 ダブルス大会」のエントリーを承諾しました。",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
-      read: true,
-    },
-    {
-      type: "tournament_partner_declined",
-      title: "パートナーが招待を辞退しました",
-      message: "山本 大輝さんが「3月度 シニアダブルス」の招待を辞退しました。理由：予定が合わない",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 50).toISOString(),
-      read: true,
-    },
-    {
-      type: "tournament_partner_expired",
-      title: "招待の有効期限が切れました",
-      message: "「3月度 ダブルストーナメント」への招待が72時間経過したため失効しました。",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-      read: true,
-    },
-    {
-      type: "tournament_participant_cancelled",
-      title: "他の参加者がエントリーを取り消しました",
-      message: "山本 大輝さんが「5月度 ダブルストーナメント」のエントリーを取り消しました。",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-      read: false,
-    },
-    {
-      type: "tournament_starting_soon",
-      title: "大会開始まで24時間",
-      message: "「5月度 オープンダブルス」が明日 14:00 から開催されます。LST 西支店コート2 にお越しください。",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-      read: false,
-    },
-    {
-      type: "tournament_results_published",
-      title: "大会の結果が発表されました",
-      message: "4月度 ダブルストーナメントで第2位を獲得しました（+160積分）。",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       read: false,
     },
     {

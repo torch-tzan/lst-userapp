@@ -1,14 +1,17 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import InnerPageLayout from "@/components/InnerPageLayout";
 import {
-  useTournamentStore,
   getPlayer,
   getRankTier,
-  computeTotalPadelPoints,
+  getPlayerSeasonalStats,
+  getPlayerRecentMatches,
+  getSeasonOf,
+  seasonKey,
+  formatSeasonLabel,
   CURRENT_USER,
   type SkillLevel,
 } from "@/lib/tournamentStore";
-import { Trophy, User, Award, Diamond, Calendar } from "lucide-react";
+import { User, Calendar, MapPin, TrendingUp, TrendingDown } from "lucide-react";
 
 const SKILL_LABEL: Record<SkillLevel, string> = {
   beginner: "初心者",
@@ -23,8 +26,6 @@ function formatDate(iso: string): string {
 
 const Profile = () => {
   const { userId } = useParams();
-  const navigate = useNavigate();
-  const { tournaments } = useTournamentStore();
 
   if (!userId) {
     return (
@@ -44,52 +45,19 @@ const Profile = () => {
   }
 
   const tier = getRankTier(player.rating);
-  const padelPoints = computeTotalPadelPoints(userId, tournaments);
   const isMe = userId === CURRENT_USER;
 
-  // Stats from completed tournaments
-  let totalPlayed = 0;
-  let totalWon = 0;
-  let bestRank: number | null = null;
-  const recentTournaments: { id: string; title: string; date: string; finalRank: number | null }[] = [];
+  // ── リーグ戦績 — 今シーズン（順位ページと同じ SEEDED_RANKINGS から取得） ──
+  const currentSeason = getSeasonOf(new Date());
+  const currentSeasonKey = seasonKey(currentSeason);
+  const seasonStats = getPlayerSeasonalStats(userId, currentSeasonKey);
+  const played = seasonStats?.played ?? 0;
+  const won = seasonStats?.won ?? 0;
+  const ratingChange = seasonStats?.ratingChange ?? 0;
+  const winRate = played === 0 ? "—" : `${Math.round((won / played) * 100)}%`;
 
-  for (const t of tournaments) {
-    if (t.status !== "completed" || !t.results) continue;
-    const entry = t.entries.find(
-      (e) =>
-        e.status === "confirmed" &&
-        (e.registrantUserId === userId || e.partnerUserId === userId)
-    );
-    if (!entry) continue;
-    let mPlayed = 0;
-    let mWon = 0;
-    for (const m of t.results.matches) {
-      const onSide1 = m.p1UserId === userId || m.p1PartnerId === userId;
-      const onSide2 = m.p2UserId === userId || m.p2PartnerId === userId;
-      if (!onSide1 && !onSide2) continue;
-      mPlayed++;
-      const isWin = (onSide1 && m.winnerSide === 1) || (onSide2 && m.winnerSide === 2);
-      if (isWin) mWon++;
-    }
-    totalPlayed += mPlayed;
-    totalWon += mWon;
-    const ranking = t.results.rankings.find(
-      (r) => r.userId === userId || r.partnerId === userId
-    );
-    if (ranking && (bestRank == null || ranking.rank < bestRank)) bestRank = ranking.rank;
-    recentTournaments.push({
-      id: t.id,
-      title: t.title,
-      date: t.scheduledAt,
-      finalRank: ranking?.rank ?? null,
-    });
-  }
-
-  recentTournaments.sort((a, b) => b.date.localeCompare(a.date));
-  const recent5 = recentTournaments.slice(0, 5);
-
-  const winRate =
-    totalPlayed === 0 ? "—" : `${Math.round((totalWon / totalPlayed) * 100)}%`;
+  // ── リーグ参加経験 — SEEDED stats から合成（順位ページと数字が対応） ──
+  const recent5 = getPlayerRecentMatches(userId, currentSeasonKey).slice(0, 5);
 
   return (
     <InnerPageLayout title="プレイヤー">
@@ -122,75 +90,93 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Stats grid */}
-      <p className="text-sm font-bold text-foreground mb-2">戦績</p>
+      {/* リーグ戦績 grid — 今シーズン（順位と同じ数字） */}
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-bold text-foreground">リーグ戦績</p>
+        <span className="text-[10px] text-muted-foreground">{formatSeasonLabel(currentSeason)}</span>
+      </div>
       <div className="grid grid-cols-3 gap-2 mb-5 text-center">
         <div className="bg-card border border-border rounded-[8px] p-3">
-          <p className="text-[10px] text-muted-foreground">総試合</p>
-          <p className="text-base font-bold text-foreground mt-1">{totalPlayed}</p>
+          <p className="text-[10px] text-muted-foreground">出場</p>
+          <p className="text-base font-bold text-foreground mt-1">{played}</p>
+          <p className="text-[10px] text-muted-foreground">試合</p>
         </div>
         <div className="bg-card border border-border rounded-[8px] p-3">
           <p className="text-[10px] text-muted-foreground">勝率</p>
           <p className="text-base font-bold text-foreground mt-1">{winRate}</p>
           <p className="text-[10px] text-muted-foreground">
-            {totalWon}勝{totalPlayed - totalWon}敗
+            {won}勝{played - won}敗
           </p>
         </div>
         <div className="bg-card border border-border rounded-[8px] p-3">
-          <p className="text-[10px] text-muted-foreground">最高名次</p>
-          <p className="text-base font-bold text-foreground mt-1 flex items-center justify-center gap-1">
-            {bestRank ? (
-              <>
-                <Trophy className="w-3.5 h-3.5 text-primary" />
-                {bestRank}位
-              </>
-            ) : (
-              "—"
-            )}
+          <p className="text-[10px] text-muted-foreground">レート変動</p>
+          <p
+            className={`text-base font-bold mt-1 flex items-center justify-center gap-0.5 ${
+              ratingChange > 0
+                ? "text-primary"
+                : ratingChange < 0
+                ? "text-destructive"
+                : "text-foreground"
+            }`}
+          >
+            {ratingChange > 0 ? (
+              <TrendingUp className="w-3.5 h-3.5" />
+            ) : ratingChange < 0 ? (
+              <TrendingDown className="w-3.5 h-3.5" />
+            ) : null}
+            {ratingChange > 0 ? "+" : ""}
+            {ratingChange}
           </p>
         </div>
       </div>
 
-      {/* Padel Points */}
-      <div className="bg-primary/5 border border-primary/30 rounded-[8px] p-3 mb-5 flex items-center gap-3">
-        <Diamond className="w-5 h-5 text-primary" />
-        <div className="flex-1">
-          <p className="text-[10px] text-muted-foreground">累計 Padel Points</p>
-          <p className="text-xl font-bold text-primary">
-            {padelPoints.toLocaleString()}{" "}
-            <span className="text-xs font-medium">PP</span>
-          </p>
-        </div>
-      </div>
-
-      {/* Recent tournaments */}
-      {recent5.length > 0 && (
+      {/* リーグ参加経験 list */}
+      {recent5.length > 0 ? (
         <>
-          <p className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
-            <Award className="w-4 h-4 text-muted-foreground" />
-            最近の大会
-          </p>
+          <p className="text-sm font-bold text-foreground mb-2">リーグ参加経験</p>
           <div className="bg-card border border-border rounded-[8px] divide-y divide-border overflow-hidden mb-5">
-            {recent5.map((rt) => (
-              <button
-                key={rt.id}
-                onClick={() => navigate(`/game/tournament/${rt.id}`)}
-                className="w-full p-3 text-left hover:bg-muted/30 flex items-center justify-between"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-foreground">{rt.title}</p>
-                  <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(rt.date)}
-                  </p>
+            {recent5.map((rm) => (
+              <div key={rm.id} className="w-full p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                        rm.won
+                          ? "bg-primary/15 text-primary"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {rm.won ? "勝" : "負"}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                        rm.isHost
+                          ? "bg-accent-yellow/15 text-foreground border-accent-yellow/40"
+                          : "bg-muted text-muted-foreground border-border"
+                      }`}
+                    >
+                      {rm.isHost ? "ホスト" : "ゲスト"}
+                    </span>
+                    <span className="text-sm font-bold text-foreground">{rm.score}</span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground">{formatDate(rm.date)}</span>
                 </div>
-                {rt.finalRank && (
-                  <span className="text-xs font-bold text-foreground">{rt.finalRank}位</span>
-                )}
-              </button>
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1 mb-0.5">
+                  <MapPin className="w-3 h-3" />
+                  {rm.venue}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  パートナー：{rm.partnerName} ・ vs {rm.opponentNames.join(" / ")}
+                </p>
+              </div>
             ))}
           </div>
         </>
+      ) : (
+        <div className="bg-muted/30 border border-border rounded-[8px] p-4 text-center mb-5">
+          <Calendar className="w-5 h-5 text-muted-foreground mx-auto mb-1.5" />
+          <p className="text-xs text-muted-foreground">リーグ参加経験はまだありません</p>
+        </div>
       )}
 
       {/* Note about privacy */}

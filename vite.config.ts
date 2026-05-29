@@ -9,8 +9,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    // 允許 cloudflared 臨時 tunnel 的 host（html.to.design 雲端匯入用），否則 Vite 5.4+ 預設會擋外來 Host
-    allowedHosts: [".trycloudflare.com"],
+    // 允許 cloudflared / localtunnel 臨時 tunnel 的 host（html.to.design 雲端匯入用），否則 Vite 5.4+ 預設會擋外來 Host
+    allowedHosts: [".trycloudflare.com", ".loca.lt"],
     hmr: {
       overlay: false,
     },

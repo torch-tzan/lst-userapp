@@ -16,7 +16,7 @@ const FigmaExportNonPremiumGame = () => {
           <div className="text-center space-y-2 py-2">
             <p className="text-[11px] text-primary-foreground/70">{formatSeasonLabel(currentSeason)}</p>
             <p className="text-sm font-bold text-primary-foreground">プレミアム会員になってリーグに参加</p>
-            <p className="text-[11px] text-primary-foreground/70">大会・リーグ参加・成績確認はプレミアム限定</p>
+            <p className="text-[11px] text-primary-foreground/70">リーグ参加・成績確認はプレミアム限定</p>
             <button type="button" className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-xs font-bold px-4 py-2 rounded-[6px] mt-1">
               <Diamond className="w-3 h-3" />
               プレミアム登録
