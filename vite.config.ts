@@ -5,8 +5,8 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // 2026-05-30 暫時：tunnel 經 vite preview 服務時 base 必須是 "/"。匯入完恢復成 production: "/lst-userapp/"
-  base: "/",
+  // GitHub Pages 部署在 /lst-userapp/；dev / tunnel 用 "/"
+  base: mode === "production" ? "/lst-userapp/" : "/",
   server: {
     host: "::",
     port: 8080,
