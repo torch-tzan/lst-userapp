@@ -1,14 +1,44 @@
 # Progress — LST padel user app
 
-**最後更新**：2026-06-02
-**本次 session 範圍**：finish-dev 收尾 — push 4 個 local backup commits 到 main
-**Commit 數**：4 個（`816fdf4` → `be491f5`）
-**Deploy**：直接推 main（無 PR）；Zeabur deploy 進行中
-**Merge**：直接推 main（`f3799f0..be491f5`）
+**最後更新**：2026-06-02（finish-dev）
+**本次 session 範圍**：修 GitHub Pages prototype 空白頁 + finish-dev 收尾
+**Commit 數**：3 個（`054c341` → `3a951ca`）
+**Deploy**：直接推 main；GitHub Pages deploy 成功
+**Merge**：直接推 main
+**Prototype URL**：https://torch-tzan.github.io/lst-userapp/
 
 ---
 
-## 2026-06-02 finish-dev 收尾
+## 2026-06-02 GitHub Pages 空白頁修復
+
+### 根因
+- `vite.config.ts` production `base` 被設成 `"/"`，build 產物 JS/CSS 指向 `/assets/...`
+- GitHub Pages 實際 host 在 `/lst-userapp/`，資源 404 → React 未 mount → 全白
+- 使用者瀏覽器可能快取舊版 HTML，即使後續 deploy 仍看到空白
+
+### 修復（commits）
+**`054c341`** — production `base` 改回 `/lst-userapp/`（dev 仍用 `/`）
+
+**`3a951ca`** — 強化 boot：
+- `routerBasename.ts`：React Router basename 去掉 trailing slash
+- `index.html`：#root 加 loading fallback
+- `main.tsx`：boot error 顯示
+- `deploy.yml`：加 `dist/.nojekyll`
+
+### Prod 狀態
+- GitHub Pages：https://torch-tzan.github.io/lst-userapp/ ✅（Playwright 驗證 phone mockup 正常）
+- Admin：https://torch-tzan.github.io/lst-userapp/admin/login
+- Deploy workflow：`deploy.yml` on push main
+
+### 驗證
+- `npm run test` ✅
+- `npm run build` ✅
+
+---
+
+## 2026-06-02 finish-dev 收尾（早場）
+
+**Commit 數**：4 個 local backup（`816fdf4` → `be491f5`）+ progress commit
 
 ### 推上 main 的變更摘要
 
