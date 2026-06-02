@@ -1,5 +1,44 @@
 # Progress — LST padel user app
 
+**最後更新**：2026-06-02
+**本次 session 範圍**：finish-dev 收尾 — push 4 個 local backup commits 到 main
+**Commit 數**：4 個（`816fdf4` → `be491f5`）
+**Deploy**：直接推 main（無 PR）；Zeabur deploy 進行中
+**Merge**：直接推 main（`f3799f0..be491f5`）
+
+---
+
+## 2026-06-02 finish-dev 收尾
+
+### 推上 main 的變更摘要
+
+**`816fdf4` — Figma export + PhoneMockup**
+- 新增 Figma 匯出頁：`FigmaExportGame` / `FigmaExportNonPremiumGame` / `FigmaLeagueCardStates` / `FigmaExportCards`
+- `PhoneMockup` 強化（支援 design export 場景）
+- `vite.config.ts` 加 tunnel allowedHosts
+
+**`945e3c9` — admin auth**
+- `adminAuthStore.ts` 小補強
+
+**`5f5378e` — 大會 UI 移除 + store 重構**
+- 刪除 user app 大會相關頁：`TournamentDetail` / `TournamentEntry` / `MyResults` / `MonthDetail` / `InviteConfirm`
+- 移除 `notificationStore.ts`（通知改走既有 flow）
+- `tournamentStore.ts` 擴充（league 對齊）
+- `leagueMatchBoardStore.ts` 新增
+- `Profile` / `GameHome` / `Messages` 等頁面調整
+- `vite.config.ts` base 暫改 `/`（tunnel 匯入用）
+
+**`be491f5` — vite tunnel**
+- `vite.config.ts` preview/server allowedHosts 補齊（cloudflared / localtunnel / serveo / localhost.run）
+
+### 驗證
+- `npm run test` ✅
+- `npm run build` ✅（bundle 1.81MB gzip 509KB，預期 warning）
+
+---
+
+## 2026-05-21 admin prototype session
+
 **最後更新**：2026-05-21
 **本次 session 範圍**：LST 後台 prototype 從 RFP 到實作 + 視覺 polish + 欄位 audit + alignment 修正
 **Commit 數**：本 session 15 個（`6d02aa2` RFP → `fe14be6` data-sync bridge）
