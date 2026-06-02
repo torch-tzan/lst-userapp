@@ -114,13 +114,14 @@ import InvitationList from "./admin/pages/store/invitations/InvitationList.tsx";
 import FigmaExportGame from "./pages/figma/FigmaExportGame.tsx";
 import FigmaExportCards from "./pages/figma/FigmaExportCards.tsx";
 import FigmaExportNonPremiumGame from "./pages/figma/FigmaExportNonPremiumGame.tsx";
+import { routerBasename } from "@/lib/routerBasename";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <BrowserRouter basename={routerBasename}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/search" element={<SearchResults />} />
